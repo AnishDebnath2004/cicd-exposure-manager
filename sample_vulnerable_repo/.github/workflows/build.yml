@@ -1,0 +1,15 @@
+name: Continuous Integration
+on: pull_request_target  # VULNERABILITY 1: Dangerous trigger with write token
+
+permissions: write-all   # VULNERABILITY 2: Over-permissive token
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2  # VULNERABILITY 3: Unpinned action (v2)
+
+      - name: Run Untrusted Script
+        run: |
+          echo "Processing PR: ${{ github.event.pull_request.title }}" 

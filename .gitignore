@@ -1,0 +1,25 @@
+# Environments & Virtualenvs
+venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.mypy_cache/
+
+# Databases & local persistent storage
+data/
+*.db
+*.sqlite3
+
+# IDEs & System
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

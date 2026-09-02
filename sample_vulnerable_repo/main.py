@@ -1,0 +1,5 @@
+# VULNERABILITY 11: Leaked AWS Key
+AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
+AWS_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+print("Starting production service...")

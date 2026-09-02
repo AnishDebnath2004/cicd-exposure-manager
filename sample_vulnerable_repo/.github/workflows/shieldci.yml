@@ -1,0 +1,22 @@
+name: ShieldCI Security Gate
+on: [push, pull_request]
+
+jobs:
+  exposure-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ShieldCI
+        run: |
+          pip install -r https://raw.githubusercontent.com/your-org/shieldci/main/requirements.txt
+
+      - name: Run Pipeline Exposure Gate
+        run: |
+          python -m app.cli --path . --fail-on HIGH --max-pes 50
