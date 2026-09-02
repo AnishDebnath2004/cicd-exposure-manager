@@ -17,11 +17,20 @@ class FindingCategory(str, Enum):
     SECRET_EXPOSURE = "Secret & Credential Leak"
     SCA_VULNERABILITY = "Vulnerable Dependency"
     IAC_CONTAINER = "Container & IaC Exposure"
+    WEB_EXPOSURE = "Web & API Security Exposure"
+    DB_EXPOSURE = "Database Posture & Access Exposure"
+
+class TargetCategory(str, Enum):
+    REPOSITORY = "repository"
+    WEBSITE = "website"
+    DATABASE = "database"
 
 class SourceType(str, Enum):
     LOCAL = "local"
     GIT = "git"
     UPLOAD = "upload"
+    WEB = "web"
+    DATABASE = "database"
 
 class Finding(BaseModel):
     id: str
@@ -54,20 +63,25 @@ class ScanSummary(BaseModel):
 class ScanResult(BaseModel):
     scan_id: str
     target_path: str
-    repo_name: str = "Repository"
+    repo_name: str = "Asset"
     repo_url: Optional[str] = None
     branch: Optional[str] = None
     source_type: SourceType = SourceType.LOCAL
+    target_type: TargetCategory = TargetCategory.REPOSITORY
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     summary: ScanSummary
     findings: List[Finding]
     sbom_components: List[Dict[str, Any]] = []
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class ScanRequest(BaseModel):
+    target: Optional[str] = None
+    target_type: Optional[TargetCategory] = None
     target_path: Optional[str] = None
     repo_url: Optional[str] = None
     branch: Optional[str] = None
     repo_name: Optional[str] = None
+    db_type: Optional[str] = None
     fail_on_severity: SeverityLevel = Field(
         default_factory=lambda: SeverityLevel(settings.policy_gate.DEFAULT_FAIL_SEVERITY)
     )
@@ -79,6 +93,7 @@ class ScheduledScan(BaseModel):
     id: str
     target: str
     source_type: SourceType = SourceType.GIT
+    target_type: TargetCategory = TargetCategory.REPOSITORY
     branch: Optional[str] = None
     interval_minutes: int = 60
     enabled: bool = True
@@ -91,6 +106,7 @@ class ScheduledScan(BaseModel):
 
 class ScheduleCreateRequest(BaseModel):
     target: str
+    target_type: TargetCategory = TargetCategory.REPOSITORY
     branch: Optional[str] = None
     interval_minutes: int = 60
     fail_on_severity: SeverityLevel = SeverityLevel.HIGH
@@ -101,6 +117,7 @@ class ScanHistorySummary(BaseModel):
     repo_name: str
     target_path: str
     source_type: str
+    target_type: str = "repository"
     timestamp: datetime
     pipeline_exposure_score: float
     risk_grade: str

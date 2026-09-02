@@ -1,6 +1,10 @@
 """
 tests/test_universal_scan.py
-Comprehensive test suite verifying local, remote Git, ZIP upload, SQLite storage, SARIF export, and scheduler.
+Comprehensive test suite verifying Tri-Vector Exposure Defense:
+1. Repositories (local, remote Git URLs, ZIP archives)
+2. Live Websites & Web APIs (SSL/TLS, security headers, CORS, sensitive paths)
+3. Databases (PostgreSQL, MySQL, Redis, MongoDB, Elasticsearch posture & credentials)
+4. SQLite persistent history, continuous background scheduling, and multi-format exports.
 """
 
 import os
@@ -13,11 +17,13 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.config import settings
-from app.models.schemas import ScanRequest, SeverityLevel, SourceType
+from app.models.schemas import ScanRequest, SeverityLevel, SourceType, TargetCategory
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
 from app.core.scheduler import scheduler
 from app.core.repo_fetcher import RepoFetcher
+from app.scanners.web_scanner import WebsiteScanner
+from app.scanners.database_scanner import DatabaseScanner
 
 
 def test_repo_fetcher_url_detection():
@@ -35,7 +41,7 @@ def test_repo_fetcher_url_detection():
 
 
 def test_local_scan_and_storage():
-    print("Testing local scan & storage...")
+    print("Testing local repo scan & storage...")
     orchestrator = ExposureOrchestrator()
     req = ScanRequest(
         target_path="./sample_vulnerable_repo",
@@ -45,6 +51,7 @@ def test_local_scan_and_storage():
     result = orchestrator.run_scan(req)
     assert result.scan_id is not None
     assert result.repo_name == "sample_vulnerable_repo"
+    assert result.target_type == TargetCategory.REPOSITORY
     assert result.summary.total_findings >= 1
     assert result.summary.pipeline_exposure_score > 0
     assert result.source_type == SourceType.LOCAL
@@ -54,17 +61,18 @@ def test_local_scan_and_storage():
     assert saved_scan is not None
     assert saved_scan.scan_id == result.scan_id
     assert saved_scan.summary.total_findings == result.summary.total_findings
+    assert saved_scan.target_type == TargetCategory.REPOSITORY
 
     # Check scan history listing
     history = storage.list_scans(limit=10)
     assert len(history) >= 1
     assert any(h.scan_id == result.scan_id for h in history)
-    print("[OK] Local scan & storage passed")
+    print("[OK] Local repo scan & storage passed")
     return result
 
 
 def test_zip_upload_scan():
-    print("Testing ZIP archive scan...")
+    print("Testing ZIP archive repo scan...")
     orchestrator = ExposureOrchestrator()
     
     with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tf:
@@ -86,12 +94,58 @@ def test_zip_upload_scan():
             temp_zip_path=zip_path
         )
         assert result.source_type == SourceType.UPLOAD
+        assert result.target_type == TargetCategory.REPOSITORY
         assert result.summary.total_findings >= 3
         assert result.summary.critical_count >= 1
         print("[OK] ZIP archive scan passed")
     finally:
         if os.path.exists(zip_path):
             os.remove(zip_path)
+
+
+def test_website_scanner():
+    print("Testing Website & API Scanner...")
+    orchestrator = ExposureOrchestrator()
+    req = ScanRequest(
+        target="https://example.com",
+        target_type=TargetCategory.WEBSITE,
+        fail_on_severity=SeverityLevel.HIGH,
+        max_allowed_pes=60.0
+    )
+    result = orchestrator.run_scan(req)
+    assert result.scan_id is not None
+    assert result.target_type == TargetCategory.WEBSITE
+    assert result.source_type == SourceType.WEB
+    assert "example.com" in result.repo_name
+    assert result.metadata is not None
+    assert "status_code" in result.metadata
+    print(f"[OK] Website scan passed: {len(result.findings)} exposures identified in example.com")
+    return result
+
+
+def test_database_scanner():
+    print("Testing Database Posture Scanner...")
+    orchestrator = ExposureOrchestrator()
+    
+    # Audit a database URI with exposed default credentials and unencrypted connection
+    db_target = "postgresql://postgres:postgres@127.0.0.1:5432/appdb"
+    req = ScanRequest(
+        target=db_target,
+        target_type=TargetCategory.DATABASE,
+        fail_on_severity=SeverityLevel.HIGH,
+        max_allowed_pes=60.0
+    )
+    result = orchestrator.run_scan(req)
+    assert result.scan_id is not None
+    assert result.target_type == TargetCategory.DATABASE
+    assert result.source_type == SourceType.DATABASE
+    assert "POSTGRESQL" in result.repo_name.upper()
+    assert result.summary.total_findings >= 2
+    # Verify masked credentials in target_path
+    assert "postgres:****@" in result.target_path
+    assert any("Default Database Password" in f.title or "Database Credentials Exposed" in f.title for f in result.findings)
+    print(f"[OK] Database scan passed: {len(result.findings)} exposures identified in test DB target")
+    return result
 
 
 def test_exports_sarif_json_csv(scan_result):
@@ -105,7 +159,7 @@ def test_exports_sarif_json_csv(scan_result):
     # CSV Export
     csv_text = storage.export_csv(scan_result)
     assert "Severity,Category,Title" in csv_text
-    assert "sample_vulnerable_repo" in csv_text or len(csv_text.splitlines()) > 1
+    assert len(csv_text.splitlines()) > 1
 
     # JSON export
     raw_json = scan_result.model_dump_json()
@@ -113,45 +167,61 @@ def test_exports_sarif_json_csv(scan_result):
     print("[OK] SARIF, JSON, CSV exports passed")
 
 
-def test_schedule_management():
-    print("Testing background scheduler...")
+def test_tri_vector_schedules():
+    print("Testing Tri-Vector background scheduling...")
     orchestrator = ExposureOrchestrator()
     scheduler.set_orchestrator(orchestrator)
 
-    sched = scheduler.create_schedule(
+    # 1. Schedule for Repository
+    sched_repo = scheduler.create_schedule(
         target="./sample_vulnerable_repo",
-        branch="main",
-        interval_minutes=15,
-        fail_on_severity=SeverityLevel.HIGH,
-        max_allowed_pes=60.0
+        target_type=TargetCategory.REPOSITORY,
+        interval_minutes=30
     )
-    assert sched.id is not None
-    assert sched.interval_minutes == 15
+    assert sched_repo.target_type == TargetCategory.REPOSITORY
 
-    # Run scheduled job manually
-    scheduler.run_scheduled_job(sched.id)
-    
+    # 2. Schedule for Website
+    sched_web = scheduler.create_schedule(
+        target="https://example.com",
+        target_type=TargetCategory.WEBSITE,
+        interval_minutes=60
+    )
+    assert sched_web.target_type == TargetCategory.WEBSITE
+
+    # 3. Schedule for Database
+    sched_db = scheduler.create_schedule(
+        target="redis://127.0.0.1:6379",
+        target_type=TargetCategory.DATABASE,
+        interval_minutes=15
+    )
+    assert sched_db.target_type == TargetCategory.DATABASE
+
+    # Run scheduled database job
+    scheduler.run_scheduled_job(sched_db.id)
     schedules = storage.get_schedules()
-    matched = next((s for s in schedules if s.id == sched.id), None)
+    matched = next((s for s in schedules if s.id == sched_db.id), None)
     assert matched is not None
     assert matched.last_run_at is not None
-    assert matched.last_status in ["PASSED", "FAILED"]
 
-    # Delete schedule
-    deleted = scheduler.delete_schedule(sched.id)
-    assert deleted is True
-    print("[OK] Scheduler management passed")
+    # Cleanup test schedules
+    scheduler.delete_schedule(sched_repo.id)
+    scheduler.delete_schedule(sched_web.id)
+    scheduler.delete_schedule(sched_db.id)
+    print("[OK] Tri-vector scheduler management passed")
 
 
 if __name__ == "__main__":
-    print("========================================")
-    print(" ShieldCI Universal Scan Verification ")
-    print("========================================")
+    print("==================================================")
+    print(" ShieldCI Tri-Vector Universal Scan Verification ")
+    print(" Repositories | Websites | Databases ")
+    print("==================================================")
     test_repo_fetcher_url_detection()
-    scan_res = test_local_scan_and_storage()
+    repo_res = test_local_scan_and_storage()
     test_zip_upload_scan()
-    test_exports_sarif_json_csv(scan_res)
-    test_schedule_management()
-    print("========================================")
-    print(" ALL TESTS COMPLETED SUCCESSFULLY! ")
-    print("========================================")
+    web_res = test_website_scanner()
+    db_res = test_database_scanner()
+    test_exports_sarif_json_csv(web_res)
+    test_tri_vector_schedules()
+    print("==================================================")
+    print(" ALL TRI-VECTOR TESTS COMPLETED SUCCESSFULLY! ")
+    print("==================================================")

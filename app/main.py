@@ -1,7 +1,7 @@
 """
 app/main.py
 FastAPI Server for DevSecOps CI/CD Exposure Manager (ShieldCI).
-Provides REST APIs for on-demand & scheduled repo scanning, file uploads, SARIF exports, and webhook triggers.
+Provides REST APIs for on-demand & scheduled scanning across Repositories, Websites, and Databases.
 """
 
 import os
@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.models.schemas import (
     ScanRequest, ScanResult, ScanHistorySummary, ScheduledScan,
-    ScheduleCreateRequest, SeverityLevel
+    ScheduleCreateRequest, SeverityLevel, TargetCategory
 )
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Universal CI/CD Posture Management, Secret Auditing, SCA, IaC and Exposure Defense Platform",
+    description="Universal Tri-Vector Posture Management: Audit Any Repository, Website, or Database At Any Time",
     version=settings.VERSION,
     debug=settings.DEBUG,
     lifespan=lifespan
@@ -73,11 +73,14 @@ async def serve_dashboard():
 @app.post("/api/scan", response_model=ScanResult)
 async def trigger_scan(request: ScanRequest):
     """
-    Triggers a security exposure scan on any target (Remote Git URL or local path).
+    Triggers a security exposure scan on any target:
+    - Repository (Git URL or local path)
+    - Website (HTTPS / HTTP URL)
+    - Database (Connection URI or host:port)
     """
-    target = request.repo_url or request.target_path
+    target = request.target or request.repo_url or request.target_path
     if not target or not target.strip():
-        raise HTTPException(status_code=400, detail="Target path or repo_url must be provided.")
+        raise HTTPException(status_code=400, detail="Target URL, path, or connection string must be provided.")
 
     try:
         result = orchestrator.run_scan(request)
@@ -88,6 +91,50 @@ async def trigger_scan(request: ScanRequest):
         raise HTTPException(status_code=408, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scan Error: {str(e)}")
+
+
+@app.post("/api/scan/website", response_model=ScanResult)
+async def scan_website(
+    url: str = Query(..., description="Target website or API URL (e.g. https://example.com)"),
+    fail_on_severity: SeverityLevel = Query(SeverityLevel.HIGH),
+    max_allowed_pes: float = Query(60.0)
+):
+    """Dedicated endpoint to audit any live website or web API."""
+    if not url or not url.strip():
+        raise HTTPException(status_code=400, detail="URL must be provided.")
+    try:
+        req = ScanRequest(
+            target=url.strip(),
+            target_type=TargetCategory.WEBSITE,
+            fail_on_severity=fail_on_severity,
+            max_allowed_pes=max_allowed_pes
+        )
+        return orchestrator.run_scan(req)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Website Scan Error: {str(e)}")
+
+
+@app.post("/api/scan/database", response_model=ScanResult)
+async def scan_database(
+    target: str = Query(..., description="Database URI (e.g. postgresql://user:pass@host:5432/db) or host:port"),
+    engine: Optional[str] = Query(None, description="Database engine (postgres, mysql, redis, mongodb, elasticsearch, mssql)"),
+    fail_on_severity: SeverityLevel = Query(SeverityLevel.HIGH),
+    max_allowed_pes: float = Query(60.0)
+):
+    """Dedicated endpoint to audit any database posture and access security."""
+    if not target or not target.strip():
+        raise HTTPException(status_code=400, detail="Database target must be provided.")
+    try:
+        req = ScanRequest(
+            target=target.strip(),
+            target_type=TargetCategory.DATABASE,
+            db_type=engine,
+            fail_on_severity=fail_on_severity,
+            max_allowed_pes=max_allowed_pes
+        )
+        return orchestrator.run_scan(req)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database Scan Error: {str(e)}")
 
 
 @app.post("/api/scan/upload", response_model=ScanResult)
@@ -110,7 +157,6 @@ async def upload_and_scan(
     temp_zip_path = temp_zip.name
 
     try:
-        # Stream upload to file with size check
         max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
         total_size = 0
         
@@ -123,6 +169,7 @@ async def upload_and_scan(
 
         req = ScanRequest(
             target_path=file.filename,
+            target_type=TargetCategory.REPOSITORY,
             repo_name=os.path.splitext(file.filename)[0],
             fail_on_severity=fail_on_severity,
             max_allowed_pes=max_allowed_pes
@@ -148,9 +195,13 @@ async def upload_and_scan(
 
 
 @app.get("/api/scans", response_model=List[ScanHistorySummary])
-async def get_scan_history(limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)):
-    """Retrieves list of past scans."""
-    return storage.list_scans(limit=limit, offset=offset)
+async def get_scan_history(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    target_type: Optional[str] = Query(None, regex="^(repository|website|database)$")
+):
+    """Retrieves list of past scans across all asset types."""
+    return storage.list_scans(limit=limit, offset=offset, target_type=target_type)
 
 
 @app.get("/api/scans/{scan_id}", response_model=ScanResult)
@@ -211,12 +262,13 @@ async def list_schedules():
 
 @app.post("/api/schedules", response_model=ScheduledScan)
 async def create_schedule(req: ScheduleCreateRequest):
-    """Creates a new recurring automated scan for any repository."""
+    """Creates a new recurring automated scan for any repository, website, or database."""
     if not req.target or not req.target.strip():
-        raise HTTPException(status_code=400, detail="Target repository URL or path is required.")
+        raise HTTPException(status_code=400, detail="Target URL, path, or connection string is required.")
 
     schedule = scheduler.create_schedule(
         target=req.target.strip(),
+        target_type=req.target_type,
         branch=req.branch,
         interval_minutes=req.interval_minutes,
         fail_on_severity=req.fail_on_severity,
@@ -257,10 +309,10 @@ async def github_webhook(payload: dict):
     req = ScanRequest(
         repo_url=repo_url,
         branch=branch,
+        target_type=TargetCategory.REPOSITORY,
         repo_name=payload.get("repository", {}).get("name")
     )
     
-    # Run scan
     try:
         result = orchestrator.run_scan(req)
         return {
@@ -281,6 +333,9 @@ async def health_check():
         "version": settings.VERSION,
         "environment": settings.APP_ENV,
         "features": {
+            "repository_scanner": True,
+            "website_scanner": True,
+            "database_scanner": True,
             "git_clone": True,
             "zip_upload": True,
             "scheduling": True,

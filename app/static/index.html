@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShieldCI | Universal DevSecOps CI/CD Exposure Defense Platform</title>
-  <meta name="description" content="Audit any Git repository, ZIP archive, or local codebase anytime for CI/CD misconfigurations, secret leaks, vulnerable dependencies, and container risks." />
+  <title>ShieldCI | Universal Tri-Vector Exposure Defense Platform</title>
+  <meta name="description" content="Audit any Repository, live Website, or Database at any time. Unified posture defense against CI/CD risks, secret leaks, SSL flaws, web exposures, and database vulnerabilities." />
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,28 +50,19 @@
     body {
       background-color: #070913;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.08) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.05) 0px, transparent 60%);
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.09) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.06) 0px, transparent 60%);
       background-attachment: fixed;
     }
     .glass-card {
-      background: rgba(12, 16, 33, 0.75);
+      background: rgba(12, 16, 33, 0.78);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .glass-card-hover {
-      transition: all 0.2s ease-in-out;
     }
     .glass-card-hover:hover {
       border-color: rgba(99, 102, 241, 0.4);
       box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
-    }
-    .badge-glow-crit {
-      box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
-    }
-    .badge-glow-pass {
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -95,7 +86,7 @@
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
 
   <!-- Header -->
-  <header class="border-b border-slate-800/80 bg-surface-950/80 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 transition-all">
+  <header class="border-b border-slate-800/80 bg-surface-950/80 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center space-x-3.5 cursor-pointer" onclick="switchNavTab('audit')">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center text-xl font-black shadow-lg shadow-indigo-600/30 text-white">
@@ -105,10 +96,10 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
               Shield<span class="text-indigo-400">CI</span>
-              <span class="text-[10px] px-2 py-0.5 font-mono uppercase font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-full">v1.2.0 Universal</span>
+              <span class="text-[10px] px-2 py-0.5 font-mono uppercase font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-full">v2.0 Tri-Vector</span>
             </h1>
           </div>
-          <p class="text-xs text-slate-400 hidden sm:block">Unified CI/CD Posture Management & Exposure Defense</p>
+          <p class="text-xs text-slate-400 hidden sm:block">Universal Posture Defense &bull; Repositories &bull; Websites &bull; Databases</p>
         </div>
       </div>
 
@@ -131,7 +122,7 @@
       <!-- Live Status & Stats -->
       <div class="hidden lg:flex items-center gap-3">
         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span> Universal Scanner Ready
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span> Tri-Vector Defense Active
         </span>
       </div>
     </div>
@@ -141,93 +132,145 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
 
     <!-- ========================================== -->
-    <!-- TAB 1: AUDIT CENTER (UNIVERSAL SCANNER) -->
+    <!-- TAB 1: AUDIT CENTER (TRI-VECTOR DEFENSE) -->
     <!-- ========================================== -->
     <div id="section-audit" class="space-y-8">
       
-      <!-- Ingestion Card -->
+      <!-- Primary Tri-Vector Ingestion Panel -->
       <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
+        <!-- Target Vector Selector Tabs -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
-              <i class="fa-solid fa-radar text-indigo-400"></i> Scan Any Repository, Anywhere, Anytime
+              <i class="fa-solid fa-crosshairs text-indigo-400"></i> Universal Asset Exposure Audit
             </h2>
-            <p class="text-sm text-slate-400 mt-1">Audit public/private Git repositories, upload zipped source trees, or analyze local directory paths.</p>
+            <p class="text-sm text-slate-400 mt-1">Audit any codebase repository, live website/API, or database at any time.</p>
           </div>
           
-          <!-- Ingestion Type Selector -->
-          <div class="flex bg-surface-950 p-1 rounded-xl border border-slate-800 self-start md:self-auto">
-            <button onclick="setIngestionMode('git')" id="modeBtn-git" class="mode-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow transition-all flex items-center gap-1.5">
-              <i class="fa-brands fa-github"></i> Git URL / Repo
+          <!-- Asset Category Selector: Repositories | Websites | Databases -->
+          <div class="flex bg-surface-950 p-1 rounded-xl border border-slate-800 self-start md:self-auto shadow-inner">
+            <button onclick="setAssetCategory('repository')" id="assetBtn-repository" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-2">
+              <i class="fa-solid fa-code-branch"></i> Repository
             </button>
-            <button onclick="setIngestionMode('upload')" id="modeBtn-upload" class="mode-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5">
-              <i class="fa-solid fa-file-zipper"></i> ZIP Upload
+            <button onclick="setAssetCategory('website')" id="assetBtn-website" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-globe"></i> Website / API
             </button>
-            <button onclick="setIngestionMode('local')" id="modeBtn-local" class="mode-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5">
-              <i class="fa-solid fa-folder-tree"></i> Local Path
+            <button onclick="setAssetCategory('database')" id="assetBtn-database" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-database"></i> Database
             </button>
           </div>
         </div>
 
-        <!-- Mode Form 1: Git URL -->
-        <div id="ingestionForm-git" class="space-y-4">
+        <!-- ==================== VECTOR 1: REPOSITORY ==================== -->
+        <div id="vectorPanel-repository" class="space-y-4">
+          <!-- Sub-mode buttons for repo (Git URL, ZIP Upload, Local Path) -->
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs text-slate-400 font-semibold mr-1">Source:</span>
+            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Git URL</button>
+            <button onclick="setRepoSubmode('upload')" id="repoSubBtn-upload" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">ZIP Upload</button>
+            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Local Path</button>
+          </div>
+
+          <!-- Git URL Input Form -->
+          <div id="repoForm-git" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div class="md:col-span-8 relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <i class="fa-brands fa-git-alt text-base"></i>
+                </div>
+                <input id="gitRepoUrl" type="text" placeholder="https://github.com/owner/repository or owner/repo..." value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+              </div>
+              <div class="md:col-span-4 relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <i class="fa-solid fa-code-branch text-xs"></i>
+                </div>
+                <input id="gitBranch" type="text" placeholder="Branch (optional, e.g. main)" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ZIP Upload Dropzone -->
+          <div id="repoForm-upload" class="hidden space-y-4">
+            <div id="dropZone" onclick="document.getElementById('zipFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-7 text-center cursor-pointer bg-surface-950/60 transition-all group">
+              <input type="file" id="zipFileInput" accept=".zip" class="hidden" onchange="handleFileSelect(event)" />
+              <div class="w-12 h-12 mx-auto rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl group-hover:scale-110 transition mb-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <p id="uploadFileName" class="text-sm font-semibold text-slate-200">Drag & drop your repository .zip archive here, or <span class="text-indigo-400 underline">browse files</span></p>
+              <p class="text-xs text-slate-500 mt-1">Full codebases up to 50MB. Audited in isolated sandbox and cleaned up automatically.</p>
+            </div>
+          </div>
+
+          <!-- Local Path Form -->
+          <div id="repoForm-local" class="hidden space-y-4">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <i class="fa-solid fa-folder-open text-base"></i>
+              </div>
+              <input id="localRepoPath" type="text" value="./sample_vulnerable_repo" placeholder="Enter relative or absolute path (e.g. ./sample_vulnerable_repo)..." class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== VECTOR 2: WEBSITE / API ==================== -->
+        <div id="vectorPanel-website" class="hidden space-y-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-globe text-base text-indigo-400"></i>
+            </div>
+            <input id="webTargetUrl" type="text" placeholder="https://example.com or https://api.mycompany.com..." value="https://example.com" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> SSL/TLS Posture</span>
+            <span><i class="fa-solid fa-lock text-sky-400 mr-1"></i> HSTS & CSP Headers</span>
+            <span><i class="fa-solid fa-user-shield text-purple-400 mr-1"></i> CORS Audit</span>
+            <span><i class="fa-solid fa-eye-slash text-amber-400 mr-1"></i> .env & /actuator Probes</span>
+          </div>
+        </div>
+
+        <!-- ==================== VECTOR 3: DATABASE ==================== -->
+        <div id="vectorPanel-database" class="hidden space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
             <div class="md:col-span-8 relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-brands fa-git-alt text-base"></i>
+                <i class="fa-solid fa-database text-base text-emerald-400"></i>
               </div>
-              <input id="gitRepoUrl" type="text" placeholder="https://github.com/owner/repository or owner/repo shorthand..." value="https://github.com/octocat/Hello-World" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
+              <input id="dbTargetUri" type="text" placeholder="postgresql://user:pass@host:5432/db, redis://127.0.0.1:6379, or host:port..." value="redis://127.0.0.1:6379" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
             </div>
             <div class="md:col-span-4 relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-solid fa-code-branch text-xs"></i>
+                <i class="fa-solid fa-server text-xs"></i>
               </div>
-              <input id="gitBranch" type="text" placeholder="Branch/Tag (e.g. main, master, v1.0) - optional" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />
+              <select id="dbEngineSelect" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="">Auto-Detect Engine</option>
+                <option value="postgres">PostgreSQL (5432)</option>
+                <option value="mysql">MySQL / MariaDB (3306)</option>
+                <option value="redis" selected>Redis (6379)</option>
+                <option value="mongodb">MongoDB (27017)</option>
+                <option value="elasticsearch">Elasticsearch (9200)</option>
+                <option value="mssql">SQL Server (1433)</option>
+              </select>
             </div>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span><i class="fa-solid fa-network-wired text-rose-400 mr-1"></i> Public Port Exposure</span>
+            <span><i class="fa-solid fa-unlock-keyhole text-amber-400 mr-1"></i> Unauthenticated Access</span>
+            <span><i class="fa-solid fa-key text-yellow-400 mr-1"></i> Default / Weak Password</span>
+            <span><i class="fa-solid fa-shield-virus text-sky-400 mr-1"></i> TLS Encryption Enforcement</span>
           </div>
         </div>
 
-        <!-- Mode Form 2: ZIP Upload -->
-        <div id="ingestionForm-upload" class="hidden space-y-4">
-          <div id="dropZone" onclick="document.getElementById('zipFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer bg-surface-950/60 transition-all duration-200 group">
-            <input type="file" id="zipFileInput" accept=".zip" class="hidden" onchange="handleFileSelect(event)" />
-            <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl group-hover:scale-110 group-hover:bg-indigo-600/20 transition-all mb-3">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-            </div>
-            <p id="uploadFileName" class="text-sm font-semibold text-slate-200">Drag and drop your repository .zip archive here, or <span class="text-indigo-400 underline">browse files</span></p>
-            <p class="text-xs text-slate-500 mt-1">Supports full projects up to 50MB. Cleaned up immediately after scan.</p>
-          </div>
-        </div>
-
-        <!-- Mode Form 3: Local Path -->
-        <div id="ingestionForm-local" class="hidden space-y-4">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-              <i class="fa-solid fa-folder-open text-base"></i>
-            </div>
-            <input id="localRepoPath" type="text" value="./sample_vulnerable_repo" placeholder="Enter relative or absolute path (e.g. ./sample_vulnerable_repo or C:/my-app)..." class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
-          </div>
-        </div>
-
-        <!-- Quick Repository Presets & Options -->
-        <div class="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Quick Presets:</span>
-            <button onclick="applyPreset('sample')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">
-              ⚠️ Local Vulnerable Sample Repo
-            </button>
-            <button onclick="applyPreset('github-demo')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">
-              🐙 GitHub Octocat Demo
-            </button>
-            <button onclick="applyPreset('current')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">
-              📁 Current Root Workspace (.)
-            </button>
+        <!-- Presets & Quality Gate Settings Toolbar -->
+        <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <!-- Presets -->
+          <div id="presetsContainer" class="flex flex-wrap items-center gap-2">
+            <!-- Dynamically populated per category -->
           </div>
 
-          <!-- Quality Gate Settings Modal Trigger -->
+          <!-- Quality Gate Settings -->
           <div class="flex items-center gap-3">
             <details class="relative">
               <summary class="cursor-pointer text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold list-none select-none">
@@ -236,7 +279,7 @@
               <div class="absolute right-0 bottom-8 w-72 bg-surface-900 border border-slate-700 rounded-xl p-4 shadow-2xl z-30 space-y-3">
                 <div class="font-semibold text-white text-xs border-b border-slate-800 pb-2">Policy Gate Thresholds</div>
                 <div>
-                  <label class="text-[11px] text-slate-400 block mb-1">Fail Pipeline On Severity:</label>
+                  <label class="text-[11px] text-slate-400 block mb-1">Fail Gate On Severity:</label>
                   <select id="failSeverityInput" class="w-full bg-surface-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
                     <option value="CRITICAL">CRITICAL Only</option>
                     <option value="HIGH" selected>HIGH & CRITICAL</option>
@@ -246,7 +289,7 @@
                 </div>
                 <div>
                   <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                    <span>Max Allowable PES Score:</span>
+                    <span>Max Allowable PES/AES:</span>
                     <span id="pesThresholdVal" class="text-indigo-400 font-bold font-mono">60</span>
                   </div>
                   <input id="maxPesInput" type="range" min="10" max="100" value="60" oninput="document.getElementById('pesThresholdVal').innerText = this.value" class="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
@@ -256,20 +299,20 @@
           </div>
         </div>
 
-        <!-- Scan Launch Trigger Button -->
+        <!-- Scan Trigger Button -->
         <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-end">
           <button onclick="executeScan()" id="scanBtn" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.01] active:scale-[0.99]">
             <i class="fa-solid fa-bolt-lightning text-amber-300"></i> Run Deep Exposure Audit
           </button>
         </div>
 
-        <!-- Progress Overlay (Hidden by Default) -->
+        <!-- Progress Indicator -->
         <div id="scanProgressBox" class="hidden mt-6 pt-4 border-t border-slate-800">
           <div class="flex items-center justify-between text-xs mb-2">
             <span id="scanProgressMsg" class="font-medium text-indigo-400 flex items-center gap-2">
-              <i class="fa-solid fa-spinner fa-spin"></i> Preparing repository sandbox...
+              <i class="fa-solid fa-spinner fa-spin"></i> Initializing security analyzers...
             </span>
-            <span id="scanProgressStep" class="text-slate-500 font-mono">1/4 Engines</span>
+            <span id="scanProgressStep" class="text-slate-500 font-mono">Running Audit</span>
           </div>
           <div class="w-full bg-surface-950 rounded-full h-2 overflow-hidden border border-slate-800">
             <div id="scanProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full w-1/3 transition-all duration-500"></div>
@@ -280,27 +323,31 @@
       <!-- Results Display Section -->
       <div id="resultsSection" class="hidden space-y-8">
         
-        <!-- Repo Header & Export Toolbar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-surface-900/60 border border-slate-800">
-          <div class="flex items-center gap-3">
-            <div id="resSourceIcon" class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-lg">
-              <i class="fa-brands fa-git-alt"></i>
+        <!-- Asset Header & Export Toolbar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-900/70 border border-slate-800 shadow-xl">
+          <div class="flex items-center gap-4">
+            <div id="resAssetIcon" class="w-12 h-12 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xl shadow-inner">
+              <i class="fa-solid fa-shield-halved"></i>
             </div>
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-2.5 flex-wrap">
                 <h3 id="resRepoName" class="text-lg font-bold text-white tracking-tight">sample_vulnerable_repo</h3>
-                <span id="resSourceBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-mono uppercase">GIT REPO</span>
-                <span id="resBranchBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-mono">main</span>
+                <span id="resTargetTypeBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-mono uppercase">REPOSITORY</span>
+                <span id="resSourceBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-mono uppercase">LOCAL</span>
               </div>
-              <p id="resTargetPath" class="text-xs text-slate-400 font-mono truncate max-w-xl">https://github.com/example/repo</p>
+              <p id="resTargetPath" class="text-xs text-slate-400 font-mono truncate max-w-xl mt-0.5">https://github.com/example/repo</p>
             </div>
           </div>
 
-          <!-- Export Actions -->
+          <!-- Metadata Telemetry Pills & Exports -->
           <div class="flex items-center gap-2 flex-wrap">
+            <div id="resTelemetryBox" class="hidden flex items-center gap-2 bg-surface-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-mono">
+              <!-- Dynamically populated telemetry (SSL expiry, DB Port status, etc.) -->
+            </div>
+
             <div class="dropdown relative inline-block">
               <button onclick="toggleDropdown('exportMenu')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm">
-                <i class="fa-solid fa-download text-indigo-400"></i> Export Report <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
+                <i class="fa-solid fa-download text-indigo-400"></i> Export <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
               </button>
               <div id="exportMenu" class="hidden absolute right-0 mt-2 w-52 bg-surface-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30">
                 <button onclick="exportCurrentScan('sarif')" class="w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-indigo-600/20 hover:text-indigo-300 flex items-center gap-2">
@@ -315,21 +362,21 @@
               </div>
             </div>
 
-            <button onclick="createScheduleFromCurrent()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm" title="Schedule continuous scans for this repo">
+            <button onclick="createScheduleFromCurrent()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm" title="Schedule continuous recurring scans for this asset">
               <i class="fa-solid fa-calendar-plus text-amber-400"></i> Auto-Schedule
             </button>
             <button onclick="executeScan()" class="px-3.5 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl text-xs font-semibold text-indigo-300 transition-all flex items-center gap-1.5 shadow-sm">
-              <i class="fa-solid fa-rotate-right"></i> Re-Scan
+              <i class="fa-solid fa-rotate-right"></i> Re-Audit
             </button>
           </div>
         </div>
 
         <!-- 4 Hero Metric Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <!-- Metric 1: PES Score -->
+          <!-- Metric 1: Exposure Score -->
           <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group">
             <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <span>Pipeline Exposure Score</span>
+              <span>Asset Exposure Score</span>
               <i class="fa-solid fa-gauge-high text-indigo-400 text-sm"></i>
             </div>
             <div class="flex items-baseline gap-2 my-3">
@@ -345,7 +392,7 @@
           <!-- Metric 2: Policy Status -->
           <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden">
             <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <span>CI/CD Quality Gate</span>
+              <span>Security Quality Gate</span>
               <i class="fa-solid fa-shield-halved text-emerald-400 text-sm"></i>
             </div>
             <div id="policyStatus" class="text-2xl font-black my-3 text-emerald-400 tracking-tight flex items-center gap-2">
@@ -363,7 +410,7 @@
               <i class="fa-solid fa-bug text-pink-400 text-sm"></i>
             </div>
             <span id="totalFindings" class="text-4xl font-black text-white my-3 font-mono">0</span>
-            <span class="text-xs text-slate-400 font-mono" id="scanStats">0 files scanned in 0.0s</span>
+            <span class="text-xs text-slate-400 font-mono" id="scanStats">Audited in 0.0s</span>
           </div>
 
           <!-- Metric 4: Actionable Exposures -->
@@ -386,7 +433,7 @@
               <h3 class="text-sm font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-indigo-400"></i> Severity Breakdown
               </h3>
-              <span class="text-xs text-slate-400">CVSS / PES Weighted</span>
+              <span class="text-xs text-slate-400">CVSS Weighted</span>
             </div>
             <div class="h-64 flex items-center justify-center relative">
               <canvas id="severityChart"></canvas>
@@ -405,10 +452,9 @@
           </div>
         </div>
 
-        <!-- Findings & SBOM Tabs Card -->
+        <!-- Detailed Findings Card -->
         <section class="glass-card rounded-2xl p-6 shadow-xl space-y-5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-            <!-- Table Sub-Tabs -->
             <div class="flex items-center gap-2">
               <button onclick="switchResultTab('findings')" id="resTab-findings" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
                 <i class="fa-solid fa-list-check"></i> Security Findings (<span id="findingsTabCount">0</span>)
@@ -418,11 +464,11 @@
               </button>
             </div>
 
-            <!-- Filters Bar (Only visible on findings tab) -->
+            <!-- Filters Bar -->
             <div id="findingsFilterBar" class="flex items-center gap-2 flex-wrap">
               <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-500"></i>
-                <input id="findingsSearch" oninput="filterFindings()" type="text" placeholder="Search findings, files, CVEs..." class="bg-surface-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48" />
+                <input id="findingsSearch" oninput="filterFindings()" type="text" placeholder="Search title, file, CVE..." class="bg-surface-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48" />
               </div>
               <select id="severityFilter" onchange="filterFindings()" class="bg-surface-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
                 <option value="ALL">All Severities</option>
@@ -451,7 +497,7 @@
             </table>
           </div>
 
-          <!-- SBOM Components Table View -->
+          <!-- SBOM View (For repo scans) -->
           <div id="view-sbom" class="hidden overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-300">
               <thead class="bg-surface-950/80 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
@@ -481,11 +527,19 @@
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Scan History Timeline
           </h2>
-          <p class="text-sm text-slate-400 mt-1">Audit trail of all scanned repositories and security posture scores over time.</p>
+          <p class="text-sm text-slate-400 mt-1">Audit trail across all Repositories, Websites, and Databases over time.</p>
         </div>
-        <button onclick="loadScanHistory()" class="px-4 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2 self-start">
-          <i class="fa-solid fa-rotate"></i> Refresh History
-        </button>
+        <div class="flex items-center gap-2">
+          <select id="historyFilterType" onchange="loadScanHistory()" class="bg-surface-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200">
+            <option value="">All Asset Types</option>
+            <option value="repository">Repositories Only</option>
+            <option value="website">Websites Only</option>
+            <option value="database">Databases Only</option>
+          </select>
+          <button onclick="loadScanHistory()" class="px-4 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
       </div>
 
       <div class="glass-card rounded-2xl overflow-hidden shadow-xl">
@@ -493,10 +547,11 @@
           <table class="w-full text-left text-sm text-slate-300">
             <thead class="bg-surface-950 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
               <tr>
-                <th class="px-5 py-3.5">Repository</th>
+                <th class="px-5 py-3.5">Asset Name</th>
+                <th class="px-5 py-3.5">Type</th>
                 <th class="px-5 py-3.5">Source</th>
                 <th class="px-5 py-3.5">Scan Date</th>
-                <th class="px-5 py-3.5">PES Score</th>
+                <th class="px-5 py-3.5">Exposure Score</th>
                 <th class="px-5 py-3.5">Risk Grade</th>
                 <th class="px-5 py-3.5">Gate Status</th>
                 <th class="px-5 py-3.5 text-right">Actions</th>
@@ -504,7 +559,7 @@
             </thead>
             <tbody id="historyTableBody" class="divide-y divide-slate-800">
               <tr>
-                <td colspan="7" class="px-5 py-10 text-center text-slate-500">
+                <td colspan="8" class="px-5 py-10 text-center text-slate-500">
                   <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading history records...
                 </td>
               </tr>
@@ -523,7 +578,7 @@
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-calendar-check text-indigo-400"></i> Continuous & Scheduled Scans
           </h2>
-          <p class="text-sm text-slate-400 mt-1">Configure automated background recurring audits for any repository at any desired time interval.</p>
+          <p class="text-sm text-slate-400 mt-1">Configure automated background recurring audits for any repository, website, or database at any desired time interval.</p>
         </div>
       </div>
 
@@ -533,14 +588,18 @@
           <i class="fa-solid fa-plus-circle text-indigo-400"></i> Add New Automated Scheduled Scan
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-          <div class="md:col-span-5">
-            <input id="schedTargetInput" type="text" placeholder="Git repository URL or local path (e.g. https://github.com/org/repo)..." class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+          <div class="md:col-span-3">
+            <select id="schedAssetTypeInput" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-200">
+              <option value="repository">📦 Repository (Git URL/Path)</option>
+              <option value="website">🌐 Website (URL)</option>
+              <option value="database">🗄️ Database (URI/Host)</option>
+            </select>
+          </div>
+          <div class="md:col-span-4">
+            <input id="schedTargetInput" type="text" placeholder="Target URL, path, or database URI..." class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
           </div>
           <div class="md:col-span-3">
-            <input id="schedBranchInput" type="text" placeholder="Branch (optional, e.g. main)" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-          </div>
-          <div class="md:col-span-2">
-            <select id="schedIntervalInput" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <select id="schedIntervalInput" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-200">
               <option value="15">Every 15 mins</option>
               <option value="30">Every 30 mins</option>
               <option value="60" selected>Every 1 hour</option>
@@ -570,11 +629,11 @@
           <table class="w-full text-left text-sm text-slate-300">
             <thead class="bg-surface-950 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
               <tr>
-                <th class="px-5 py-3.5">Target Repository</th>
-                <th class="px-5 py-3.5">Branch</th>
+                <th class="px-5 py-3.5">Asset Target</th>
+                <th class="px-5 py-3.5">Type</th>
                 <th class="px-5 py-3.5">Frequency</th>
                 <th class="px-5 py-3.5">Last Audited</th>
-                <th class="px-5 py-3.5">Last PES Score</th>
+                <th class="px-5 py-3.5">Exposure Score</th>
                 <th class="px-5 py-3.5">Status</th>
                 <th class="px-5 py-3.5 text-right">Actions</th>
               </tr>
@@ -595,23 +654,47 @@
     <div id="section-integration" class="hidden space-y-6">
       <div>
         <h2 class="text-xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-code-merge text-indigo-400"></i> CI/CD Pipeline & Webhook Integration
+          <i class="fa-solid fa-code-merge text-indigo-400"></i> CI/CD Pipeline & Multi-Vector CLI
         </h2>
-        <p class="text-sm text-slate-400 mt-1">Integrate ShieldCI into any CI/CD runner, pull request gate, or trigger audits via webhooks and CLI anytime.</p>
+        <p class="text-sm text-slate-400 mt-1">Integrate ShieldCI into any CI/CD runner, audit live websites or databases via CLI, and trigger automated scans via webhooks anytime.</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Card 1: GitHub Actions -->
+        <!-- Card 1: CLI Universal Commands -->
         <div class="glass-card rounded-2xl p-6 space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-brands fa-github text-indigo-400"></i> GitHub Actions Workflow
+              <i class="fa-solid fa-terminal text-emerald-400"></i> CLI Universal Commands
+            </h3>
+            <button onclick="copyCode('code-cli')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+          </div>
+          <pre id="code-cli" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto border border-slate-800"># 1. Audit any live Website / API
+python -m app.cli --web https://example.com --sarif web.sarif
+
+# 2. Audit any Database (URI or host:port)
+python -m app.cli --db postgresql://localhost:5432/db --sarif db.sarif
+python -m app.cli --db redis://127.0.0.1:6379
+
+# 3. Audit any remote Git repository
+python -m app.cli --url https://github.com/org/repo --sarif repo.sarif
+
+# 4. View recent audit history across all assets
+python -m app.cli --history</pre>
+        </div>
+
+        <!-- Card 2: GitHub Actions -->
+        <div class="glass-card rounded-2xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-brands fa-github text-indigo-400"></i> GitHub Actions Quality Gate
             </h3>
             <button onclick="copyCode('code-gh')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
               <i class="fa-regular fa-copy"></i> Copy
             </button>
           </div>
-          <pre id="code-gh" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-indigo-200 overflow-x-auto border border-slate-800">name: ShieldCI Exposure Gate
+          <pre id="code-gh" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-indigo-200 overflow-x-auto border border-slate-800">name: ShieldCI Posture Gate
 on: [push, pull_request]
 jobs:
   security-audit:
@@ -628,44 +711,25 @@ jobs:
           sarif_file: results.sarif</pre>
         </div>
 
-        <!-- Card 2: CLI Usage -->
-        <div class="glass-card rounded-2xl p-6 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-terminal text-emerald-400"></i> CLI Universal Commands
-            </h3>
-            <button onclick="copyCode('code-cli')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-              <i class="fa-regular fa-copy"></i> Copy
-            </button>
-          </div>
-          <pre id="code-cli" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto border border-slate-800"># Audit any remote Git repository directly
-python -m app.cli --url https://github.com/org/repo --sarif out.sarif
-
-# Audit local directory with strict threshold
-python -m app.cli --path ./sample_vulnerable_repo --fail-on CRITICAL --max-pes 40
-
-# View recent scan history in terminal
-python -m app.cli --history</pre>
-        </div>
-
-        <!-- Card 3: Webhook API -->
+        <!-- Card 3: Instant REST APIs -->
         <div class="glass-card rounded-2xl p-6 space-y-3 md:col-span-2">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-satellite-dish text-pink-400"></i> Instant Webhook Trigger Endpoint
+              <i class="fa-solid fa-satellite-dish text-pink-400"></i> Direct REST API Endpoints
             </h3>
-            <button onclick="copyCode('code-webhook')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+            <button onclick="copyCode('code-api')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
               <i class="fa-regular fa-copy"></i> Copy
             </button>
           </div>
-          <p class="text-xs text-slate-400">Add this Webhook URL to GitHub or GitLab repository settings to trigger automatic scans on every push:</p>
-          <pre id="code-webhook" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-pink-300 overflow-x-auto border border-slate-800">POST http://&lt;your-host&gt;:8000/api/webhook/github
-Content-Type: application/json
+          <pre id="code-api" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-pink-300 overflow-x-auto border border-slate-800"># Audit a Website:
+curl -X POST "http://127.0.0.1:8000/api/scan/website?url=https://example.com"
 
-# Or trigger on-demand scan for any Git repo via cURL:
-curl -X POST http://127.0.0.1:8000/api/scan \
-  -H "Content-Type: application/json" \
-  -d '{"repo_url": "https://github.com/octocat/Hello-World", "fail_on_severity": "HIGH", "max_allowed_pes": 60}'</pre>
+# Audit a Database:
+curl -X POST "http://127.0.0.1:8000/api/scan/database?target=redis://127.0.0.1:6379"
+
+# Audit a Git Repo:
+curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" \
+  -d '{"repo_url": "https://github.com/octocat/Hello-World"}'</pre>
         </div>
       </div>
     </div>
@@ -676,12 +740,12 @@ curl -X POST http://127.0.0.1:8000/api/scan \
   <footer class="border-t border-slate-800/80 bg-surface-950/60 py-6 px-6 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <span class="font-bold text-slate-300">ShieldCI Exposure Defense</span> &bull; 
-        <span>Automated Secret Auditing, SCA, IaC & CI/CD Posture Management</span>
+        <span class="font-bold text-slate-300">ShieldCI Tri-Vector Exposure Defense</span> &bull; 
+        <span>Repositories &bull; Websites &bull; Databases</span>
       </div>
       <div class="flex items-center gap-4 text-slate-400">
-        <a href="https://github.com" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-brands fa-github mr-1"></i> Documentation</a>
-        <a href="/docs" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-solid fa-book-open mr-1"></i> OpenAPI Spec</a>
+        <a href="/docs" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-solid fa-book-open mr-1"></i> Interactive Swagger API</a>
+        <a href="https://github.com" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-brands fa-github mr-1"></i> GitHub</a>
       </div>
     </div>
   </footer>
@@ -690,11 +754,12 @@ curl -X POST http://127.0.0.1:8000/api/scan \
   <script>
     let currentScanData = null;
     let selectedZipFile = null;
-    let currentIngestionMode = 'git';
+    let currentAssetCategory = 'repository';
+    let currentRepoSubmode = 'git';
     let severityChartInst = null;
     let categoryChartInst = null;
 
-    // Tab Switching
+    // Navigation Tab Switching
     function switchNavTab(tabName) {
       const tabs = ['audit', 'history', 'schedules', 'integration'];
       tabs.forEach(t => {
@@ -717,42 +782,115 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       if (tabName === 'schedules') loadSchedules();
     }
 
-    // Ingestion Mode Switching
-    function setIngestionMode(mode) {
-      currentIngestionMode = mode;
-      const modes = ['git', 'upload', 'local'];
-      modes.forEach(m => {
-        const form = document.getElementById(`ingestionForm-${m}`);
-        const btn = document.getElementById(`modeBtn-${m}`);
-        if (form) form.classList.add('hidden');
+    // Asset Category Switching: Repository | Website | Database
+    function setAssetCategory(cat) {
+      currentAssetCategory = cat;
+      const cats = ['repository', 'website', 'database'];
+      cats.forEach(c => {
+        const panel = document.getElementById(`vectorPanel-${c}`);
+        const btn = document.getElementById(`assetBtn-${c}`);
+        if (panel) panel.classList.add('hidden');
         if (btn) {
-          btn.className = "mode-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5";
+          btn.className = "asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2";
         }
       });
 
-      const activeForm = document.getElementById(`ingestionForm-${mode}`);
-      const activeBtn = document.getElementById(`modeBtn-${mode}`);
+      const activePanel = document.getElementById(`vectorPanel-${cat}`);
+      const activeBtn = document.getElementById(`assetBtn-${cat}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = "asset-btn px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-2";
+      }
+
+      renderPresets(cat);
+    }
+
+    // Repository Submode Switching: Git URL | ZIP Upload | Local Path
+    function setRepoSubmode(mode) {
+      currentRepoSubmode = mode;
+      const modes = ['git', 'upload', 'local'];
+      modes.forEach(m => {
+        const form = document.getElementById(`repoForm-${m}`);
+        const btn = document.getElementById(`repoSubBtn-${m}`);
+        if (form) form.classList.add('hidden');
+        if (btn) {
+          btn.className = "px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60";
+        }
+      });
+
+      const activeForm = document.getElementById(`repoForm-${mode}`);
+      const activeBtn = document.getElementById(`repoSubBtn-${mode}`);
       if (activeForm) activeForm.classList.remove('hidden');
       if (activeBtn) {
-        activeBtn.className = "mode-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow transition-all flex items-center gap-1.5";
+        activeBtn.className = "px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40";
       }
     }
 
-    // Presets
+    // Presets Management
+    function renderPresets(category) {
+      const container = document.getElementById('presetsContainer');
+      container.innerHTML = `<span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Quick Presets:</span>`;
+
+      if (category === 'repository') {
+        container.innerHTML += `
+          <button onclick="applyPreset('repo-sample')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚠️ Local Sample Repo</button>
+          <button onclick="applyPreset('repo-github')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐙 GitHub Octocat Demo</button>
+          <button onclick="applyPreset('repo-current')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📁 Current Workspace (.)</button>
+        `;
+      } else if (category === 'website') {
+        container.innerHTML += `
+          <button onclick="applyPreset('web-example')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🌐 example.com (Standard)</button>
+          <button onclick="applyPreset('web-httpbin')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📡 httpbin.org (REST API)</button>
+        `;
+      } else if (category === 'database') {
+        container.innerHTML += `
+          <button onclick="applyPreset('db-redis')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚡ Local Redis (6379)</button>
+          <button onclick="applyPreset('db-postgres')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐘 PostgreSQL (5432)</button>
+          <button onclick="applyPreset('db-elastic')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🔍 Elasticsearch (9200)</button>
+        `;
+      }
+    }
+
     function applyPreset(preset) {
-      if (preset === 'sample') {
-        setIngestionMode('local');
+      if (preset === 'repo-sample') {
+        setAssetCategory('repository');
+        setRepoSubmode('local');
         document.getElementById('localRepoPath').value = './sample_vulnerable_repo';
         showToast("Applied sample vulnerable repository preset", "info");
-      } else if (preset === 'github-demo') {
-        setIngestionMode('git');
+      } else if (preset === 'repo-github') {
+        setAssetCategory('repository');
+        setRepoSubmode('git');
         document.getElementById('gitRepoUrl').value = 'https://github.com/octocat/Hello-World';
         document.getElementById('gitBranch').value = 'master';
-        showToast("Applied GitHub Octocat demo preset", "info");
-      } else if (preset === 'current') {
-        setIngestionMode('local');
+        showToast("Applied GitHub Octocat preset", "info");
+      } else if (preset === 'repo-current') {
+        setAssetCategory('repository');
+        setRepoSubmode('local');
         document.getElementById('localRepoPath').value = '.';
         showToast("Applied current workspace preset", "info");
+      } else if (preset === 'web-example') {
+        setAssetCategory('website');
+        document.getElementById('webTargetUrl').value = 'https://example.com';
+        showToast("Applied example.com website preset", "info");
+      } else if (preset === 'web-httpbin') {
+        setAssetCategory('website');
+        document.getElementById('webTargetUrl').value = 'https://httpbin.org';
+        showToast("Applied httpbin.org API preset", "info");
+      } else if (preset === 'db-redis') {
+        setAssetCategory('database');
+        document.getElementById('dbTargetUri').value = 'redis://127.0.0.1:6379';
+        document.getElementById('dbEngineSelect').value = 'redis';
+        showToast("Applied local Redis preset", "info");
+      } else if (preset === 'db-postgres') {
+        setAssetCategory('database');
+        document.getElementById('dbTargetUri').value = 'postgresql://postgres:postgres@127.0.0.1:5432/app';
+        document.getElementById('dbEngineSelect').value = 'postgres';
+        showToast("Applied PostgreSQL preset", "info");
+      } else if (preset === 'db-elastic') {
+        setAssetCategory('database');
+        document.getElementById('dbTargetUri').value = 'http://127.0.0.1:9200';
+        document.getElementById('dbEngineSelect').value = 'elasticsearch';
+        showToast("Applied Elasticsearch preset", "info");
       }
     }
 
@@ -780,7 +918,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       }
     }
 
-    // Execute Universal Scan
+    // Universal Scan Execution
     async function executeScan() {
       const btn = document.getElementById('scanBtn');
       const progressBox = document.getElementById('scanProgressBox');
@@ -790,66 +928,106 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       const maxPes = parseFloat(document.getElementById('maxPesInput').value) || 60.0;
 
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Auditing Repository...`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Auditing Asset...`;
       progressBox.classList.remove('hidden');
       progressBar.style.width = '20%';
 
       try {
         let response;
-        if (currentIngestionMode === 'upload') {
-          if (!selectedZipFile) {
-            throw new Error("Please select or drop a .zip archive file first.");
-          }
-          progressMsg.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading & extracting repository archive...`;
-          progressBar.style.width = '40%';
-          
-          const formData = new FormData();
-          formData.append('file', selectedZipFile);
-          formData.append('fail_on_severity', failSeverity);
-          formData.append('max_allowed_pes', maxPes);
 
-          response = await fetch('/api/scan/upload', {
-            method: 'POST',
-            body: formData
-          });
-        } else if (currentIngestionMode === 'git') {
-          const url = document.getElementById('gitRepoUrl').value.trim();
-          const branch = document.getElementById('gitBranch').value.trim() || null;
-          if (!url) throw new Error("Please enter a Git repository URL or shorthand.");
-
-          progressMsg.innerHTML = `<i class="fa-brands fa-git-alt fa-fade"></i> Shallow cloning remote Git repository...`;
-          progressBar.style.width = '40%';
+        if (currentAssetCategory === 'website') {
+          const url = document.getElementById('webTargetUrl').value.trim();
+          if (!url) throw new Error("Please enter a website or API URL.");
+          progressMsg.innerHTML = `<i class="fa-solid fa-globe fa-fade"></i> Inspecting SSL/TLS, headers, and endpoints for ${url}...`;
+          progressBar.style.width = '50%';
 
           response = await fetch('/api/scan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              repo_url: url,
-              branch: branch,
+              target: url,
+              target_type: 'website',
               fail_on_severity: failSeverity,
               max_allowed_pes: maxPes
             })
           });
+
+        } else if (currentAssetCategory === 'database') {
+          const target = document.getElementById('dbTargetUri').value.trim();
+          const engine = document.getElementById('dbEngineSelect').value || null;
+          if (!target) throw new Error("Please enter a database connection URI or host:port.");
+          progressMsg.innerHTML = `<i class="fa-solid fa-database fa-fade"></i> Auditing database posture, port exposure, and credentials...`;
+          progressBar.style.width = '50%';
+
+          response = await fetch('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              target: target,
+              target_type: 'database',
+              db_type: engine,
+              fail_on_severity: failSeverity,
+              max_allowed_pes: maxPes
+            })
+          });
+
         } else {
-          const path = document.getElementById('localRepoPath').value.trim();
-          if (!path) throw new Error("Please enter a valid local filesystem path.");
+          // Repository Scan
+          if (currentRepoSubmode === 'upload') {
+            if (!selectedZipFile) throw new Error("Please select or drop a .zip archive first.");
+            progressMsg.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading & extracting repository archive...`;
+            progressBar.style.width = '40%';
+            
+            const formData = new FormData();
+            formData.append('file', selectedZipFile);
+            formData.append('fail_on_severity', failSeverity);
+            formData.append('max_allowed_pes', maxPes);
 
-          progressMsg.innerHTML = `<i class="fa-solid fa-folder-open fa-fade"></i> Resolving local repository workspace...`;
-          progressBar.style.width = '40%';
+            response = await fetch('/api/scan/upload', {
+              method: 'POST',
+              body: formData
+            });
+          } else if (currentRepoSubmode === 'git') {
+            const url = document.getElementById('gitRepoUrl').value.trim();
+            const branch = document.getElementById('gitBranch').value.trim() || null;
+            if (!url) throw new Error("Please enter a Git repository URL.");
+            progressMsg.innerHTML = `<i class="fa-brands fa-git-alt fa-fade"></i> Shallow cloning remote Git repository...`;
+            progressBar.style.width = '40%';
 
-          response = await fetch('/api/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              target_path: path,
-              fail_on_severity: failSeverity,
-              max_allowed_pes: maxPes
-            })
-          });
+            response = await fetch('/api/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                target: url,
+                repo_url: url,
+                branch: branch,
+                target_type: 'repository',
+                fail_on_severity: failSeverity,
+                max_allowed_pes: maxPes
+              })
+            });
+          } else {
+            const path = document.getElementById('localRepoPath').value.trim();
+            if (!path) throw new Error("Please enter a local filesystem path.");
+            progressMsg.innerHTML = `<i class="fa-solid fa-folder-open fa-fade"></i> Auditing local codebase...`;
+            progressBar.style.width = '40%';
+
+            response = await fetch('/api/scan', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                target: path,
+                target_path: path,
+                target_type: 'repository',
+                fail_on_severity: failSeverity,
+                max_allowed_pes: maxPes
+              })
+            });
+          }
         }
 
-        progressMsg.innerHTML = `<i class="fa-solid fa-shield-halved fa-fade"></i> Running deep exposure analyzers...`;
-        progressBar.style.width = '80%';
+        progressMsg.innerHTML = `<i class="fa-solid fa-shield-halved fa-fade"></i> Computing exposure score and risk grades...`;
+        progressBar.style.width = '85%';
 
         if (!response.ok) {
           const errData = await response.json();
@@ -875,26 +1053,57 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       document.getElementById('resultsSection').classList.remove('hidden');
       const s = data.summary;
 
-      // Meta header
+      // Meta header & Badges
       document.getElementById('resRepoName').innerText = data.repo_name;
       document.getElementById('resTargetPath').innerText = data.target_path || data.repo_url;
-      document.getElementById('resSourceBadge').innerText = `${data.source_type} SOURCE`;
       
-      const branchBadge = document.getElementById('resBranchBadge');
-      if (data.branch) {
-        branchBadge.innerText = data.branch;
-        branchBadge.classList.remove('hidden');
+      const typeBadge = document.getElementById('resTargetTypeBadge');
+      typeBadge.innerText = (data.target_type || 'repository').toUpperCase();
+
+      const sourceBadge = document.getElementById('resSourceBadge');
+      sourceBadge.innerText = (data.source_type || 'local').toUpperCase();
+
+      // Icon update
+      const iconBox = document.getElementById('resAssetIcon');
+      if (data.target_type === 'website') {
+        iconBox.innerHTML = `<i class="fa-solid fa-globe text-sky-400"></i>`;
+      } else if (data.target_type === 'database') {
+        iconBox.innerHTML = `<i class="fa-solid fa-database text-emerald-400"></i>`;
       } else {
-        branchBadge.classList.add('hidden');
+        iconBox.innerHTML = `<i class="fa-solid fa-code-branch text-indigo-400"></i>`;
       }
 
-      // Metric Cards
+      // Telemetry Box
+      const telemBox = document.getElementById('resTelemetryBox');
+      telemBox.innerHTML = '';
+      if (data.target_type === 'website' && data.metadata) {
+        const m = data.metadata;
+        const sslDays = m.ssl && m.ssl.days_remaining !== undefined ? `${m.ssl.days_remaining}d SSL` : 'SSL';
+        telemBox.innerHTML = `
+          <span>Status: <b class="text-emerald-400">${m.status_code || 200}</b></span> &bull;
+          <span>${m.response_time_ms ? m.response_time_ms + 'ms' : '-'}</span> &bull;
+          <span class="${m.ssl && m.ssl.days_remaining < 15 ? 'text-rose-400' : 'text-slate-300'}">${sslDays}</span>
+        `;
+        telemBox.classList.remove('hidden');
+      } else if (data.target_type === 'database' && data.metadata) {
+        const m = data.metadata;
+        telemBox.innerHTML = `
+          <span>Engine: <b class="text-indigo-400">${(m.engine || 'DB').toUpperCase()}</b></span> &bull;
+          <span>Port: <b class="${m.port_accessible ? 'text-rose-400' : 'text-emerald-400'}">${m.port_accessible ? 'OPEN' : 'FILTERED'}</b></span> &bull;
+          <span>Auth: <b class="${m.auth_enforced ? 'text-emerald-400' : 'text-rose-400'}">${m.auth_enforced ? 'ENFORCED' : 'NONE'}</b></span>
+        `;
+        telemBox.classList.remove('hidden');
+      } else {
+        telemBox.classList.add('hidden');
+      }
+
+      // Metrics
       document.getElementById('pesScore').innerText = s.pipeline_exposure_score;
       document.getElementById('riskGradeBadge').innerText = s.risk_grade;
       document.getElementById('totalFindings').innerText = s.total_findings;
       document.getElementById('critCount').innerText = s.critical_count;
       document.getElementById('highCount').innerText = s.high_count;
-      document.getElementById('scanStats').innerText = `${s.scanned_files_count} files in ${s.scan_duration_seconds}s`;
+      document.getElementById('scanStats').innerText = `Audited in ${s.scan_duration_seconds}s`;
 
       const policyElem = document.getElementById('policyStatus');
       if (s.policy_passed) {
@@ -913,7 +1122,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       renderSbomTable(data.sbom_components || []);
     }
 
-    // Charts Rendering
+    // Render Charts
     function renderCharts(summary, findings) {
       if (severityChartInst) severityChartInst.destroy();
       if (categoryChartInst) categoryChartInst.destroy();
@@ -933,14 +1142,11 @@ curl -X POST http://127.0.0.1:8000/api/scan \
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } } }
-          },
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } } } },
           cutout: '70%'
         }
       });
 
-      // Categories Chart
       const categories = {};
       findings.forEach(f => { categories[f.category] = (categories[f.category] || 0) + 1; });
       const ctx2 = document.getElementById('categoryChart').getContext('2d');
@@ -973,7 +1179,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       tbody.innerHTML = '';
 
       if (!findings || findings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-12 text-center text-slate-500 font-medium">✨ Zero security exposures detected in this codebase!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-12 text-center text-slate-500 font-medium">✨ Zero security exposures detected in this asset!</td></tr>`;
         return;
       }
 
@@ -995,20 +1201,20 @@ curl -X POST http://127.0.0.1:8000/api/scan \
           <td class="px-4 py-3.5 align-top">
             <div class="font-bold text-white text-sm tracking-tight">${f.title}</div>
             <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5 font-mono">
-              <i class="fa-regular fa-file-code text-indigo-400"></i> ${f.file_path}${f.line_number ? ` : Line ${f.line_number}` : ''}
+              <i class="fa-regular fa-compass text-indigo-400"></i> ${f.file_path}${f.line_number ? ` : Line ${f.line_number}` : ''}
             </div>
             ${f.snippet ? `<pre class="mt-2 p-2 bg-surface-950 rounded-lg text-xs text-rose-300 font-mono overflow-x-auto border border-slate-800/80">${escapeHtml(f.snippet)}</pre>` : ''}
           </td>
           <td class="px-4 py-3.5 align-top text-xs text-indigo-300">
             <div class="p-2.5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl space-y-1.5">
               <div class="font-semibold text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-wrench text-indigo-400"></i> Remediation Plan:
+                <i class="fa-solid fa-wrench text-indigo-400"></i> Remediation Advice:
               </div>
               <p class="text-indigo-200 text-xs">${f.remediation_advice}</p>
               ${f.fix_patch ? `
                 <div class="pt-1">
                   <button onclick="copyPatch('${escapeHtml(f.fix_patch)}')" class="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 rounded text-[11px] font-mono border border-indigo-500/30 transition flex items-center gap-1">
-                    <i class="fa-regular fa-copy"></i> Copy Auto-Fix Patch
+                    <i class="fa-regular fa-copy"></i> Copy Patch / Config
                   </button>
                 </div>
               ` : ''}
@@ -1025,7 +1231,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       tbody.innerHTML = '';
 
       if (!components || components.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-8 text-center text-slate-500">No package manifests found in repository.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-8 text-center text-slate-500">No package manifests relevant to this asset.</td></tr>`;
         return;
       }
 
@@ -1042,7 +1248,6 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       });
     }
 
-    // Filter Findings
     function filterFindings() {
       if (!currentScanData || !currentScanData.findings) return;
       const query = document.getElementById('findingsSearch').value.toLowerCase();
@@ -1061,7 +1266,6 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       renderFindingsTable(filtered);
     }
 
-    // Switch Results Subtabs
     function switchResultTab(tab) {
       const isFindings = tab === 'findings';
       document.getElementById('view-findings').classList.toggle('hidden', !isFindings);
@@ -1077,17 +1281,19 @@ curl -X POST http://127.0.0.1:8000/api/scan \
         : "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-surface-850 hover:bg-surface-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
     }
 
-    // Load Scan History
+    // Scan History
     async function loadScanHistory() {
       const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Fetching records...</td></tr>`;
+      const filterType = document.getElementById('historyFilterType').value;
+      tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Fetching records...</td></tr>`;
 
       try {
-        const res = await fetch('/api/scans?limit=50');
+        const url = filterType ? `/api/scans?limit=50&target_type=${filterType}` : `/api/scans?limit=50`;
+        const res = await fetch(url);
         const list = await res.json();
 
         if (!list || list.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">No scan history recorded yet. Launch your first scan above!</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-slate-500">No scan history recorded yet for this asset type.</td></tr>`;
           return;
         }
 
@@ -1101,7 +1307,8 @@ curl -X POST http://127.0.0.1:8000/api/scan \
               <div class="font-bold text-white">${item.repo_name}</div>
               <div class="text-xs text-slate-500 font-mono truncate max-w-xs">${item.target_path}</div>
             </td>
-            <td class="px-5 py-3.5 font-mono text-xs text-indigo-400 uppercase">${item.source_type}</td>
+            <td class="px-5 py-3.5 font-mono text-xs text-indigo-400 uppercase font-bold">${item.target_type || 'REPOSITORY'}</td>
+            <td class="px-5 py-3.5 font-mono text-xs text-slate-400 uppercase">${item.source_type}</td>
             <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">${dateStr}</td>
             <td class="px-5 py-3.5 font-mono font-bold ${item.pipeline_exposure_score > 50 ? 'text-rose-400' : 'text-emerald-400'}">${item.pipeline_exposure_score}</td>
             <td class="px-5 py-3.5 text-xs font-bold">${item.risk_grade}</td>
@@ -1112,7 +1319,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
             </td>
             <td class="px-5 py-3.5 text-right space-x-2">
               <button onclick="loadAndDisplayScan('${item.scan_id}')" class="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded text-xs font-semibold transition">
-                View Report
+                View
               </button>
               <button onclick="deleteScanRecord('${item.scan_id}')" class="px-2 py-1 text-slate-500 hover:text-rose-400 transition text-xs" title="Delete record">
                 <i class="fa-solid fa-trash-can"></i>
@@ -1122,7 +1329,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
           tbody.appendChild(tr);
         });
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-rose-400 font-medium">Failed to load history: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400 font-medium">Failed to load history: ${err.message}</td></tr>`;
       }
     }
 
@@ -1134,14 +1341,14 @@ curl -X POST http://127.0.0.1:8000/api/scan \
         currentScanData = data;
         switchNavTab('audit');
         renderResults(data);
-        showToast(`Loaded scan report for ${data.repo_name}`, "info");
+        showToast(`Loaded report for ${data.repo_name}`, "info");
       } catch (err) {
         showToast(err.message, "error");
       }
     }
 
     async function deleteScanRecord(scanId) {
-      if (!confirm("Are you sure you want to delete this scan record?")) return;
+      if (!confirm("Delete this scan record from history?")) return;
       try {
         const res = await fetch(`/api/scans/${scanId}`, { method: 'DELETE' });
         if (res.ok) {
@@ -1163,7 +1370,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
         const list = await res.json();
 
         if (!list || list.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">No recurring scan schedules configured yet.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">No continuous schedules configured yet.</td></tr>`;
           return;
         }
 
@@ -1173,8 +1380,8 @@ curl -X POST http://127.0.0.1:8000/api/scan \
           tr.className = "hover:bg-surface-850/50 transition-colors";
           tr.innerHTML = `
             <td class="px-5 py-3.5 font-bold text-white font-mono text-xs">${s.target}</td>
-            <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">${s.branch || 'default'}</td>
-            <td class="px-5 py-3.5 text-xs text-indigo-400 font-semibold font-mono">Every ${s.interval_minutes}m</td>
+            <td class="px-5 py-3.5 text-xs text-indigo-400 font-mono uppercase font-bold">${s.target_type || 'REPOSITORY'}</td>
+            <td class="px-5 py-3.5 text-xs text-slate-300 font-semibold font-mono">Every ${s.interval_minutes}m</td>
             <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">${s.last_run_at ? new Date(s.last_run_at).toLocaleTimeString() : 'Pending'}</td>
             <td class="px-5 py-3.5 text-xs font-mono font-bold ${s.last_pes !== null && s.last_pes > 50 ? 'text-rose-400' : 'text-emerald-400'}">${s.last_pes !== null ? s.last_pes : '-'}</td>
             <td class="px-5 py-3.5">
@@ -1183,10 +1390,10 @@ curl -X POST http://127.0.0.1:8000/api/scan \
               </span>
             </td>
             <td class="px-5 py-3.5 text-right space-x-2">
-              <button onclick="triggerScheduleNow('${s.id}')" class="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded text-xs font-semibold transition" title="Trigger scan now">
+              <button onclick="triggerScheduleNow('${s.id}')" class="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded text-xs font-semibold transition" title="Run now">
                 <i class="fa-solid fa-play mr-1"></i> Run
               </button>
-              <button onclick="deleteScheduleRecord('${s.id}')" class="px-2 py-1 text-slate-500 hover:text-rose-400 transition text-xs" title="Remove schedule">
+              <button onclick="deleteScheduleRecord('${s.id}')" class="px-2 py-1 text-slate-500 hover:text-rose-400 transition text-xs" title="Delete">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </td>
@@ -1200,11 +1407,11 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 
     async function createNewSchedule() {
       const target = document.getElementById('schedTargetInput').value.trim();
-      const branch = document.getElementById('schedBranchInput').value.trim() || null;
+      const targetType = document.getElementById('schedAssetTypeInput').value;
       const interval = parseInt(document.getElementById('schedIntervalInput').value) || 60;
 
       if (!target) {
-        showToast("Please enter a target repository URL or path", "error");
+        showToast("Please enter a target URL, path, or database URI", "error");
         return;
       }
 
@@ -1214,7 +1421,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             target: target,
-            branch: branch,
+            target_type: targetType,
             interval_minutes: interval
           })
         });
@@ -1258,8 +1465,8 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       if (!currentScanData) return;
       switchNavTab('schedules');
       document.getElementById('schedTargetInput').value = currentScanData.target_path || currentScanData.repo_url;
-      if (currentScanData.branch) document.getElementById('schedBranchInput').value = currentScanData.branch;
-      showToast("Pre-filled target from current scan into scheduler", "info");
+      document.getElementById('schedAssetTypeInput').value = currentScanData.target_type || 'repository';
+      showToast("Pre-filled target into scheduler", "info");
     }
 
     // Exporters
@@ -1284,7 +1491,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
     }
     function copyPatch(patch) {
       navigator.clipboard.writeText(patch);
-      showToast("Copied Git patch to clipboard!", "success");
+      showToast("Copied patch to clipboard!", "success");
     }
     function escapeHtml(str) {
       if (!str) return '';
@@ -1310,7 +1517,6 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       }, 4000);
     }
 
-    // Close dropdown on outside click
     window.addEventListener('click', function(e) {
       if (!e.target.closest('.dropdown')) {
         const menu = document.getElementById('exportMenu');
@@ -1318,8 +1524,9 @@ curl -X POST http://127.0.0.1:8000/api/scan \
       }
     });
 
-    // Auto-run initial local scan on load
+    // Initialize defaults on load
     window.addEventListener('DOMContentLoaded', () => {
+      renderPresets('repository');
       executeScan();
     });
   </script>

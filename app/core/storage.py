@@ -1,6 +1,7 @@
 """
 app/core/storage.py
 Persistent storage engine using SQLite for scan history, reports, and scheduled jobs.
+Supports tri-vector auditing: Repositories, Websites, and Databases.
 Includes SARIF 2.1.0, JSON, and CSV export generators.
 """
 
@@ -13,7 +14,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from app.config import settings
 from app.models.schemas import (
-    ScanResult, ScanHistorySummary, ScheduledScan, SeverityLevel, FindingCategory
+    ScanResult, ScanHistorySummary, ScheduledScan, SeverityLevel, FindingCategory, TargetCategory
 )
 
 
@@ -41,6 +42,7 @@ class StorageEngine:
                     repo_url TEXT,
                     branch TEXT,
                     source_type TEXT NOT NULL,
+                    target_type TEXT NOT NULL DEFAULT 'repository',
                     timestamp TEXT NOT NULL,
                     total_findings INTEGER NOT NULL,
                     critical_count INTEGER NOT NULL,
@@ -61,6 +63,7 @@ class StorageEngine:
                     id TEXT PRIMARY KEY,
                     target TEXT NOT NULL,
                     source_type TEXT NOT NULL,
+                    target_type TEXT NOT NULL DEFAULT 'repository',
                     branch TEXT,
                     interval_minutes INTEGER NOT NULL,
                     fail_on_severity TEXT NOT NULL,
@@ -74,6 +77,18 @@ class StorageEngine:
                     last_status TEXT
                 )
             """)
+            
+            # Migration check: ensure target_type column exists if table was created in earlier versions
+            cursor.execute("PRAGMA table_info(scans)")
+            columns = [row["name"] for row in cursor.fetchall()]
+            if "target_type" not in columns:
+                cursor.execute("ALTER TABLE scans ADD COLUMN target_type TEXT NOT NULL DEFAULT 'repository'")
+
+            cursor.execute("PRAGMA table_info(schedules)")
+            sched_columns = [row["name"] for row in cursor.fetchall()]
+            if "target_type" not in sched_columns:
+                cursor.execute("ALTER TABLE schedules ADD COLUMN target_type TEXT NOT NULL DEFAULT 'repository'")
+
             conn.commit()
 
     def save_scan(self, scan: ScanResult):
@@ -81,13 +96,14 @@ class StorageEngine:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             s = scan.summary
+            target_type_val = scan.target_type.value if hasattr(scan.target_type, "value") else str(scan.target_type)
             cursor.execute("""
                 INSERT OR REPLACE INTO scans (
                     scan_id, repo_name, target_path, repo_url, branch, source_type,
-                    timestamp, total_findings, critical_count, high_count, medium_count,
+                    target_type, timestamp, total_findings, critical_count, high_count, medium_count,
                     low_count, info_count, pipeline_exposure_score, risk_grade,
                     policy_passed, scan_duration_seconds, scanned_files_count, result_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 scan.scan_id,
                 scan.repo_name,
@@ -95,6 +111,7 @@ class StorageEngine:
                 scan.repo_url,
                 scan.branch,
                 scan.source_type.value if hasattr(scan.source_type, "value") else str(scan.source_type),
+                target_type_val,
                 scan.timestamp.isoformat(),
                 s.total_findings,
                 s.critical_count,
@@ -121,18 +138,29 @@ class StorageEngine:
                 return None
             return ScanResult.model_validate_json(row["result_json"])
 
-    def list_scans(self, limit: int = 50, offset: int = 0) -> List[ScanHistorySummary]:
-        """Retrieves scan history list."""
+    def list_scans(self, limit: int = 50, offset: int = 0, target_type: Optional[str] = None) -> List[ScanHistorySummary]:
+        """Retrieves scan history list with optional target type filter."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT scan_id, repo_name, target_path, source_type, timestamp,
-                       pipeline_exposure_score, risk_grade, total_findings,
-                       critical_count, high_count, policy_passed, scan_duration_seconds
-                FROM scans
-                ORDER BY timestamp DESC
-                LIMIT ? OFFSET ?
-            """, (limit, offset))
+            if target_type:
+                cursor.execute("""
+                    SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
+                           pipeline_exposure_score, risk_grade, total_findings,
+                           critical_count, high_count, policy_passed, scan_duration_seconds
+                    FROM scans
+                    WHERE target_type = ?
+                    ORDER BY timestamp DESC
+                    LIMIT ? OFFSET ?
+                """, (target_type, limit, offset))
+            else:
+                cursor.execute("""
+                    SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
+                           pipeline_exposure_score, risk_grade, total_findings,
+                           critical_count, high_count, policy_passed, scan_duration_seconds
+                    FROM scans
+                    ORDER BY timestamp DESC
+                    LIMIT ? OFFSET ?
+                """, (limit, offset))
             rows = cursor.fetchall()
             return [
                 ScanHistorySummary(
@@ -140,6 +168,7 @@ class StorageEngine:
                     repo_name=r["repo_name"],
                     target_path=r["target_path"],
                     source_type=r["source_type"],
+                    target_type=r["target_type"] if "target_type" in r.keys() else "repository",
                     timestamp=datetime.fromisoformat(r["timestamp"]),
                     pipeline_exposure_score=r["pipeline_exposure_score"],
                     risk_grade=r["risk_grade"],
@@ -166,6 +195,7 @@ class StorageEngine:
         sched_id: str,
         target: str,
         source_type: str,
+        target_type: str,
         branch: Optional[str],
         interval_minutes: int,
         fail_on_severity: str = "HIGH",
@@ -176,11 +206,11 @@ class StorageEngine:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT OR REPLACE INTO schedules (
-                    id, target, source_type, branch, interval_minutes,
+                    id, target, source_type, target_type, branch, interval_minutes,
                     fail_on_severity, max_allowed_pes, enabled, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
             """, (
-                sched_id, target, source_type, branch, interval_minutes,
+                sched_id, target, source_type, target_type, branch, interval_minutes,
                 fail_on_severity, max_allowed_pes, created_at
             ))
             conn.commit()
@@ -189,6 +219,7 @@ class StorageEngine:
             id=sched_id,
             target=target,
             source_type=source_type, # type: ignore
+            target_type=target_type, # type: ignore
             branch=branch,
             interval_minutes=interval_minutes,
             enabled=True,
@@ -205,6 +236,7 @@ class StorageEngine:
                     id=r["id"],
                     target=r["target"],
                     source_type=r["source_type"],
+                    target_type=r["target_type"] if "target_type" in r.keys() else TargetCategory.REPOSITORY,
                     branch=r["branch"],
                     interval_minutes=r["interval_minutes"],
                     enabled=bool(r["enabled"]),
@@ -311,7 +343,7 @@ class StorageEngine:
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow([
-            "ID", "Severity", "Category", "Title", "File Path", "Line Number",
+            "ID", "Severity", "Category", "Title", "File/Target Path", "Line Number",
             "Remediation Advice", "CVE ID", "CVSS Score", "Snippet"
         ])
         for f in scan.findings:

@@ -1,6 +1,6 @@
 """
 app/core/scheduler.py
-Background task scheduler for automated continuous and recurring repository scans.
+Background task scheduler for automated continuous and recurring scans across Repositories, Websites, and Databases.
 """
 
 import time
@@ -9,14 +9,14 @@ import threading
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
-from app.models.schemas import ScanRequest, ScheduledScan, SeverityLevel
+from app.models.schemas import ScanRequest, ScheduledScan, SeverityLevel, TargetCategory, SourceType
 from app.core.storage import storage
 
 logger = logging.getLogger("ShieldCI.Scheduler")
 
 
 class ScanScheduler:
-    """Manages periodic, automated background scans for repositories."""
+    """Manages periodic, automated background scans for Repositories, Websites, and Databases."""
 
     def __init__(self, orchestrator=None):
         self.orchestrator = orchestrator
@@ -33,7 +33,7 @@ class ScanScheduler:
                 self._running = True
                 self._thread = threading.Thread(target=self._run_loop, daemon=True, name="ShieldCIScheduler")
                 self._thread.start()
-                logger.info("Continuous scan scheduler started.")
+                logger.info("Continuous tri-vector scan scheduler started.")
 
     def stop(self):
         with self._lock:
@@ -46,7 +46,6 @@ class ScanScheduler:
             except Exception as e:
                 logger.error(f"Scheduler loop error: {e}")
             
-            # Sleep in short increments to allow quick shutdown
             for _ in range(15):
                 if not self._running:
                     break
@@ -82,15 +81,18 @@ class ScanScheduler:
             return
 
         target = matched.target
+        target_type = matched.target_type
+
         req = ScanRequest(
+            target=target,
+            target_type=target_type,
             target_path=target,
-            repo_url=target if target.startswith(("http://", "https://", "git@", "ssh://", "github.com", "gitlab.com")) else None,
             branch=matched.branch
         )
 
         try:
             result = self.orchestrator.run_scan(req)
-            status = "PASSED" if result.summary.policy_passed else "FAILED"
+            status = "PASSED" if result.summary.policy_passed else "BLOCKED"
             storage.update_schedule_execution(
                 sched_id=schedule_id,
                 scan_id=result.scan_id,
@@ -98,7 +100,7 @@ class ScanScheduler:
                 grade=result.summary.risk_grade,
                 status=status
             )
-            logger.info(f"Scheduled scan completed for {target}: PES {result.summary.pipeline_exposure_score}")
+            logger.info(f"Scheduled scan completed for {target} ({target_type}): PES {result.summary.pipeline_exposure_score}")
         except Exception as e:
             logger.error(f"Scheduled scan failed for {target}: {e}")
             storage.update_schedule_execution(
@@ -112,19 +114,34 @@ class ScanScheduler:
     def create_schedule(
         self,
         target: str,
+        target_type: Optional[TargetCategory] = None,
         branch: Optional[str] = None,
         interval_minutes: int = 60,
         fail_on_severity: SeverityLevel = SeverityLevel.HIGH,
         max_allowed_pes: float = 60.0
     ) -> ScheduledScan:
         sched_id = str(uuid.uuid4())[:8]
-        is_git = target.startswith(("http", "git@", "github", "gitlab", "bitbucket"))
-        source_type = "git" if is_git else "local"
+
+        # Auto-detect target type if not provided
+        if not target_type and self.orchestrator:
+            target_type = self.orchestrator.detect_target_type(target)
+        elif not target_type:
+            target_type = TargetCategory.REPOSITORY
+
+        # Determine source type representation
+        if target_type == TargetCategory.WEBSITE:
+            source_type = "web"
+        elif target_type == TargetCategory.DATABASE:
+            source_type = "database"
+        else:
+            is_git = target.startswith(("http", "git@", "github", "gitlab", "bitbucket"))
+            source_type = "git" if is_git else "local"
 
         saved = storage.save_schedule(
             sched_id=sched_id,
             target=target,
             source_type=source_type,
+            target_type=target_type.value if hasattr(target_type, "value") else str(target_type),
             branch=branch,
             interval_minutes=max(1, interval_minutes),
             fail_on_severity=fail_on_severity.value if hasattr(fail_on_severity, "value") else str(fail_on_severity),
