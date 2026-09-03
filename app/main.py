@@ -268,6 +268,64 @@ async def export_scan(scan_id: str, format: str = Query("sarif", pattern="^(sari
         )
 
 
+@app.get("/api/scans/{scan_id}/patch")
+async def download_scan_patch(scan_id: str):
+    """
+    Downloads the 1-click self-healing git unified patch (.patch) or server configuration.
+    Applicable directly with `git apply shieldci-remediation.patch`.
+    """
+    scan = storage.get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+
+    clean_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in scan.repo_name)
+    patch_content = scan.unified_patch or (
+        "# ShieldCI Automated Remediation\n"
+        "# No code-level patches required for this asset.\n"
+    )
+
+    return PlainTextResponse(
+        content=patch_content,
+        media_type="text/x-diff",
+        headers={"Content-Disposition": f'attachment; filename="shieldci_remediation_{clean_name}_{scan_id[:8]}.patch"'}
+    )
+
+
+@app.get("/api/scans/{scan_id}/attack-graph")
+async def get_scan_attack_graph(scan_id: str):
+    """
+    Retrieves the correlated Attack Graph and Toxic Combinations for a scan.
+    """
+    scan = storage.get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+
+    if scan.attack_graph:
+        return scan.attack_graph
+    
+    # Fallback compute if older scan record
+    toxic_combos, graph = orchestrator.correlator.correlate(
+        findings=scan.findings,
+        target_name=scan.repo_name
+    )
+    return graph
+
+
+@app.post("/api/scan/triangulate", response_model=ScanResult)
+async def scan_with_triangulation(request: ScanRequest):
+    """
+    Automated Triangulation Scan:
+    Inspects repository configs (compose, env, workflows) to auto-discover and probe
+    live web endpoints and databases, linking all exposures into a unified attack graph.
+    """
+    target = request.target or request.repo_url or request.target_path
+    if not target or not target.strip():
+        raise HTTPException(status_code=400, detail="Target repository URL or path is required.")
+
+    request.auto_triangulate = True
+    return orchestrator.run_scan(request)
+
+
 # Scheduled Scans Endpoints
 @app.get("/api/schedules", response_model=List[ScheduledScan])
 async def list_schedules():
@@ -351,6 +409,10 @@ async def health_check():
             "repository_scanner": True,
             "website_scanner": True,
             "database_scanner": True,
+            "attack_path_correlator": True,
+            "toxic_combinations": True,
+            "auto_discovery_triangulation": True,
+            "autonomous_self_healing": True,
             "git_clone": True,
             "zip_upload": True,
             "scheduling": True,

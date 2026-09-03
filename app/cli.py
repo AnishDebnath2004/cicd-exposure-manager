@@ -42,10 +42,11 @@ console = Console(legacy_windows=False)
 )
 @click.option("--sarif", type=str, default=None, help="File path to export SARIF 2.1.0 report.")
 @click.option("--json-out", type=str, default=None, help="File path to export raw JSON report.")
+@click.option("--patch-out", type=str, default=None, help="File path to save 1-click self-healing git unified patch (.patch).")
 @click.option("--history", is_flag=True, help="Display recent scan history timeline.")
-def main(path: str, url: str, web: str, db: str, db_type: str, branch: str, fail_on: str, max_pes: float, sarif: str, json_out: str, history: bool):
+def main(path: str, url: str, web: str, db: str, db_type: str, branch: str, fail_on: str, max_pes: float, sarif: str, json_out: str, patch_out: str, history: bool):
     """DevSecOps CI/CD Exposure Manager - Universal Tri-Vector Security Auditor."""
-    console.print(Panel.fit(f"[bold blue]{settings.PROJECT_NAME}[/bold blue] | Tri-Vector Exposure Auditor\n[dim]Repositories \u2022 Websites \u2022 Databases[/dim]", border_style="blue"))
+    console.print(Panel.fit(f"[bold blue]{settings.PROJECT_NAME}[/bold blue] | Tri-Vector Exposure Auditor\n[dim]Repositories \u2022 Websites \u2022 Databases \u2022 Exploit Correlation[/dim]", border_style="blue"))
 
     if history:
         scans = storage.list_scans(limit=15)
@@ -141,7 +142,25 @@ def main(path: str, url: str, web: str, db: str, db_type: str, branch: str, fail
     status_text = "[bold green]PASSED[/bold green]" if s.policy_passed else "[bold red]FAILED (GATE BLOCKED)[/bold red]"
     console.print(f"\n[bold]Asset Exposure Score (AES):[/bold] {s.pipeline_exposure_score}/100 ([bold]{s.risk_grade}[/bold])")
     console.print(f"[bold]Quality Gate Policy Result:[/bold] {status_text}")
-    console.print(f"[dim]Total Findings: {s.total_findings} (Critical: {s.critical_count}, High: {s.high_count}) in {s.scan_duration_seconds}s (Scan ID: {result.scan_id})[/dim]\n")
+    console.print(f"[dim]Total Findings: {s.total_findings} (Critical: {s.critical_count}, High: {s.high_count}) in {s.scan_duration_seconds}s (Scan ID: {result.scan_id})[/dim]")
+
+    # Advanced Differentiator 1: Toxic Combinations
+    if result.toxic_combinations:
+        console.print(f"\n[bold red][!] {len(result.toxic_combinations)} Correlated Toxic Combination(s) Detected:[/bold red]")
+        for idx, tc in enumerate(result.toxic_combinations, 1):
+            console.print(f"  [bold red]{idx}. {tc.title}[/bold red] ({tc.likelihood})")
+            for s_idx, step in enumerate(tc.exploit_chain, 1):
+                console.print(f"     [dim]Stage {s_idx}:[/dim] {step}")
+            console.print(f"     [green]Remediation:[/green] {tc.remediation_advice}\n")
+
+    # Advanced Differentiator 2: Auto-Discovered Infrastructure
+    if result.auto_discovery and (result.auto_discovery.discovered_web_targets or result.auto_discovery.discovered_db_targets):
+        console.print("[bold cyan][*] Auto-Discovered Infrastructure Footprint:[/bold cyan]")
+        if result.auto_discovery.discovered_web_targets:
+            console.print(f"  [cyan]Web Targets:[/cyan] {', '.join(result.auto_discovery.discovered_web_targets)}")
+        if result.auto_discovery.discovered_db_targets:
+            console.print(f"  [cyan]Database Targets:[/cyan] {', '.join(result.auto_discovery.discovered_db_targets)}")
+        console.print("")
 
     # Exports if requested
     if sarif:
@@ -155,12 +174,20 @@ def main(path: str, url: str, web: str, db: str, db_type: str, branch: str, fail
             jf.write(result.model_dump_json(indent=2))
         console.print(f"[green][OK] Raw JSON report exported to: {json_out}[/green]")
 
+    if patch_out:
+        patch_str = result.unified_patch or "# ShieldCI: No automated code patches required.\n"
+        with open(patch_out, "w", encoding="utf-8") as pf:
+            pf.write(patch_str)
+        console.print(f"[green][OK] 1-Click Self-Healing Git Patch saved to: {patch_out}[/green]")
+        console.print("     [dim]Apply using: git apply " + patch_out + "[/dim]")
+
     if not s.policy_passed:
-        console.print("[bold red][!] Target failed security policy thresholds![/bold red]")
+        console.print("\n[bold red][!] Target failed security policy thresholds![/bold red]")
         sys.exit(1)
     else:
-        console.print("[bold green][OK] Security quality gate passed![/bold green]")
+        console.print("\n[bold green][OK] Security quality gate passed![/bold green]")
         sys.exit(0)
+
 
 
 if __name__ == "__main__":

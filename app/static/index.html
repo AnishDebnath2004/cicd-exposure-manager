@@ -362,6 +362,9 @@
               </div>
             </div>
 
+            <button onclick="downloadCurrentPatch()" id="btnDownloadPatch" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/30" title="Download 1-click git patch (.patch)">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> 1-Click Fix Patch
+            </button>
             <button onclick="createScheduleFromCurrent()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm" title="Schedule continuous recurring scans for this asset">
               <i class="fa-solid fa-calendar-plus text-amber-400"></i> Auto-Schedule
             </button>
@@ -425,6 +428,77 @@
             <span class="text-xs text-slate-400">Requires immediate attention</span>
           </div>
         </div>
+
+        <!-- ============================================================== -->
+        <!-- CORE DIFFERENTIATOR 1: INTERACTIVE ATTACK PATH CANVAS         -->
+        <!-- ============================================================== -->
+        <div class="glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden border border-indigo-500/30">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-slate-800/80 pb-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase tracking-wide">Next-Gen Attack Surface</span>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i class="fa-solid fa-diagram-project text-indigo-400"></i> Interactive Visual Attack Path Canvas
+                </h3>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Real-time correlated kill chain connecting threat actor ingress, harvested code secrets, and crown jewel databases.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2 bg-surface-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                <span class="text-slate-400">Exploitability Index:</span>
+                <span id="exploitabilityIndexBadge" class="font-mono font-bold text-rose-400">0%</span>
+              </div>
+              <button onclick="simulateBreachTrajectory()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-play text-amber-300"></i> Simulate Breach Pulse
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic SVG Canvas Container -->
+          <div class="relative w-full h-[320px] bg-surface-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center p-2" id="attackGraphWrapper">
+            <svg id="attackGraphSvg" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <!-- Dynamically rendered nodes, animated pulse links, and labels -->
+            </svg>
+            <div id="graphEmptyPlaceholder" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs">
+              <i class="fa-solid fa-shield-check text-emerald-400 text-3xl mb-2"></i>
+              <span>No attack paths detected. The perimeter and code posture are secure.</span>
+            </div>
+          </div>
+
+          <!-- Node Inspector Drawer (Shown on node click) -->
+          <div id="nodeInspectorPanel" class="hidden mt-4 p-4 rounded-xl bg-surface-950 border border-indigo-500/40 text-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span id="inspectorNodeTitle" class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-indigo-400"></i> Node Details
+              </span>
+              <button onclick="document.getElementById('nodeInspectorPanel').classList.add('hidden')" class="text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <p id="inspectorNodeDesc" class="text-slate-400"></p>
+            <div id="inspectorPatchSection" class="pt-2 border-t border-slate-800 flex items-center justify-between">
+              <span class="text-indigo-400 font-mono text-[11px]" id="inspectorFixAdvice"></span>
+              <button onclick="openPatchModal()" class="px-3 py-1 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 rounded-lg text-[11px] font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> View 1-Click Fix Patch
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- CORE DIFFERENTIATOR 2: TOXIC COMBINATIONS & EXPLOIT CHAINS     -->
+        <!-- ============================================================== -->
+        <div id="toxicCombinationsContainer" class="hidden space-y-4">
+          <!-- Dynamically populated with Compound Exploit Chains -->
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- CORE DIFFERENTIATOR 3: AUTO-DISCOVERY TRIANGULATION DRAWER     -->
+        <!-- ============================================================== -->
+        <div id="autoDiscoveryContainer" class="hidden glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
+          <!-- Dynamically populated with discovered web, DB, and docker services -->
+        </div>
+
 
         <!-- Charts & Visualizers -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1120,6 +1194,11 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       renderCharts(s, data.findings);
       renderFindingsTable(data.findings);
       renderSbomTable(data.sbom_components || []);
+
+      // Advanced Tri-Vector Differentiators
+      renderAttackGraph(data.attack_graph, data.toxic_combinations);
+      renderToxicCombinations(data.toxic_combinations || []);
+      renderAutoDiscovery(data.auto_discovery);
     }
 
     // Render Charts
@@ -1524,11 +1603,441 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       }
     });
 
+    // ==============================================================
+    // CORE DIFFERENTIATOR 1: ATTACK PATH GRAPH VISUALIZER
+    // ==============================================================
+    let activeAttackNodes = {};
+
+    function renderAttackGraph(graph, toxicCombos) {
+      const svg = document.getElementById('attackGraphSvg');
+      const placeholder = document.getElementById('graphEmptyPlaceholder');
+      const badge = document.getElementById('exploitabilityIndexBadge');
+      activeAttackNodes = {};
+
+      if (!graph || !graph.nodes || graph.nodes.length === 0) {
+        svg.innerHTML = '';
+        placeholder.classList.remove('hidden');
+        badge.innerText = '0% (Safe)';
+        badge.className = 'font-mono font-bold text-emerald-400';
+        return;
+      }
+
+      placeholder.classList.add('hidden');
+      const index = graph.exploitability_index || 0;
+      badge.innerText = `${index}%`;
+      if (index >= 70) badge.className = 'font-mono font-bold text-rose-400 animate-pulse';
+      else if (index >= 40) badge.className = 'font-mono font-bold text-amber-400';
+      else badge.className = 'font-mono font-bold text-emerald-400';
+
+      graph.nodes.forEach(n => { activeAttackNodes[n.id] = n; });
+
+      // Calculate node coordinates in 1000x300 viewBox
+      const width = 1000;
+      const height = 300;
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+      // Separate actor, findings, and crown jewels
+      const actorNode = graph.nodes.find(n => n.category === 'actor') || { id: 'node-actor', label: 'Threat Actor', category: 'actor', severity: 'CRITICAL', icon: 'fa-user-secret' };
+      const assetNodes = graph.nodes.filter(n => n.category === 'asset' || n.category === 'exfiltration');
+      const findingNodes = graph.nodes.filter(n => n.category !== 'actor' && n.category !== 'asset' && n.category !== 'exfiltration');
+
+      const positions = {};
+      positions[actorNode.id] = { x: 70, y: 150 };
+
+      // Distribute finding nodes in center area [240 to 740]
+      const fCount = findingNodes.length;
+      if (fCount === 1) {
+        positions[findingNodes[0].id] = { x: 480, y: 150 };
+      } else if (fCount > 1) {
+        const xStep = 500 / Math.max(fCount - 1, 1);
+        findingNodes.forEach((fn, idx) => {
+          const x = 240 + (idx * xStep);
+          const y = (idx % 2 === 0) ? 95 : 205;
+          positions[fn.id] = { x, y };
+        });
+      }
+
+      // Crown jewels at right
+      if (assetNodes.length === 1) {
+        positions[assetNodes[0].id] = { x: 880, y: 150 };
+      } else if (assetNodes.length >= 2) {
+        positions[assetNodes[0].id] = { x: 800, y: 110 };
+        positions[assetNodes[1].id] = { x: 910, y: 190 };
+      }
+
+      // Build SVG definitions (glow filters, markers)
+      let svgContent = `
+        <defs>
+          <filter id="glowRose" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="glowIndigo" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.9" />
+          </linearGradient>
+        </defs>
+      `;
+
+      // Render Edges
+      graph.edges.forEach((edge, eIdx) => {
+        const p1 = positions[edge.source];
+        const p2 = positions[edge.target];
+        if (!p1 || !p2) return;
+
+        const pathId = `attack-path-${eIdx}`;
+        const midX = (p1.x + p2.x) / 2;
+        const d = `M ${p1.x} ${p1.y} C ${midX} ${p1.y}, ${midX} ${p2.y}, ${p2.x} ${p2.y}`;
+
+        const strokeColor = edge.severity === 'CRITICAL' ? '#f43f5e' : (edge.severity === 'HIGH' ? '#fb923c' : '#818cf8');
+
+        svgContent += `
+          <g>
+            <path id="${pathId}" d="${d}" stroke="${strokeColor}" stroke-width="2.5" stroke-dasharray="5,4" fill="none" opacity="0.75" />
+            <!-- Animated Particle along Path -->
+            <circle r="4" fill="${strokeColor}" filter="url(#glowRose)">
+              <animateMotion dur="${3.5 - Math.min(eIdx * 0.4, 2)}s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#${pathId}" />
+              </animateMotion>
+            </circle>
+            <!-- Edge label -->
+            <text x="${midX}" y="${(p1.y + p2.y) / 2 - 8}" fill="#94a3b8" font-size="9" font-family="'JetBrains Mono', monospace" text-anchor="middle" opacity="0.85">${escapeHtml(edge.label)}</text>
+          </g>
+        `;
+      });
+
+      // Render Nodes
+      graph.nodes.forEach(node => {
+        const pos = positions[node.id];
+        if (!pos) return;
+
+        const isActor = node.category === 'actor';
+        const isAsset = node.category === 'asset' || node.category === 'exfiltration';
+        const isCrit = node.severity === 'CRITICAL';
+        
+        let nodeFill = isActor ? '#0f172a' : (isAsset ? '#1e1b4b' : (isCrit ? '#2a0e1b' : '#17203d'));
+        let nodeStroke = isActor ? '#38bdf8' : (isAsset ? '#a855f7' : (isCrit ? '#f43f5e' : '#6366f1'));
+
+        const labelText = node.label.length > 20 ? node.label.substring(0, 18) + '..' : node.label;
+        const subText = node.category.toUpperCase();
+
+        svgContent += `
+          <g class="cursor-pointer group" onclick="inspectGraphNode('${node.id}')" transform="translate(${pos.x}, ${pos.y})">
+            <!-- Glow pulse halo -->
+            <circle r="26" fill="${nodeStroke}" opacity="0.15" class="animate-pulse"></circle>
+            <!-- Main node circle -->
+            <circle r="20" fill="${nodeFill}" stroke="${nodeStroke}" stroke-width="2.5" filter="url(#glowIndigo)"></circle>
+            <!-- Icon/Symbol -->
+            <text y="4" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="bold">${isActor ? '👤' : (isAsset ? '💎' : '⚠️')}</text>
+            <!-- Node Labels -->
+            <text y="36" text-anchor="middle" fill="#f1f5f9" font-size="10" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif">${escapeHtml(labelText)}</text>
+            <text y="48" text-anchor="middle" fill="${nodeStroke}" font-size="8" font-family="'JetBrains Mono', monospace" font-weight="bold">${subText}</text>
+          </g>
+        `;
+      });
+
+      svg.innerHTML = svgContent;
+    }
+
+    function inspectGraphNode(nodeId) {
+      const node = activeAttackNodes[nodeId];
+      if (!node) return;
+
+      const panel = document.getElementById('nodeInspectorPanel');
+      panel.classList.remove('hidden');
+
+      document.getElementById('inspectorNodeTitle').innerHTML = `<i class="fa-solid fa-crosshairs text-indigo-400"></i> ${escapeHtml(node.label)} <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 ml-2">${node.category} &bull; ${node.severity}</span>`;
+      document.getElementById('inspectorNodeDesc').innerText = node.detail || "Correlated security node in exploit trajectory.";
+
+      const fixAdvice = node.remediation_patch || "No immediate single-line fix; refer to full unified patch.";
+      document.getElementById('inspectorFixAdvice').innerText = `Fix: ${fixAdvice.length > 70 ? fixAdvice.substring(0, 68) + '...' : fixAdvice}`;
+    }
+
+    function simulateBreachTrajectory() {
+      showToast("Simulating live threat actor exploit trajectory...", "info");
+      const edges = document.querySelectorAll('#attackGraphSvg path');
+      edges.forEach(e => {
+        e.setAttribute('stroke-width', '4');
+        e.setAttribute('stroke', '#f43f5e');
+      });
+      setTimeout(() => {
+        edges.forEach(e => {
+          e.setAttribute('stroke-width', '2.5');
+        });
+        showToast("Breach trajectory simulated. Review toxic combinations below.", "success");
+      }, 1500);
+    }
+
+    // ==============================================================
+    // CORE DIFFERENTIATOR 2: TOXIC COMBINATIONS RENDERER
+    // ==============================================================
+    function renderToxicCombinations(toxicCombos) {
+      const container = document.getElementById('toxicCombinationsContainer');
+      if (!toxicCombos || toxicCombos.length === 0) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+
+      container.classList.remove('hidden');
+      let html = `
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-radiation text-rose-500 animate-spin" style="animation-duration: 6s;"></i>
+            Correlated Toxic Combinations (${toxicCombos.length})
+          </h3>
+          <span class="text-xs text-rose-400 font-mono font-bold uppercase bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/30">
+            Compound Breach Exploit Chains
+          </span>
+        </div>
+      `;
+
+      toxicCombos.forEach((tc, idx) => {
+        const isCrit = tc.severity === 'CRITICAL';
+        const borderCls = isCrit ? 'border-rose-500/60 bg-gradient-to-r from-rose-950/40 via-surface-900 to-surface-900' : 'border-amber-500/50 bg-gradient-to-r from-amber-950/30 via-surface-900 to-surface-900';
+        
+        let stepsHtml = '';
+        if (tc.exploit_chain && tc.exploit_chain.length > 0) {
+          stepsHtml = `
+            <div class="mt-3.5 space-y-2">
+              <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 font-mono">Kill Chain Execution Steps:</span>
+              <div class="grid grid-cols-1 md:grid-cols-${Math.min(tc.exploit_chain.length, 4)} gap-2">
+          `;
+          tc.exploit_chain.forEach((step, sIdx) => {
+            stepsHtml += `
+              <div class="p-2.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 relative flex flex-col justify-between">
+                <span class="text-[10px] font-mono font-bold text-indigo-400 mb-1">STAGE ${sIdx + 1}</span>
+                <span class="leading-snug">${escapeHtml(step)}</span>
+              </div>
+            `;
+          });
+          stepsHtml += `</div></div>`;
+        }
+
+        html += `
+          <div class="glass-card rounded-2xl p-5 border ${borderCls} shadow-xl relative overflow-hidden space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-sm font-black">
+                  ${idx + 1}
+                </span>
+                <h4 class="font-bold text-white text-sm">${escapeHtml(tc.title)}</h4>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  ${tc.likelihood}
+                </span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(tc.impact)}</p>
+
+            ${stepsHtml}
+
+            <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-2 text-emerald-400">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span class="text-slate-300"><b class="text-emerald-400">Remediation:</b> ${escapeHtml(tc.remediation_advice)}</span>
+              </div>
+              <button onclick="downloadCurrentPatch()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition-all flex items-center gap-1.5 whitespace-nowrap self-end sm:self-auto">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Fix Patch
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ==============================================================
+    // CORE DIFFERENTIATOR 3: AUTO-DISCOVERY TRIANGULATION RENDERER
+    // ==============================================================
+    function renderAutoDiscovery(autoDisc) {
+      const container = document.getElementById('autoDiscoveryContainer');
+      if (!autoDisc || (!autoDisc.discovered_web_targets.length && !autoDisc.discovered_db_targets.length && !autoDisc.discovered_services.length)) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+
+      container.classList.remove('hidden');
+      let html = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-radar text-indigo-400 text-base"></i>
+            <h3 class="text-sm font-bold text-white">Auto-Discovered Infrastructure Footprint (Triangulated)</h3>
+          </div>
+          <span class="text-xs text-slate-400 font-mono">Parsed: ${autoDisc.source_files.join(', ') || 'Repository configs'}</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+      `;
+
+      // Web Targets
+      html += `
+        <div class="space-y-2">
+          <span class="text-xs font-bold text-sky-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-globe"></i> Discovered Web Targets (${autoDisc.discovered_web_targets.length})
+          </span>
+          <div class="space-y-1.5">
+      `;
+      if (autoDisc.discovered_web_targets.length === 0) {
+        html += `<p class="text-xs text-slate-500 italic">No web URLs declared</p>`;
+      } else {
+        autoDisc.discovered_web_targets.forEach(w => {
+          html += `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-surface-950 border border-slate-800 text-xs">
+              <span class="font-mono text-slate-300 truncate max-w-[170px]" title="${escapeHtml(w)}">${escapeHtml(w)}</span>
+              <button onclick="probeDiscoveredTarget('${escapeHtml(w)}', 'website')" class="px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 text-[10px] font-semibold flex items-center gap-1">
+                Audit <i class="fa-solid fa-arrow-right text-[8px]"></i>
+              </button>
+            </div>
+          `;
+        });
+      }
+      html += `</div></div>`;
+
+      // Database Targets
+      html += `
+        <div class="space-y-2">
+          <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-database"></i> Discovered Databases (${autoDisc.discovered_db_targets.length})
+          </span>
+          <div class="space-y-1.5">
+      `;
+      if (autoDisc.discovered_db_targets.length === 0) {
+        html += `<p class="text-xs text-slate-500 italic">No database configs declared</p>`;
+      } else {
+        autoDisc.discovered_db_targets.forEach(db => {
+          // Mask password if present
+          const masked = db.replace(/:\/\/[^:]+:[^@]+@/, '://user:****@');
+          html += `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-surface-950 border border-slate-800 text-xs">
+              <span class="font-mono text-slate-300 truncate max-w-[170px]" title="${escapeHtml(masked)}">${escapeHtml(masked)}</span>
+              <button onclick="probeDiscoveredTarget('${escapeHtml(db)}', 'database')" class="px-2 py-1 rounded bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 text-[10px] font-semibold flex items-center gap-1">
+                Audit <i class="fa-solid fa-arrow-right text-[8px]"></i>
+              </button>
+            </div>
+          `;
+        });
+      }
+      html += `</div></div>`;
+
+      // Docker Services
+      html += `
+        <div class="space-y-2">
+          <span class="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-box"></i> Declared Containers (${autoDisc.discovered_services.length})
+          </span>
+          <div class="space-y-1.5">
+      `;
+      if (autoDisc.discovered_services.length === 0) {
+        html += `<p class="text-xs text-slate-500 italic">No container services declared</p>`;
+      } else {
+        autoDisc.discovered_services.forEach(s => {
+          html += `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-surface-950 border border-slate-800 text-xs">
+              <div>
+                <span class="font-bold text-slate-200">${escapeHtml(s.name)}</span>
+                <span class="text-[10px] text-slate-500 block font-mono">${s.ports.join(', ') || 'internal'}</span>
+              </div>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">${s.service_type}</span>
+            </div>
+          `;
+        });
+      }
+      html += `</div></div></div>`;
+
+      container.innerHTML = html;
+    }
+
+    function probeDiscoveredTarget(target, type) {
+      switchNavTab('audit');
+      if (type === 'website') {
+        setAssetCategory('website');
+        document.getElementById('webTargetUrl').value = target;
+      } else if (type === 'database') {
+        setAssetCategory('database');
+        document.getElementById('dbTargetUri').value = target;
+      }
+      showToast(`Pre-filled ${type} target from auto-discovery. Starting audit...`, "info");
+      executeScan();
+    }
+
+    // ==============================================================
+    // CORE DIFFERENTIATOR 4: 1-CLICK SELF-HEALING & PATCH ENGINE
+    // ==============================================================
+    function downloadCurrentPatch() {
+      if (!currentScanData) {
+        showToast("Run or select a scan first to download remediation patch", "error");
+        return;
+      }
+      window.location.href = `/api/scans/${currentScanData.scan_id}/patch`;
+      showToast("Downloading ShieldCI 1-Click Remediation Patch (.patch)...", "success");
+    }
+
+    function openPatchModal() {
+      if (!currentScanData) return;
+      const modal = document.getElementById('patchPreviewModal');
+      const codeBox = document.getElementById('patchPreviewContent');
+      const patch = currentScanData.unified_patch || "# ShieldCI Automated Remediation\n# No code patches required for this asset.";
+      codeBox.innerText = patch;
+      modal.classList.remove('hidden');
+    }
+
+    function closePatchModal() {
+      document.getElementById('patchPreviewModal').classList.add('hidden');
+    }
+
+    function copyModalPatch() {
+      if (!currentScanData || !currentScanData.unified_patch) return;
+      navigator.clipboard.writeText(currentScanData.unified_patch);
+      showToast("Unified patch copied to clipboard! Apply via: git apply shieldci-remediation.patch", "success");
+    }
+
     // Initialize defaults on load
     window.addEventListener('DOMContentLoaded', () => {
       renderPresets('repository');
       executeScan();
     });
   </script>
+
+  <!-- Patch Preview Modal -->
+  <div id="patchPreviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="glass-card rounded-2xl w-full max-w-3xl border border-indigo-500/40 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/80">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">ShieldCI 1-Click Unified Remediation Patch</h3>
+            <p class="text-[11px] text-slate-400">Consolidated unified diff ready for <code class="text-indigo-300 font-mono">git apply</code></p>
+          </div>
+        </div>
+        <button onclick="closePatchModal()" class="text-slate-400 hover:text-white text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 font-mono text-xs text-slate-200 bg-surface-950">
+        <pre id="patchPreviewContent" class="whitespace-pre-wrap selection:bg-indigo-500 selection:text-white leading-relaxed"></pre>
+      </div>
+      <div class="px-6 py-3.5 border-t border-slate-800 bg-surface-950 flex items-center justify-between text-xs">
+        <span class="text-slate-400 font-mono">Apply via: <b class="text-indigo-400">git apply patch.diff</b></span>
+        <div class="flex items-center gap-2">
+          <button onclick="copyModalPatch()" class="px-4 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700 text-slate-200 rounded-xl font-semibold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-copy"></i> Copy Patch
+          </button>
+          <button onclick="downloadCurrentPatch()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <i class="fa-solid fa-download"></i> Download .patch
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

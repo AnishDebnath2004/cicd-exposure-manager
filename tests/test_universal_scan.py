@@ -16,6 +16,7 @@ from datetime import datetime
 # Ensure root dir is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import asyncio
 from app.config import settings
 from app.models.schemas import ScanRequest, SeverityLevel, SourceType, TargetCategory
 from app.core.orchestrator import ExposureOrchestrator
@@ -24,6 +25,10 @@ from app.core.scheduler import scheduler
 from app.core.repo_fetcher import RepoFetcher
 from app.scanners.web_scanner import WebsiteScanner
 from app.scanners.database_scanner import DatabaseScanner
+from app.core.auto_discovery import AutoDiscoveryEngine
+from app.core.correlator import AttackCorrelator
+from app.core.remediator import AutoRemediator
+from app.main import download_scan_patch, get_scan_attack_graph, scan_with_triangulation, health_check
 
 
 def test_repo_fetcher_url_detection():
@@ -210,6 +215,88 @@ def test_tri_vector_schedules():
     print("[OK] Tri-vector scheduler management passed")
 
 
+def test_auto_discovery_engine():
+    print("Testing Auto-Discovery Triangulation Engine...")
+    engine = AutoDiscoveryEngine()
+    disc = engine.discover("./sample_vulnerable_repo")
+    assert disc is not None
+    assert len(disc.discovered_services) >= 2, f"Expected services in compose, got: {disc.discovered_services}"
+    service_names = [s.name for s in disc.discovered_services]
+    assert "web" in service_names
+    assert "db" in service_names
+    assert any("5432" in s for s in disc.discovered_db_targets)
+    assert any("staging.internal-api.io" in w for w in disc.discovered_web_targets)
+    assert "docker-compose.yml" in disc.source_files
+    print(f"[OK] Auto-Discovery passed: detected {len(disc.discovered_services)} services, {len(disc.discovered_web_targets)} web targets, {len(disc.discovered_db_targets)} DB targets")
+    return disc
+
+
+def test_attack_correlator_and_toxic_combinations(repo_res):
+    print("Testing Attack Path Correlator & Toxic Combinations...")
+    assert repo_res.toxic_combinations is not None
+    assert len(repo_res.toxic_combinations) >= 1, "Expected at least 1 toxic combination"
+    
+    tc = repo_res.toxic_combinations[0]
+    assert tc.title is not None
+    assert len(tc.exploit_chain) >= 2
+    assert tc.impact is not None
+    assert tc.remediation_advice is not None
+
+    # Verify attack graph
+    assert repo_res.attack_graph is not None
+    assert len(repo_res.attack_graph.nodes) >= 3
+    assert len(repo_res.attack_graph.edges) >= 2
+    assert repo_res.attack_graph.exploitability_index > 0
+    print(f"[OK] Attack Correlator passed: {len(repo_res.toxic_combinations)} toxic combinations, {len(repo_res.attack_graph.nodes)} graph nodes, exploitability={repo_res.attack_graph.exploitability_index}%")
+
+
+def test_remediator_patch_generation(repo_res):
+    print("Testing 1-Click Self-Healing & Unified Patch Generator...")
+    assert repo_res.unified_patch is not None
+    assert len(repo_res.unified_patch) > 50
+    assert "--- a/" in repo_res.unified_patch or "+++ b/" in repo_res.unified_patch
+    assert "USER 10001" in repo_res.unified_patch or "pull_request" in repo_res.unified_patch
+
+    # Test web security config generator
+    configs = AutoRemediator.generate_web_security_configs(["Strict-Transport-Security", "Content-Security-Policy"])
+    assert "nginx" in configs and "Strict-Transport-Security" in configs["nginx"]
+    assert "caddy" in configs and "Content-Security-Policy" in configs["caddy"]
+    print("[OK] Remediator Patch Generator passed")
+
+
+def test_api_endpoints_patch_and_graph(repo_res):
+    print("Testing API endpoints for Patch download, Attack Graph, and Triangulation...")
+    
+    # 1. Patch Download
+    patch_resp = asyncio.run(download_scan_patch(repo_res.scan_id))
+    assert patch_resp.status_code == 200
+    assert "text/x-diff" in patch_resp.media_type
+    assert len(patch_resp.body) > 0
+
+    # 2. Attack Graph API
+    graph = asyncio.run(get_scan_attack_graph(repo_res.scan_id))
+    assert len(graph.nodes) >= 3
+    assert len(graph.edges) >= 2
+    assert graph.exploitability_index > 0
+
+    # 3. Triangulate Scan API
+    tri_req = ScanRequest(target="./sample_vulnerable_repo", target_type=TargetCategory.REPOSITORY)
+    tri_res = asyncio.run(scan_with_triangulation(tri_req))
+    assert tri_res.auto_discovery is not None
+    assert tri_res.toxic_combinations is not None
+    assert tri_res.attack_graph is not None
+    assert tri_res.unified_patch is not None
+
+    # 4. Health Check Features
+    health = asyncio.run(health_check())
+    features = health.get("features", {})
+    assert features.get("attack_path_correlator") is True
+    assert features.get("auto_discovery_triangulation") is True
+    assert features.get("autonomous_self_healing") is True
+
+    print("[OK] API endpoints (patch, attack-graph, triangulate, health) verified successfully")
+
+
 if __name__ == "__main__":
     print("==================================================")
     print(" ShieldCI Tri-Vector Universal Scan Verification ")
@@ -222,6 +309,11 @@ if __name__ == "__main__":
     db_res = test_database_scanner()
     test_exports_sarif_json_csv(web_res)
     test_tri_vector_schedules()
+    test_auto_discovery_engine()
+    test_attack_correlator_and_toxic_combinations(repo_res)
+    test_remediator_patch_generation(repo_res)
+    test_api_endpoints_patch_and_graph(repo_res)
     print("==================================================")
-    print(" ALL TRI-VECTOR TESTS COMPLETED SUCCESSFULLY! ")
+    print(" ALL NEXT-GEN SHIELDCI TESTS COMPLETED SUCCESSFULLY! ")
     print("==================================================")
+

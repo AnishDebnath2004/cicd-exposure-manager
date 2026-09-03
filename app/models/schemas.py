@@ -47,6 +47,56 @@ class Finding(BaseModel):
     auto_fixable: bool = False
     fix_patch: Optional[str] = None
 
+class AttackGraphNode(BaseModel):
+    id: str
+    label: str
+    category: str = Field("vulnerability", description="actor, ingress, vulnerability, asset, exfiltration")
+    severity: SeverityLevel = SeverityLevel.INFO
+    detail: Optional[str] = None
+    icon: Optional[str] = None
+    finding_id: Optional[str] = None
+    file_path: Optional[str] = None
+    line_number: Optional[int] = None
+    remediation_patch: Optional[str] = None
+
+class AttackGraphEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    label: str
+    animated: bool = True
+    severity: SeverityLevel = SeverityLevel.MEDIUM
+
+class ToxicCombination(BaseModel):
+    id: str
+    title: str
+    severity: SeverityLevel
+    likelihood: str = "High"
+    exploit_chain: List[str]
+    finding_ids: List[str] = []
+    impact: str
+    remediation_advice: str
+    unified_patch: Optional[str] = None
+
+class AttackGraph(BaseModel):
+    nodes: List[AttackGraphNode] = []
+    edges: List[AttackGraphEdge] = []
+    toxic_combinations: List[ToxicCombination] = []
+    exploitability_index: float = Field(0.0, description="0 to 100 metric of how weaponizable the attack surface is")
+
+class DiscoveredService(BaseModel):
+    name: str
+    service_type: str = "service"
+    image_or_source: Optional[str] = None
+    ports: List[str] = []
+    connection_hint: Optional[str] = None
+
+class AutoDiscoveryResult(BaseModel):
+    discovered_web_targets: List[str] = []
+    discovered_db_targets: List[str] = []
+    discovered_services: List[DiscoveredService] = []
+    source_files: List[str] = []
+
 class ScanSummary(BaseModel):
     total_findings: int
     critical_count: int
@@ -73,6 +123,10 @@ class ScanResult(BaseModel):
     findings: List[Finding]
     sbom_components: List[Dict[str, Any]] = []
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    toxic_combinations: List[ToxicCombination] = []
+    attack_graph: Optional[AttackGraph] = None
+    auto_discovery: Optional[AutoDiscoveryResult] = None
+    unified_patch: Optional[str] = None
 
 class ScanRequest(BaseModel):
     target: Optional[str] = None
@@ -82,6 +136,7 @@ class ScanRequest(BaseModel):
     branch: Optional[str] = None
     repo_name: Optional[str] = None
     db_type: Optional[str] = None
+    auto_triangulate: bool = True
     fail_on_severity: SeverityLevel = Field(
         default_factory=lambda: SeverityLevel(settings.policy_gate.DEFAULT_FAIL_SEVERITY)
     )

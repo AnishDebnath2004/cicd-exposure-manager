@@ -24,6 +24,9 @@ from app.scanners.database_scanner import DatabaseScanner
 from app.core.scoring import ExposureScorer
 from app.core.repo_fetcher import RepoFetcher
 from app.core.storage import storage
+from app.core.auto_discovery import AutoDiscoveryEngine
+from app.core.correlator import AttackCorrelator
+from app.core.remediator import AutoRemediator
 from app.config import settings
 
 
@@ -40,6 +43,11 @@ class ExposureOrchestrator:
         # Web & Database scanners
         self.web_scanner = WebsiteScanner()
         self.database_scanner = DatabaseScanner()
+
+        # Advanced Posture & Attack Path Engines
+        self.auto_discovery_engine = AutoDiscoveryEngine()
+        self.correlator = AttackCorrelator()
+        self.remediator = AutoRemediator()
 
     def detect_target_type(self, target: str, explicit_type: Optional[TargetCategory] = None) -> TargetCategory:
         """Determines if a target is a Repository, Website, or Database."""
@@ -139,6 +147,22 @@ class ExposureOrchestrator:
                 max_pes=request.max_allowed_pes
             )
 
+            # Auto-Discovery Triangulation: extract web & DB footprints from repo code
+            auto_disc = self.auto_discovery_engine.discover(target_dir)
+
+            # Correlate findings into Toxic Combinations & construct visual Attack Graph
+            toxic_combos, attack_graph = self.correlator.correlate(
+                findings=all_findings,
+                target_name=repo_name,
+                auto_discovery=auto_disc
+            )
+
+            # Generate consolidated 1-click git patch
+            unified_patch = self.remediator.bundle_repository_patch(
+                findings=all_findings,
+                base_dir=target_dir
+            )
+
             result = ScanResult(
                 scan_id=scan_id,
                 target_path=target_input if not is_zip_upload else detected_repo_name,
@@ -151,7 +175,11 @@ class ExposureOrchestrator:
                 summary=summary,
                 findings=all_findings,
                 sbom_components=sbom_components,
-                metadata={"file_count": file_count}
+                metadata={"file_count": file_count},
+                toxic_combinations=toxic_combos,
+                attack_graph=attack_graph,
+                auto_discovery=auto_disc,
+                unified_patch=unified_patch
             )
 
             try:
@@ -185,6 +213,15 @@ class ExposureOrchestrator:
             max_pes=max_pes
         )
 
+        toxic_combos, attack_graph = self.correlator.correlate(
+            findings=findings,
+            target_name=asset_name
+        )
+
+        missing_headers = [f.title.replace("Missing Security Header: ", "").strip() for f in findings if "Missing Security Header" in f.title]
+        web_configs = self.remediator.generate_web_security_configs(missing_headers)
+        patch_str = f"# ====================================================================\n# ShieldCI Web Security Hardening Configurations\n# Target: {asset_name}\n# ====================================================================\n\n{web_configs.get('nginx', '')}\n\n{web_configs.get('caddy', '')}\n"
+
         result = ScanResult(
             scan_id=scan_id,
             target_path=web_meta.get("url", target_url),
@@ -196,7 +233,10 @@ class ExposureOrchestrator:
             summary=summary,
             findings=findings,
             sbom_components=[],
-            metadata=web_meta
+            metadata=web_meta,
+            toxic_combinations=toxic_combos,
+            attack_graph=attack_graph,
+            unified_patch=patch_str
         )
 
         try:
@@ -233,6 +273,11 @@ class ExposureOrchestrator:
             max_pes=max_pes
         )
 
+        toxic_combos, attack_graph = self.correlator.correlate(
+            findings=findings,
+            target_name=asset_name
+        )
+
         # Mask target path password if present
         masked_target = re.sub(r"(://[^:]+):([^@]+)@", r"\1:****@", target_db)
 
@@ -247,7 +292,9 @@ class ExposureOrchestrator:
             summary=summary,
             findings=findings,
             sbom_components=[],
-            metadata=db_meta
+            metadata=db_meta,
+            toxic_combinations=toxic_combos,
+            attack_graph=attack_graph
         )
 
         try:
