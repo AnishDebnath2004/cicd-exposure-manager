@@ -49,6 +49,57 @@ class ExposureOrchestrator:
         self.correlator = AttackCorrelator()
         self.remediator = AutoRemediator()
 
+    def reload_scanner_settings(self):
+        """Synchronizes current settings with scanner instances."""
+        self.secret_scanner.entropy_threshold = settings.scanner.SHANNON_ENTROPY_THRESHOLD
+        self.secret_scanner.min_token_length = settings.scanner.MIN_TOKEN_LENGTH_FOR_ENTROPY
+        self.secret_scanner.ignore_dirs = settings.scanner.IGNORED_DIRECTORIES
+        self.secret_scanner.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
+        self.iac_scanner.ignore_dirs = settings.scanner.IGNORED_DIRECTORIES
+        self.iac_scanner.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
+
+    def _dispatch_webhook_alert(self, scan: ScanResult):
+        """Dispatches an outbound HTTP POST webhook alert if configured."""
+        if not getattr(settings, "WEBHOOK_ENABLED", False):
+            return
+        webhook_url = getattr(settings, "WEBHOOK_URL", None)
+        if not webhook_url or not str(webhook_url).strip().startswith("http"):
+            return
+
+        notify_only_failure = getattr(settings, "NOTIFY_ON_GATE_FAILURE_ONLY", True)
+        if notify_only_failure and scan.summary.policy_passed:
+            return
+
+        payload = {
+            "event": "shieldci_scan_completed",
+            "timestamp": scan.timestamp.isoformat() if hasattr(scan.timestamp, "isoformat") else str(scan.timestamp),
+            "scan_id": scan.scan_id,
+            "target": scan.target_path,
+            "target_type": scan.target_type.value if hasattr(scan.target_type, "value") else str(scan.target_type),
+            "policy_passed": scan.summary.policy_passed,
+            "pipeline_exposure_score": scan.summary.pipeline_exposure_score,
+            "risk_grade": scan.summary.risk_grade,
+            "findings_summary": {
+                "total": scan.summary.total_findings,
+                "critical": scan.summary.critical_count,
+                "high": scan.summary.high_count,
+                "medium": scan.summary.medium_count,
+                "low": scan.summary.low_count
+            },
+            "toxic_combinations_count": len(scan.toxic_combinations),
+            "user_email": scan.user_email
+        }
+
+        def _send():
+            try:
+                import requests
+                requests.post(webhook_url, json=payload, timeout=5)
+            except Exception:
+                pass
+
+        import threading
+        threading.Thread(target=_send, daemon=True).start()
+
     def detect_target_type(self, target: str, explicit_type: Optional[TargetCategory] = None) -> TargetCategory:
         """Determines if a target is a Repository, Website, or Database."""
         if explicit_type:
@@ -85,6 +136,7 @@ class ExposureOrchestrator:
         Routes and executes deep exposure scans across any Repository, Website, or Database.
         """
         raw_target = temp_zip_path if is_zip_upload else (request.target or request.repo_url or request.target_path or ".")
+        self.reload_scanner_settings()
         target_type = self.detect_target_type(raw_target, request.target_type)
 
         if target_type == TargetCategory.WEBSITE:
@@ -163,6 +215,10 @@ class ExposureOrchestrator:
                 base_dir=target_dir
             )
 
+            # Quality gate enforcement: auto-fail if toxic attack combinations detected
+            if getattr(settings, "AUTO_FAIL_ON_TOXIC_COMBOS", True) and len(toxic_combos) > 0:
+                summary.policy_passed = False
+
             result = ScanResult(
                 scan_id=scan_id,
                 target_path=target_input if not is_zip_upload else detected_repo_name,
@@ -187,6 +243,8 @@ class ExposureOrchestrator:
                 storage.save_scan(result)
             except Exception:
                 pass
+
+            self._dispatch_webhook_alert(result)
 
             return result
 
@@ -247,6 +305,8 @@ class ExposureOrchestrator:
         except Exception:
             pass
 
+        self._dispatch_webhook_alert(result)
+
         return result
 
     def run_database_scan(
@@ -306,5 +366,7 @@ class ExposureOrchestrator:
             storage.save_scan(result)
         except Exception:
             pass
+
+        self._dispatch_webhook_alert(result)
 
         return result

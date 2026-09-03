@@ -8,6 +8,7 @@ import os
 import shutil
 import tempfile
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import List, Optional
 
 # pyrefly: ignore [missing-import]
@@ -22,10 +23,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.models.schemas import (
     ScanRequest, ScanResult, ScanHistorySummary, ScheduledScan,
-    ScheduleCreateRequest, SeverityLevel, TargetCategory
+    ScheduleCreateRequest, SeverityLevel, TargetCategory,
+    SettingsSchema, SettingsUpdateRequest, WebhookTestRequest, WebhookTestResponse
 )
 from app.models.auth_schemas import (
-    UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse
+    UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse,
+    UserProfileUpdateRequest, PasswordChangeRequest
 )
 from app.core.security import (
     hash_password, verify_password, create_access_token, decode_access_token
@@ -594,6 +597,106 @@ async def logout():
     return {"status": "success", "message": "Successfully logged out."}
 
 
+@app.put("/api/auth/profile", response_model=UserResponse)
+async def update_profile(
+    req: UserProfileUpdateRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Updates user profile display name and organization."""
+    user = storage.update_user_profile(
+        user_id=current_user.id,
+        full_name=req.full_name,
+        organization=req.organization
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    return user
+
+
+@app.put("/api/auth/password")
+async def change_password(
+    req: PasswordChangeRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Changes user password after validating existing credentials."""
+    raw_user = storage.get_user_by_email(current_user.email)
+    if not raw_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if not verify_password(req.current_password, raw_user["password_hash"], raw_user["salt"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+
+    new_hash, new_salt = hash_password(req.new_password)
+    updated = storage.update_user_password(current_user.id, new_hash, new_salt)
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update password.")
+
+    return {"status": "success", "message": "Password changed successfully."}
+
+
+# ==============================================================
+# Settings Management Endpoints
+# ==============================================================
+@app.get("/api/settings", response_model=SettingsSchema)
+async def get_settings():
+    """Retrieves active system, scanner, quality gate, and alerting settings."""
+    active = storage.get_system_settings()
+    return SettingsSchema(**active)
+
+
+@app.put("/api/settings", response_model=SettingsSchema)
+async def update_settings(req: SettingsUpdateRequest):
+    """
+    Updates system, scanner, quality gate, and alerting settings.
+    Saves to SQLite and dynamically synchronizes scanner engine parameters.
+    """
+    update_data = req.model_dump(exclude_unset=True)
+    updated = storage.save_system_settings(update_data)
+    orchestrator.reload_scanner_settings()
+    return SettingsSchema(**updated)
+
+
+@app.post("/api/settings/reset", response_model=SettingsSchema)
+async def reset_settings():
+    """Resets all settings back to default factory values."""
+    reset_data = storage.reset_system_settings()
+    orchestrator.reload_scanner_settings()
+    return SettingsSchema(**reset_data)
+
+
+@app.post("/api/settings/test-webhook", response_model=WebhookTestResponse)
+async def test_webhook(req: WebhookTestRequest):
+    """Dispatches a test notification ping to verify webhook connectivity."""
+    target_url = (req.webhook_url or getattr(settings, "WEBHOOK_URL", "") or "").strip()
+    if not target_url or not target_url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Valid HTTP/HTTPS Webhook URL must be provided.")
+
+    payload = {
+        "event": "shieldci_webhook_test",
+        "timestamp": datetime.utcnow().isoformat(),
+        "message": "ShieldCI Webhook Alert Connectivity Test Successful",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION
+    }
+
+    try:
+        import requests
+        res = requests.post(target_url, json=payload, timeout=8)
+        return WebhookTestResponse(
+            status="success" if res.status_code < 400 else "warning",
+            message=f"Webhook ping responded with HTTP {res.status_code}",
+            target_url=target_url,
+            response_code=res.status_code
+        )
+    except Exception as e:
+        return WebhookTestResponse(
+            status="error",
+            message=f"Failed to reach webhook: {str(e)}",
+            target_url=target_url,
+            response_code=None
+        )
+
+
 # Webhook CI/CD Integration
 @app.post("/api/webhook/github")
 async def github_webhook(payload: dict):
@@ -646,7 +749,8 @@ async def health_check():
             "scheduling": True,
             "history": True,
             "sarif_export": True,
-            "user_authentication": True
+            "user_authentication": True,
+            "settings": True
         }
     }
 

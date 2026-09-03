@@ -26,6 +26,7 @@ class StorageEngine:
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or settings.DB_PATH
         self._init_db()
+        self._sync_runtime_settings()
 
     def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
@@ -105,6 +106,14 @@ class StorageEngine:
                     client_ip TEXT PRIMARY KEY,
                     scan_count INTEGER NOT NULL DEFAULT 0,
                     reset_at TEXT NOT NULL
+                )
+            """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS system_settings (
+                    key TEXT PRIMARY KEY,
+                    value_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
                 )
             """)
             
@@ -448,6 +457,147 @@ class StorageEngine:
             cursor = conn.cursor()
             cursor.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (datetime.utcnow().isoformat(), user_id))
             conn.commit()
+
+    def update_user_profile(
+        self,
+        user_id: str,
+        full_name: Optional[str] = None,
+        organization: Optional[str] = None
+    ) -> Optional[UserResponse]:
+        """Updates user display name and organization."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET full_name = ?, organization = ?
+                WHERE id = ?
+            """, (
+                full_name.strip() if full_name is not None else None,
+                organization.strip() if organization is not None else None,
+                user_id
+            ))
+            conn.commit()
+        return self.get_user_by_id(user_id)
+
+    def update_user_password(self, user_id: str, new_password_hash: str, salt: str) -> bool:
+        """Updates user password hash and salt."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET password_hash = ?, salt = ?
+                WHERE id = ?
+            """, (new_password_hash, salt, user_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # System & Engine Settings Management
+    def _sync_runtime_settings(self):
+        """Synchronizes persisted SQLite settings into in-memory settings config."""
+        try:
+            stored = self.get_system_settings()
+            settings.apply_settings_dict(stored)
+        except Exception:
+            pass
+
+    @staticmethod
+    def get_default_settings_dict() -> Dict[str, Any]:
+        """Returns default settings dictionary."""
+        return {
+            "default_fail_severity": settings.policy_gate.DEFAULT_FAIL_SEVERITY,
+            "default_max_pes": settings.policy_gate.DEFAULT_MAX_PES,
+            "auto_fail_on_toxic_combos": getattr(settings, "AUTO_FAIL_ON_TOXIC_COMBOS", True),
+            "shannon_entropy_threshold": settings.scanner.SHANNON_ENTROPY_THRESHOLD,
+            "min_token_length_for_entropy": settings.scanner.MIN_TOKEN_LENGTH_FOR_ENTROPY,
+            "ignored_directories": sorted(list(settings.scanner.IGNORED_DIRECTORIES)),
+            "ignored_extensions": sorted(list(settings.scanner.IGNORED_EXTENSIONS)),
+            "weight_critical": settings.scoring_weights.CRITICAL,
+            "weight_high": settings.scoring_weights.HIGH,
+            "weight_medium": settings.scoring_weights.MEDIUM,
+            "weight_low": settings.scoring_weights.LOW,
+            "weight_info": settings.scoring_weights.INFO,
+            "git_timeout_seconds": settings.GIT_TIMEOUT_SECONDS,
+            "max_upload_size_mb": settings.MAX_UPLOAD_SIZE_MB,
+            "webhook_url": getattr(settings, "WEBHOOK_URL", None),
+            "webhook_enabled": getattr(settings, "WEBHOOK_ENABLED", False),
+            "notify_on_gate_failure_only": getattr(settings, "NOTIFY_ON_GATE_FAILURE_ONLY", True),
+        }
+
+    def get_system_settings(self) -> Dict[str, Any]:
+        """Retrieves active system settings from SQLite merged over defaults."""
+        defaults = self.get_default_settings_dict()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value_json FROM system_settings")
+            rows = cursor.fetchall()
+            for row in rows:
+                k = row["key"]
+                try:
+                    v = json.loads(row["value_json"])
+                    defaults[k] = v
+                except Exception:
+                    pass
+        return defaults
+
+    def save_system_settings(self, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Persists system settings updates to SQLite and synchronizes in-memory config."""
+        now = datetime.utcnow().isoformat()
+        current = self.get_system_settings()
+
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for key, val in updates.items():
+                if val is not None:
+                    # Normalize enum instances
+                    if hasattr(val, "value"):
+                        val = val.value
+                    current[key] = val
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO system_settings (key, value_json, updated_at)
+                        VALUES (?, ?, ?)
+                    """, (key, json.dumps(val), now))
+            conn.commit()
+
+        # Synchronize runtime settings
+        settings.apply_settings_dict(current)
+        return current
+
+    def reset_system_settings(self) -> Dict[str, Any]:
+        """Clears custom system settings from SQLite and restores factory defaults."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM system_settings")
+            conn.commit()
+
+        factory_defaults = {
+            "default_fail_severity": "HIGH",
+            "default_max_pes": 60.0,
+            "auto_fail_on_toxic_combos": True,
+            "shannon_entropy_threshold": 4.4,
+            "min_token_length_for_entropy": 24,
+            "ignored_directories": [
+                ".git", "node_modules", "venv", ".venv", "env", "__pycache__",
+                ".idea", ".vscode", "dist", "build", ".pytest_cache", ".mypy_cache"
+            ],
+            "ignored_extensions": [
+                ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+                ".pdf", ".zip", ".tar", ".gz", ".7z", ".rar",
+                ".pyc", ".pyo", ".pyd", ".min.js", ".min.css",
+                ".woff", ".woff2", ".ttf", ".eot", ".mp4", ".mp3"
+            ],
+            "weight_critical": 25.0,
+            "weight_high": 12.0,
+            "weight_medium": 4.0,
+            "weight_low": 1.0,
+            "weight_info": 0.0,
+            "git_timeout_seconds": 60,
+            "max_upload_size_mb": 50,
+            "webhook_url": None,
+            "webhook_enabled": False,
+            "notify_on_gate_failure_only": True,
+        }
+        settings.apply_settings_dict(factory_defaults)
+        return factory_defaults
 
     # Exporters
     @staticmethod

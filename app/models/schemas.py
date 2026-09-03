@@ -186,3 +186,75 @@ class ScanHistorySummary(BaseModel):
     policy_passed: bool
     scan_duration_seconds: float
     user_email: Optional[str] = None
+
+
+class SettingsSchema(BaseModel):
+    # Quality Gates
+    default_fail_severity: SeverityLevel = SeverityLevel.HIGH
+    default_max_pes: float = 60.0
+    auto_fail_on_toxic_combos: bool = True
+
+    # Scanner & Entropy Engine
+    shannon_entropy_threshold: float = 4.4
+    min_token_length_for_entropy: int = 24
+    ignored_directories: List[str] = Field(default_factory=lambda: [
+        ".git", "node_modules", "venv", ".venv", "env", "__pycache__",
+        ".idea", ".vscode", "dist", "build", ".pytest_cache", ".mypy_cache"
+    ])
+    ignored_extensions: List[str] = Field(default_factory=lambda: [
+        ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+        ".pdf", ".zip", ".tar", ".gz", ".7z", ".rar",
+        ".pyc", ".pyo", ".pyd", ".min.js", ".min.css",
+        ".woff", ".woff2", ".ttf", ".eot", ".mp4", ".mp3"
+    ])
+
+    # Exposure Scoring Weights
+    weight_critical: float = 25.0
+    weight_high: float = 12.0
+    weight_medium: float = 4.0
+    weight_low: float = 1.0
+    weight_info: float = 0.0
+
+    # System & Ingestion
+    git_timeout_seconds: int = 60
+    max_upload_size_mb: int = 50
+
+    # Outbound Webhook Alerts
+    webhook_url: Optional[str] = None
+    webhook_enabled: bool = False
+    notify_on_gate_failure_only: bool = True
+
+
+class SettingsUpdateRequest(BaseModel):
+    default_fail_severity: Optional[SeverityLevel] = None
+    default_max_pes: Optional[float] = None
+    auto_fail_on_toxic_combos: Optional[bool] = None
+
+    shannon_entropy_threshold: Optional[float] = None
+    min_token_length_for_entropy: Optional[int] = None
+    ignored_directories: Optional[List[str]] = None
+    ignored_extensions: Optional[List[str]] = None
+
+    weight_critical: Optional[float] = None
+    weight_high: Optional[float] = None
+    weight_medium: Optional[float] = None
+    weight_low: Optional[float] = None
+    weight_info: Optional[float] = None
+
+    git_timeout_seconds: Optional[int] = None
+    max_upload_size_mb: Optional[int] = None
+
+    webhook_url: Optional[str] = None
+    webhook_enabled: Optional[bool] = None
+    notify_on_gate_failure_only: Optional[bool] = None
+
+
+class WebhookTestRequest(BaseModel):
+    webhook_url: Optional[str] = None
+
+
+class WebhookTestResponse(BaseModel):
+    status: str
+    message: str
+    target_url: str
+    response_code: Optional[int] = None

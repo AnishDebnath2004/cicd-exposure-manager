@@ -53,3 +53,16 @@ class AuthTokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in_seconds: int = 86400 * 7  # 7 days
     user: UserResponse
+
+
+class UserProfileUpdateRequest(BaseModel):
+    """Payload for updating user profile information."""
+    full_name: Optional[str] = Field(None, description="User full or display name")
+    organization: Optional[str] = Field(None, description="Organization or team name")
+
+
+class PasswordChangeRequest(BaseModel):
+    """Payload for changing password."""
+    current_password: str = Field(..., description="Existing account password")
+    new_password: str = Field(..., min_length=8, description="New password (minimum 8 characters)")
+

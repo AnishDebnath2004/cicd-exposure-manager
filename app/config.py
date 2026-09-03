@@ -7,7 +7,7 @@ Supports environment variable overrides for CI/CD integration and deployment.
 import os
 import shutil
 import tempfile
-from typing import Set, Dict
+from typing import Set, Dict, Optional
 from pydantic import BaseModel, Field
 
 
@@ -139,6 +139,57 @@ class AppConfig(BaseModel):
     scoring_weights: ExposureScoringWeights = ExposureScoringWeights()
     scanner: ScannerSettings = ScannerSettings()
     policy_gate: PolicyGateDefaults = PolicyGateDefaults()
+
+    # Outbound Webhook Alerts & Policy Toggles
+    WEBHOOK_URL: Optional[str] = None
+    WEBHOOK_ENABLED: bool = False
+    NOTIFY_ON_GATE_FAILURE_ONLY: bool = True
+    AUTO_FAIL_ON_TOXIC_COMBOS: bool = True
+
+    def apply_settings_dict(self, data: dict):
+        """Dynamically applies persisted settings updates to runtime configuration."""
+        if not data:
+            return
+        if "default_fail_severity" in data and data["default_fail_severity"]:
+            val = data["default_fail_severity"]
+            self.policy_gate.DEFAULT_FAIL_SEVERITY = val.value if hasattr(val, "value") else str(val)
+        if "default_max_pes" in data and data["default_max_pes"] is not None:
+            self.policy_gate.DEFAULT_MAX_PES = float(data["default_max_pes"])
+        if "auto_fail_on_toxic_combos" in data and data["auto_fail_on_toxic_combos"] is not None:
+            self.AUTO_FAIL_ON_TOXIC_COMBOS = bool(data["auto_fail_on_toxic_combos"])
+
+        if "shannon_entropy_threshold" in data and data["shannon_entropy_threshold"] is not None:
+            self.scanner.SHANNON_ENTROPY_THRESHOLD = float(data["shannon_entropy_threshold"])
+        if "min_token_length_for_entropy" in data and data["min_token_length_for_entropy"] is not None:
+            self.scanner.MIN_TOKEN_LENGTH_FOR_ENTROPY = int(data["min_token_length_for_entropy"])
+        if "ignored_directories" in data and data["ignored_directories"] is not None:
+            self.scanner.IGNORED_DIRECTORIES = set(data["ignored_directories"])
+        if "ignored_extensions" in data and data["ignored_extensions"] is not None:
+            self.scanner.IGNORED_EXTENSIONS = set(data["ignored_extensions"])
+
+        if "weight_critical" in data and data["weight_critical"] is not None:
+            self.scoring_weights.CRITICAL = float(data["weight_critical"])
+        if "weight_high" in data and data["weight_high"] is not None:
+            self.scoring_weights.HIGH = float(data["weight_high"])
+        if "weight_medium" in data and data["weight_medium"] is not None:
+            self.scoring_weights.MEDIUM = float(data["weight_medium"])
+        if "weight_low" in data and data["weight_low"] is not None:
+            self.scoring_weights.LOW = float(data["weight_low"])
+        if "weight_info" in data and data["weight_info"] is not None:
+            self.scoring_weights.INFO = float(data["weight_info"])
+
+        if "git_timeout_seconds" in data and data["git_timeout_seconds"] is not None:
+            self.GIT_TIMEOUT_SECONDS = int(data["git_timeout_seconds"])
+        if "max_upload_size_mb" in data and data["max_upload_size_mb"] is not None:
+            self.MAX_UPLOAD_SIZE_MB = int(data["max_upload_size_mb"])
+
+        if "webhook_url" in data:
+            self.WEBHOOK_URL = str(data["webhook_url"]).strip() if data["webhook_url"] else None
+        if "webhook_enabled" in data and data["webhook_enabled"] is not None:
+            self.WEBHOOK_ENABLED = bool(data["webhook_enabled"])
+        if "notify_on_gate_failure_only" in data and data["notify_on_gate_failure_only"] is not None:
+            self.NOTIFY_ON_GATE_FAILURE_ONLY = bool(data["notify_on_gate_failure_only"])
+
 
 
 # Global config instance for import across all modules
