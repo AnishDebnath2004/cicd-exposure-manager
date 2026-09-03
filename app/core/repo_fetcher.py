@@ -112,6 +112,13 @@ class RepoFetcher:
                     raise RuntimeError(f"Git clone failed: {result.stderr or result.stdout}")
 
             return dest_dir
+        except FileNotFoundError:
+            cls.safe_cleanup(dest_dir)
+            raise RuntimeError(
+                "Git binary is not installed in this environment (common in serverless runtimes like Vercel). "
+                "To audit a repository on Vercel, use ZIP archive upload or deploy with Docker/Render. "
+                "Website and Database scans remain 100% active."
+            )
         except subprocess.TimeoutExpired:
             cls.safe_cleanup(dest_dir)
             raise TimeoutError(f"Cloning '{git_url}' timed out after {settings.GIT_TIMEOUT_SECONDS}s")

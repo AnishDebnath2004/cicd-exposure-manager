@@ -35,11 +35,13 @@ scheduler.set_orchestrator(orchestrator)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Start background scheduler
-    scheduler.start()
+    # Startup: Start background continuous scheduler only if not in serverless runtime
+    if not settings.IS_SERVERLESS:
+        scheduler.start()
     yield
     # Shutdown: Stop scheduler
-    scheduler.stop()
+    if not settings.IS_SERVERLESS:
+        scheduler.stop()
 
 
 app = FastAPI(
@@ -59,14 +61,21 @@ app.add_middleware(
 )
 
 STATIC_DIR = settings.STATIC_DIR
-os.makedirs(STATIC_DIR, exist_ok=True)
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+except OSError:
+    pass
 
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
-        return FileResponse(index_path)
+        try:
+            with open(index_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        except Exception:
+            return FileResponse(index_path)
     return HTMLResponse("<h1>ShieldCI Exposure Manager API is running. UI file missing in /static/index.html</h1>")
 
 
@@ -198,7 +207,7 @@ async def upload_and_scan(
 async def get_scan_history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    target_type: Optional[str] = Query(None, regex="^(repository|website|database)$")
+    target_type: Optional[str] = Query(None, pattern="^(repository|website|database)$")
 ):
     """Retrieves list of past scans across all asset types."""
     return storage.list_scans(limit=limit, offset=offset, target_type=target_type)
@@ -223,7 +232,7 @@ async def delete_scan(scan_id: str):
 
 
 @app.get("/api/scans/{scan_id}/export")
-async def export_scan(scan_id: str, format: str = Query("sarif", regex="^(sarif|json|csv)$")):
+async def export_scan(scan_id: str, format: str = Query("sarif", pattern="^(sarif|json|csv)$")):
     """
     Exports a scan report in SARIF 2.1.0, JSON, or CSV formats.
     """

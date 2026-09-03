@@ -5,6 +5,8 @@ Supports environment variable overrides for CI/CD integration and deployment.
 """
 
 import os
+import shutil
+import tempfile
 from typing import Set, Dict
 from pydantic import BaseModel, Field
 
@@ -72,6 +74,15 @@ class AppConfig(BaseModel):
     VERSION: str = "1.0.0"
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
+
+    # Serverless runtime detection (Vercel, AWS Lambda, Google Cloud Functions)
+    IS_SERVERLESS: bool = Field(
+        default_factory=lambda: bool(
+            os.getenv("VERCEL")
+            or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+            or os.getenv("LAMBDA_TASK_ROOT")
+        )
+    )
     
     # Server Binding
     HOST: str = os.getenv("HOST", "0.0.0.0")
@@ -80,9 +91,44 @@ class AppConfig(BaseModel):
     # File Paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     STATIC_DIR: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-    DATA_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-    TEMP_SCAN_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "temp_scans")
-    DB_PATH: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "shieldci.db")
+    
+    # In serverless environments, root is read-only; use /tmp for writable data and temp files
+    DATA_DIR: str = Field(
+        default_factory=lambda: os.getenv(
+            "SHIELDCI_DATA_DIR",
+            os.path.join(tempfile.gettempdir(), "shieldci_data")
+            if bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT"))
+            else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        )
+    )
+    TEMP_SCAN_DIR: str = Field(
+        default_factory=lambda: os.getenv(
+            "SHIELDCI_TEMP_DIR",
+            os.path.join(
+                os.getenv(
+                    "SHIELDCI_DATA_DIR",
+                    os.path.join(tempfile.gettempdir(), "shieldci_data")
+                    if bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT"))
+                    else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+                ),
+                "temp_scans"
+            )
+        )
+    )
+    DB_PATH: str = Field(
+        default_factory=lambda: os.getenv(
+            "SHIELDCI_DB_PATH",
+            os.path.join(
+                os.getenv(
+                    "SHIELDCI_DATA_DIR",
+                    os.path.join(tempfile.gettempdir(), "shieldci_data")
+                    if bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT"))
+                    else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+                ),
+                "shieldci.db"
+            )
+        )
+    )
 
     # Ingestion & Timeout Settings
     GIT_TIMEOUT_SECONDS: int = int(os.getenv("SHIELDCI_GIT_TIMEOUT", "60"))
@@ -97,5 +143,26 @@ class AppConfig(BaseModel):
 
 # Global config instance for import across all modules
 settings = AppConfig()
-os.makedirs(settings.DATA_DIR, exist_ok=True)
-os.makedirs(settings.TEMP_SCAN_DIR, exist_ok=True)
+
+def _ensure_directories():
+    """Ensures necessary writable directories exist and pre-seeds DB if in serverless."""
+    try:
+        os.makedirs(settings.DATA_DIR, exist_ok=True)
+    except OSError:
+        pass
+
+    try:
+        os.makedirs(settings.TEMP_SCAN_DIR, exist_ok=True)
+    except OSError:
+        pass
+
+    # If running in serverless, copy packaged database to writable /tmp if it doesn't already exist
+    if settings.IS_SERVERLESS:
+        bundled_db = os.path.join(settings.BASE_DIR, "data", "shieldci.db")
+        if os.path.isfile(bundled_db) and not os.path.isfile(settings.DB_PATH):
+            try:
+                shutil.copy2(bundled_db, settings.DB_PATH)
+            except Exception:
+                pass
+
+_ensure_directories()
