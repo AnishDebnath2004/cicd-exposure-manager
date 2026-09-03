@@ -11,14 +11,26 @@ import hashlib
 import json
 import secrets
 import time
+import socket
+import ipaddress
+from urllib.parse import urlparse
 from typing import Optional, Tuple, Dict, Any
 
 from fastapi import Header, HTTPException, status
 from app.models.auth_schemas import UserResponse
 
 
-# Secret key for HMAC token signing (can be overridden via environment variable)
-SECRET_KEY = os.getenv("SHIELDCI_SECRET_KEY", "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops")
+# Secret key for HMAC token signing
+_ENV_SECRET = os.getenv("SHIELDCI_SECRET_KEY")
+if not _ENV_SECRET:
+    # If in production without explicit key, generate secure random key per instance
+    if os.getenv("APP_ENV", "development").lower() in ("production", "prod"):
+        SECRET_KEY = secrets.token_hex(32)
+    else:
+        SECRET_KEY = "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
+else:
+    SECRET_KEY = _ENV_SECRET
+
 HASH_ITERATIONS = 200_000
 
 
@@ -59,9 +71,9 @@ def _b64_url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode((data + padding).encode('utf-8'))
 
 
-def create_access_token(user_id: str, email: str, expires_seconds: int = 7 * 86400) -> str:
+def create_access_token(user_id: str, email: str, token_version: int = 1, expires_seconds: int = 7 * 86400) -> str:
     """
-    Generates a cryptographically signed Bearer token containing user claims and expiration.
+    Generates a cryptographically signed Bearer token containing user claims, token_version, and expiration.
     Format: header_b64.payload_b64.signature_b64
     """
     now = int(time.time())
@@ -69,6 +81,7 @@ def create_access_token(user_id: str, email: str, expires_seconds: int = 7 * 864
     payload = {
         "sub": user_id,
         "email": email,
+        "ver": token_version,
         "iat": now,
         "exp": now + expires_seconds
     }
@@ -120,3 +133,73 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return claims
     except Exception:
         return None
+
+
+def validate_safe_url(url: str, allow_private: Optional[bool] = None) -> Tuple[bool, str]:
+    """
+    Validates a target URL against Server-Side Request Forgery (SSRF).
+    Guarantees that outbound HTTP requests cannot target:
+    - Cloud metadata (169.254.169.254, fd00:ec2::254, metadata.google.internal)
+    - Local loopback (127.0.0.0/8, ::1, localhost)
+    - Private networks (RFC1918 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
+    - Link-local, multicast, or unspecified IP addresses
+    """
+    if allow_private is None:
+        allow_private = os.getenv("SHIELDCI_ALLOW_PRIVATE_TARGETS", "").lower() in ("true", "1", "yes")
+
+    if not url or not isinstance(url, str):
+        return False, "Target URL cannot be empty."
+
+    try:
+        parsed = urlparse(url.strip())
+    except Exception as e:
+        return False, f"Malformed URL: {str(e)}"
+
+    if parsed.scheme.lower() not in ("http", "https"):
+        return False, f"Unsupported URL scheme '{parsed.scheme}'. Only http and https are allowed."
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False, "URL missing valid hostname."
+
+    hostname_lower = hostname.lower()
+
+    # Immediate check for known metadata & loopback hostnames
+    if not allow_private:
+        restricted_hosts = (
+            "localhost", "127.0.0.1", "::1", "0.0.0.0",
+            "169.254.169.254", "metadata.google.internal",
+            "instance-data", "metadata"
+        )
+        if hostname_lower in restricted_hosts or hostname_lower.endswith(".internal"):
+            return False, f"Target '{hostname}' is a restricted host (SSRF Protection)."
+
+    if allow_private:
+        return True, "Target URL allowed (private testing enabled)."
+
+    # Resolve IP addresses for hostname
+    port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+    try:
+        addr_info = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        return False, f"Unable to resolve hostname '{hostname}': {str(e)}"
+    except Exception as e:
+        return False, f"DNS resolution error for '{hostname}': {str(e)}"
+
+    for entry in addr_info:
+        ip_str = entry[4][0]
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+            if ip_obj.is_loopback:
+                return False, f"Target resolves to loopback IP {ip_str} (SSRF Protection)."
+            if ip_obj.is_private:
+                return False, f"Target resolves to private network IP {ip_str} (SSRF Protection)."
+            if ip_obj.is_link_local:
+                return False, f"Target resolves to link-local/cloud metadata IP {ip_str} (SSRF Protection)."
+            if ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_unspecified:
+                return False, f"Target resolves to non-routable IP {ip_str} (SSRF Protection)."
+        except ValueError:
+            return False, f"Invalid IP address resolved: {ip_str}"
+
+    return True, "Target URL validated successfully."
+

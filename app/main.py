@@ -31,7 +31,7 @@ from app.models.auth_schemas import (
     UserProfileUpdateRequest, PasswordChangeRequest
 )
 from app.core.security import (
-    hash_password, verify_password, create_access_token, decode_access_token
+    hash_password, verify_password, create_access_token, decode_access_token, validate_safe_url
 )
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
@@ -49,7 +49,16 @@ async def get_current_user_optional(authorization: Optional[str] = Header(None))
     claims = decode_access_token(authorization)
     if not claims or not claims.get("sub"):
         return None
-    return storage.get_user_by_id(claims["sub"])
+    user = storage.get_user_by_id(claims["sub"])
+    if not user:
+        return None
+
+    # Immediate session revocation: token version must match current user version
+    token_ver = claims.get("ver", 1)
+    if token_ver < getattr(user, "token_version", 1):
+        return None
+
+    return user
 
 
 async def get_current_user(authorization: Optional[str] = Header(None)) -> UserResponse:
@@ -109,10 +118,48 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# HTTP Security Response Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    # Defense-in-depth security response headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+    # Content Security Policy (allows UI assets: CDN Tailwind, Chart.js, FontAwesome, Google Fonts)
+    csp_policy = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' http: https:; "
+        "frame-ancestors 'none';"
+    )
+    response.headers["Content-Security-Policy"] = csp_policy
+
+    # Strict-Transport-Security when HTTPS
+    if request.url.scheme == "https" or request.headers.get("X-Forwarded-Proto") == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    return response
+
+# Hardened CORS policy
+cors_origins_env = os.getenv("SHIELDCI_CORS_ORIGINS", "*").strip()
+if cors_origins_env == "*":
+    allow_origins = ["*"]
+    allow_credentials = False
+else:
+    allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -163,6 +210,13 @@ async def trigger_scan(
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Target URL, path, or connection string must be provided.")
 
+    target = target.strip()
+    target_type = request.target_type or orchestrator.detect_target_type(target)
+    if target_type == TargetCategory.WEBSITE:
+        is_safe, msg = validate_safe_url(target)
+        if not is_safe:
+            raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")
+
     try:
         result = orchestrator.run_scan(request)
         return result
@@ -187,9 +241,15 @@ async def scan_website(
     enforce_guest_quota(http_req, user)
     if not url or not url.strip():
         raise HTTPException(status_code=400, detail="URL must be provided.")
+
+    clean_url = url.strip()
+    is_safe, msg = validate_safe_url(clean_url)
+    if not is_safe:
+        raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")
+
     try:
         req = ScanRequest(
-            target=url.strip(),
+            target=clean_url,
             target_type=TargetCategory.WEBSITE,
             fail_on_severity=fail_on_severity,
             max_allowed_pes=max_allowed_pes,
@@ -542,7 +602,7 @@ async def signup(req: UserSignupRequest):
         full_name=req.full_name,
         organization=req.organization
     )
-    token = create_access_token(user_id=user.id, email=user.email)
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -573,7 +633,7 @@ async def login(req: UserLoginRequest):
     if not user:
         raise HTTPException(status_code=500, detail="User lookup failed.")
 
-    token = create_access_token(user_id=user.id, email=user.email)
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -670,6 +730,10 @@ async def test_webhook(req: WebhookTestRequest):
     target_url = (req.webhook_url or getattr(settings, "WEBHOOK_URL", "") or "").strip()
     if not target_url or not target_url.startswith("http"):
         raise HTTPException(status_code=400, detail="Valid HTTP/HTTPS Webhook URL must be provided.")
+
+    is_safe, msg = validate_safe_url(target_url)
+    if not is_safe:
+        raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")
 
     payload = {
         "event": "shieldci_webhook_test",

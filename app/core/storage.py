@@ -132,6 +132,12 @@ class StorageEngine:
             if "user_email" not in sched_columns:
                 cursor.execute("ALTER TABLE schedules ADD COLUMN user_email TEXT")
 
+            # Migration check: ensure token_version exists in users table
+            cursor.execute("PRAGMA table_info(users)")
+            user_columns = [row["name"] for row in cursor.fetchall()]
+            if "token_version" not in user_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1")
+
             conn.commit()
 
     def save_scan(self, scan: ScanResult):
@@ -403,13 +409,13 @@ class StorageEngine:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO users (
-                    id, email, password_hash, salt, full_name, organization, role, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    id, email, password_hash, salt, full_name, organization, role, token_version, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id, email.lower().strip(), password_hash, salt,
                 full_name.strip() if full_name else None,
                 organization.strip() if organization else None,
-                role, created_at
+                role, 1, created_at
             ))
             conn.commit()
 
@@ -419,6 +425,7 @@ class StorageEngine:
             full_name=full_name.strip() if full_name else None,
             organization=organization.strip() if organization else None,
             role=role,
+            token_version=1,
             created_at=created_at_dt,
             last_login_at=None
         )
@@ -437,16 +444,19 @@ class StorageEngine:
         """Retrieves user profile by ID."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, email, full_name, organization, role, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
+            cursor.execute("SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             if not row:
                 return None
+            keys = row.keys()
+            tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
             return UserResponse(
                 id=row["id"],
                 email=row["email"],
                 full_name=row["full_name"],
                 organization=row["organization"],
                 role=row["role"] or "developer",
+                token_version=tok_ver,
                 created_at=datetime.fromisoformat(row["created_at"]),
                 last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
             )
@@ -480,12 +490,12 @@ class StorageEngine:
         return self.get_user_by_id(user_id)
 
     def update_user_password(self, user_id: str, new_password_hash: str, salt: str) -> bool:
-        """Updates user password hash and salt."""
+        """Updates user password hash and salt, and increments token_version to invalidate prior sessions."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE users
-                SET password_hash = ?, salt = ?
+                SET password_hash = ?, salt = ?, token_version = COALESCE(token_version, 1) + 1
                 WHERE id = ?
             """, (new_password_hash, salt, user_id))
             conn.commit()

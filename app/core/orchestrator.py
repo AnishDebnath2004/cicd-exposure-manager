@@ -66,6 +66,11 @@ class ExposureOrchestrator:
         if not webhook_url or not str(webhook_url).strip().startswith("http"):
             return
 
+        from app.core.security import validate_safe_url
+        is_safe, _ = validate_safe_url(str(webhook_url))
+        if not is_safe:
+            return
+
         notify_only_failure = getattr(settings, "NOTIFY_ON_GATE_FAILURE_ONLY", True)
         if notify_only_failure and scan.summary.policy_passed:
             return

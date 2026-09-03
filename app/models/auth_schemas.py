@@ -43,6 +43,7 @@ class UserResponse(BaseModel):
     full_name: Optional[str] = None
     organization: Optional[str] = None
     role: str = "developer"
+    token_version: int = 1
     created_at: datetime
     last_login_at: Optional[datetime] = None
 
