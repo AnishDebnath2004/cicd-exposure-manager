@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Header, Depends, status
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles
 # pyrefly: ignore [missing-import]
@@ -24,6 +24,12 @@ from app.models.schemas import (
     ScanRequest, ScanResult, ScanHistorySummary, ScheduledScan,
     ScheduleCreateRequest, SeverityLevel, TargetCategory
 )
+from app.models.auth_schemas import (
+    UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse
+)
+from app.core.security import (
+    hash_password, verify_password, create_access_token, decode_access_token
+)
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
 from app.core.scheduler import scheduler
@@ -31,6 +37,28 @@ from app.core.scheduler import scheduler
 
 orchestrator = ExposureOrchestrator()
 scheduler.set_orchestrator(orchestrator)
+
+
+async def get_current_user_optional(authorization: Optional[str] = Header(None)) -> Optional[UserResponse]:
+    """Extracts authenticated user from Authorization Bearer token header if present."""
+    if not authorization:
+        return None
+    claims = decode_access_token(authorization)
+    if not claims or not claims.get("sub"):
+        return None
+    return storage.get_user_by_id(claims["sub"])
+
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> UserResponse:
+    """Dependency that mandates a valid Bearer authentication token."""
+    user = await get_current_user_optional(authorization)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session. Please sign in.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 @asynccontextmanager
@@ -366,6 +394,84 @@ async def delete_schedule(schedule_id: str):
     return {"status": "success", "message": f"Schedule {schedule_id} removed"}
 
 
+# ==============================================================
+# Authentication & User Management Endpoints
+# ==============================================================
+@app.post("/api/auth/signup", response_model=AuthTokenResponse, status_code=status.HTTP_201_CREATED)
+async def signup(req: UserSignupRequest):
+    """
+    Registers a new user account with email and password.
+    """
+    existing = storage.get_user_by_email(req.email)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email address already exists. Please sign in."
+        )
+
+    pw_hash, salt = hash_password(req.password)
+    user = storage.create_user(
+        email=req.email,
+        password_hash=pw_hash,
+        salt=salt,
+        full_name=req.full_name,
+        organization=req.organization
+    )
+    token = create_access_token(user_id=user.id, email=user.email)
+    return AuthTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=user
+    )
+
+
+@app.post("/api/auth/login", response_model=AuthTokenResponse)
+async def login(req: UserLoginRequest):
+    """
+    Authenticates a user with email and password, returning a cryptographically signed access token.
+    """
+    user_record = storage.get_user_by_email(req.email)
+    if not user_record:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password."
+        )
+
+    if not verify_password(req.password, user_record["password_hash"], user_record["salt"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password."
+        )
+
+    storage.update_last_login(user_record["id"])
+    user = storage.get_user_by_id(user_record["id"])
+    if not user:
+        raise HTTPException(status_code=500, detail="User lookup failed.")
+
+    token = create_access_token(user_id=user.id, email=user.email)
+    return AuthTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=user
+    )
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def get_my_profile(current_user: UserResponse = Depends(get_current_user)):
+    """
+    Retrieves the currently authenticated user's profile from the session token.
+    """
+    return current_user
+
+
+@app.post("/api/auth/logout")
+async def logout():
+    """
+    Logs out the current user session.
+    """
+    return {"status": "success", "message": "Successfully logged out."}
+
+
 # Webhook CI/CD Integration
 @app.post("/api/webhook/github")
 async def github_webhook(payload: dict):
@@ -417,7 +523,8 @@ async def health_check():
             "zip_upload": True,
             "scheduling": True,
             "history": True,
-            "sarif_export": True
+            "sarif_export": True,
+            "user_authentication": True
         }
     }
 

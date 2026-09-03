@@ -9,6 +9,7 @@ import os
 import io
 import csv
 import json
+import uuid
 import sqlite3
 from datetime import datetime
 from typing import List, Optional, Dict, Any
@@ -16,6 +17,7 @@ from app.config import settings
 from app.models.schemas import (
     ScanResult, ScanHistorySummary, ScheduledScan, SeverityLevel, FindingCategory, TargetCategory
 )
+from app.models.auth_schemas import UserResponse
 
 
 class StorageEngine:
@@ -82,11 +84,27 @@ class StorageEngine:
                 )
             """)
             
-            # Migration check: ensure target_type column exists if table was created in earlier versions
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    salt TEXT NOT NULL,
+                    full_name TEXT,
+                    organization TEXT,
+                    role TEXT NOT NULL DEFAULT 'developer',
+                    created_at TEXT NOT NULL,
+                    last_login_at TEXT
+                )
+            """)
+            
+            # Migration check: ensure target_type and user_email columns exist
             cursor.execute("PRAGMA table_info(scans)")
             columns = [row["name"] for row in cursor.fetchall()]
             if "target_type" not in columns:
                 cursor.execute("ALTER TABLE scans ADD COLUMN target_type TEXT NOT NULL DEFAULT 'repository'")
+            if "user_email" not in columns:
+                cursor.execute("ALTER TABLE scans ADD COLUMN user_email TEXT")
 
             cursor.execute("PRAGMA table_info(schedules)")
             sched_columns = [row["name"] for row in cursor.fetchall()]
@@ -277,6 +295,78 @@ class StorageEngine:
             cursor.execute("DELETE FROM schedules WHERE id = ?", (sched_id,))
             conn.commit()
             return cursor.rowcount > 0
+
+    # User Management
+    def create_user(
+        self,
+        email: str,
+        password_hash: str,
+        salt: str,
+        full_name: Optional[str] = None,
+        organization: Optional[str] = None,
+        role: str = "developer"
+    ) -> UserResponse:
+        user_id = str(uuid.uuid4())
+        created_at_dt = datetime.utcnow()
+        created_at = created_at_dt.isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO users (
+                    id, email, password_hash, salt, full_name, organization, role, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                user_id, email.lower().strip(), password_hash, salt,
+                full_name.strip() if full_name else None,
+                organization.strip() if organization else None,
+                role, created_at
+            ))
+            conn.commit()
+
+        return UserResponse(
+            id=user_id,
+            email=email.lower().strip(),
+            full_name=full_name.strip() if full_name else None,
+            organization=organization.strip() if organization else None,
+            role=role,
+            created_at=created_at_dt,
+            last_login_at=None
+        )
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Retrieves raw user record by email (including password hash and salt)."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", (email.strip(),))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return dict(row)
+
+    def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
+        """Retrieves user profile by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, email, full_name, organization, role, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return UserResponse(
+                id=row["id"],
+                email=row["email"],
+                full_name=row["full_name"],
+                organization=row["organization"],
+                role=row["role"] or "developer",
+                created_at=datetime.fromisoformat(row["created_at"]),
+                last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
+            )
+
+    def update_last_login(self, user_id: str):
+        """Updates user last login timestamp."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (datetime.utcnow().isoformat(), user_id))
+            conn.commit()
 
     # Exporters
     @staticmethod
