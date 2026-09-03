@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import subprocess
 import zipfile
+import requests
 from contextlib import contextmanager
 from typing import Generator, Tuple, Optional
 from app.config import settings
@@ -76,8 +77,122 @@ class RepoFetcher:
         return parts[-1] if parts else "Repository"
 
     @classmethod
+    def download_repo_archive(cls, git_url: str, branch: Optional[str] = None, dest_dir: Optional[str] = None) -> str:
+        """
+        Downloads a remote git repository archive directly via HTTPS and extracts it.
+        Allows repository scanning in environments without the git CLI (such as Vercel and serverless).
+        """
+        if not dest_dir:
+            dest_dir = tempfile.mkdtemp(prefix="shieldci_git_", dir=settings.TEMP_SCAN_DIR)
+
+        cleaned = git_url.strip()
+        if cleaned.endswith(".git"):
+            cleaned = cleaned[:-4]
+
+        # Extract owner and repo for GitHub
+        github_match = re.search(r"github\.com[/:]([^/]+)/([^/\?#]+)", cleaned)
+        if not github_match and re.match(r"^[a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-\.]+$", cleaned):
+            parts = cleaned.split("/")
+            owner, repo = parts[0], parts[1]
+        elif github_match:
+            owner, repo = github_match.group(1), github_match.group(2)
+        else:
+            owner, repo = None, None
+
+        download_urls = []
+        if owner and repo:
+            if branch:
+                download_urls.append(f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip")
+                download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/{branch}")
+            # Default branch fallbacks (HEAD, main, master)
+            download_urls.append(f"https://github.com/{owner}/{repo}/archive/HEAD.zip")
+            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/main")
+            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/master")
+        elif "gitlab.com" in cleaned:
+            gl_match = re.search(r"gitlab\.com[/:]([^/]+)/([^/\?#]+)", cleaned)
+            if gl_match:
+                gl_owner, gl_repo = gl_match.group(1), gl_match.group(2)
+                target_branch = branch or "main"
+                download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/{target_branch}/{gl_repo}-{target_branch}.zip")
+                if not branch:
+                    download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/master/{gl_repo}-master.zip")
+        elif "bitbucket.org" in cleaned:
+            bb_match = re.search(r"bitbucket\.org[/:]([^/]+)/([^/\?#]+)", cleaned)
+            if bb_match:
+                bb_owner, bb_repo = bb_match.group(1), bb_match.group(2)
+                target_branch = branch or "HEAD"
+                download_urls.append(f"https://bitbucket.org/{bb_owner}/{bb_repo}/get/{target_branch}.zip")
+
+        if not download_urls:
+            cls.safe_cleanup(dest_dir)
+            raise RuntimeError(
+                f"Cannot download repository archive for '{git_url}'. "
+                "Supported remote providers without git CLI: GitHub, GitLab, and Bitbucket. "
+                "Alternatively, upload a ZIP archive directly."
+            )
+
+        headers = {
+            "User-Agent": "ShieldCI-Security-Auditor/1.0",
+            "Accept": "application/zip, application/octet-stream, */*"
+        }
+
+        temp_zip_fd, temp_zip_file = tempfile.mkstemp(suffix=".zip", dir=settings.TEMP_SCAN_DIR)
+        os.close(temp_zip_fd)
+        download_success = False
+        last_error = ""
+
+        try:
+            for url in download_urls:
+                try:
+                    resp = requests.get(
+                        url,
+                        headers=headers,
+                        stream=True,
+                        timeout=settings.GIT_TIMEOUT_SECONDS,
+                        allow_redirects=True
+                    )
+                    if resp.status_code == 200:
+                        with open(temp_zip_file, "wb") as f:
+                            for chunk in resp.iter_content(chunk_size=128 * 1024):
+                                if chunk:
+                                    f.write(chunk)
+                        if zipfile.is_zipfile(temp_zip_file):
+                            download_success = True
+                            break
+                        else:
+                            if os.path.exists(temp_zip_file):
+                                os.remove(temp_zip_file)
+                    else:
+                        last_error = f"HTTP {resp.status_code} ({url})"
+                except Exception as e:
+                    last_error = str(e)
+
+            if not download_success:
+                cls.safe_cleanup(dest_dir)
+                raise RuntimeError(
+                    f"Failed to download repository archive for '{git_url}'. "
+                    f"Ensure the repository is public or branch exists. ({last_error})"
+                )
+
+            scan_path = cls.extract_zip_archive(temp_zip_file, dest_dir)
+            return scan_path
+        finally:
+            if os.path.exists(temp_zip_file):
+                try:
+                    os.remove(temp_zip_file)
+                except Exception:
+                    pass
+
+    @classmethod
     def clone_git_repo(cls, git_url: str, branch: Optional[str] = None, dest_dir: Optional[str] = None) -> str:
-        """Clones a remote git repository shallowly into a destination directory."""
+        """
+        Clones a remote git repository shallowly into a destination directory.
+        Automatically falls back to HTTPS archive download if git CLI is absent (e.g. on Vercel).
+        """
+        # If git CLI is not installed on the host, seamlessly download via HTTPS
+        if not shutil.which("git"):
+            return cls.download_repo_archive(git_url, branch=branch, dest_dir=dest_dir)
+
         if not dest_dir:
             dest_dir = tempfile.mkdtemp(prefix="shieldci_git_", dir=settings.TEMP_SCAN_DIR)
 
@@ -106,25 +221,26 @@ class RepoFetcher:
                         timeout=settings.GIT_TIMEOUT_SECONDS,
                         check=False
                     )
-                    if fb_res.returncode != 0:
-                        raise RuntimeError(f"Git clone failed: {fb_res.stderr or fb_res.stdout or result.stderr}")
-                else:
-                    raise RuntimeError(f"Git clone failed: {result.stderr or result.stdout}")
+                    if fb_res.returncode == 0:
+                        return dest_dir
+
+                # If git clone failed, fall back to HTTPS archive download
+                return cls.download_repo_archive(git_url, branch=branch, dest_dir=dest_dir)
 
             return dest_dir
-        except FileNotFoundError:
-            cls.safe_cleanup(dest_dir)
-            raise RuntimeError(
-                "Git binary is not installed in this environment (common in serverless runtimes like Vercel). "
-                "To audit a repository on Vercel, use ZIP archive upload or deploy with Docker/Render. "
-                "Website and Database scans remain 100% active."
-            )
+        except (FileNotFoundError, OSError):
+            # git CLI not executable, download archive directly
+            return cls.download_repo_archive(git_url, branch=branch, dest_dir=dest_dir)
         except subprocess.TimeoutExpired:
             cls.safe_cleanup(dest_dir)
             raise TimeoutError(f"Cloning '{git_url}' timed out after {settings.GIT_TIMEOUT_SECONDS}s")
-        except Exception as e:
-            cls.safe_cleanup(dest_dir)
-            raise e
+        except Exception:
+            # Final fallback to HTTPS archive download
+            try:
+                return cls.download_repo_archive(git_url, branch=branch, dest_dir=dest_dir)
+            except Exception as ex:
+                cls.safe_cleanup(dest_dir)
+                raise ex
 
     @classmethod
     def extract_zip_archive(cls, zip_path: str, dest_dir: Optional[str] = None) -> str:
