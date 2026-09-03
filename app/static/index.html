@@ -329,8 +329,16 @@
           </div>
         </div>
 
-        <!-- Scan Trigger Button -->
-        <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-end">
+        <!-- Scan Trigger Button & Quota Pill -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <!-- Dynamic Quota Badge -->
+          <div id="scanQuotaBanner" class="w-full sm:w-auto">
+            <div id="quotaPill" class="px-3.5 py-2 rounded-xl border bg-surface-900/80 border-slate-700/80 text-slate-300 flex items-center gap-2 text-xs font-medium backdrop-blur-sm shadow-sm transition-all">
+              <i class="fa-solid fa-gauge text-indigo-400"></i>
+              <span id="quotaText">Loading quota status...</span>
+            </div>
+          </div>
+
           <button onclick="executeScan()" id="scanBtn" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.01] active:scale-[0.99]">
             <i class="fa-solid fa-bolt-lightning text-amber-300"></i> Run Deep Exposure Audit
           </button>
@@ -628,8 +636,11 @@
     <div id="section-history" class="hidden space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <h2 class="text-xl font-bold text-white flex items-center gap-2.5 flex-wrap">
             <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Scan History Timeline
+            <span id="historyScopePill" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-spinner fa-spin text-xs"></i> Loading scope...
+            </span>
           </h2>
           <p class="text-sm text-slate-400 mt-1">Audit trail across all Repositories, Websites, and Databases over time.</p>
         </div>
@@ -686,8 +697,29 @@
         </div>
       </div>
 
-      <!-- Schedule Registration Form -->
-      <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
+      <!-- Guest Locked Card (Shown to Unauthenticated Guests) -->
+      <div id="schedGuestLockedCard" class="hidden glass-card rounded-2xl p-8 text-center border border-indigo-500/30 bg-gradient-to-b from-indigo-950/20 to-surface-900/50 space-y-4 shadow-xl">
+        <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto text-2xl shadow-inner">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div class="max-w-md mx-auto">
+          <h3 class="text-base font-bold text-white">Continuous Background Schedules are Locked</h3>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Automated background recurring scans require an authenticated account to manage jobs, persist scan alerts, and deliver private audit histories.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <button onclick="openAuthModal('signup')" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-user-plus"></i> Create Account to Unlock
+          </button>
+          <button onclick="openAuthModal('login')" class="px-5 py-2.5 bg-surface-800 hover:bg-surface-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </button>
+        </div>
+      </div>
+
+      <!-- Schedule Registration Form (Active for Authenticated Users) -->
+      <div id="schedFormCard" class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
           <i class="fa-solid fa-plus-circle text-indigo-400"></i> Add New Automated Scheduled Scan
         </h3>
@@ -1024,6 +1056,13 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
     // Universal Scan Execution
     async function executeScan() {
+      // Guest Quota Guard
+      if (!currentUser && currentQuota && currentQuota.remaining_scans <= 0) {
+        showToast("Daily guest scan quota reached (5/5). Please sign in for unlimited scans.", "error");
+        openAuthModal('signup');
+        return;
+      }
+
       const btn = document.getElementById('scanBtn');
       const progressBox = document.getElementById('scanProgressBox');
       const progressMsg = document.getElementById('scanProgressMsg');
@@ -1135,7 +1174,12 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         progressBar.style.width = '85%';
 
         if (!response.ok) {
-          const errData = await response.json();
+          const errData = await response.json().catch(() => ({}));
+          if (response.status === 429) {
+            fetchQuota();
+            openAuthModal('signup');
+            throw new Error(errData.detail || "Guest daily scan quota exceeded. Please sign in or create an account.");
+          }
           throw new Error(errData.detail || "Scan request failed.");
         }
 
@@ -1144,6 +1188,7 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         currentScanData = data;
         renderResults(data);
         showToast("Exposure audit completed successfully!", "success");
+        fetchQuota();
       } catch (err) {
         showToast(err.message, "error");
       } finally {
@@ -1473,10 +1518,18 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     // Schedules Management
     async function loadSchedules() {
       const tbody = document.getElementById('schedulesTableBody');
+      if (!currentUser) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500"><i class="fa-solid fa-lock text-indigo-400 mr-2"></i> Continuous schedules are locked for guest sessions. Please sign in or register to view and configure recurring background monitors.</td></tr>`;
+        return;
+      }
       tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading schedules...</td></tr>`;
 
       try {
         const res = await fetch('/api/schedules', { headers: getAuthHeaders() });
+        if (res.status === 401) {
+          tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500"><i class="fa-solid fa-lock text-indigo-400 mr-2"></i> Continuous schedules require an active account. Please sign in.</td></tr>`;
+          return;
+        }
         const list = await res.json();
 
         if (!list || list.length === 0) {
@@ -1516,6 +1569,11 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     }
 
     async function createNewSchedule() {
+      if (!currentUser) {
+        showToast("Authentication required to configure continuous background schedules. Please sign in.", "error");
+        openAuthModal('signup');
+        return;
+      }
       const target = document.getElementById('schedTargetInput').value.trim();
       const targetType = document.getElementById('schedAssetTypeInput').value;
       const interval = parseInt(document.getElementById('schedIntervalInput').value) || 60;
@@ -2050,6 +2108,67 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       return headers;
     }
 
+    let currentQuota = null;
+
+    async function fetchQuota() {
+      try {
+        const res = await fetch('/api/auth/quota', { headers: getAuthHeaders() });
+        if (res.ok) {
+          currentQuota = await res.json();
+          updateQuotaUI();
+        }
+      } catch (err) {
+        console.warn("Could not fetch quota:", err);
+      }
+    }
+
+    function updateQuotaUI() {
+      const quotaPill = document.getElementById('quotaPill');
+      const quotaText = document.getElementById('quotaText');
+      const schedGuestLockedCard = document.getElementById('schedGuestLockedCard');
+      const schedFormCard = document.getElementById('schedFormCard');
+      const historyScopePill = document.getElementById('historyScopePill');
+
+      if (currentUser) {
+        if (quotaPill && quotaText) {
+          quotaPill.className = "px-3.5 py-2 rounded-xl border bg-emerald-950/40 border-emerald-500/30 text-emerald-300 flex items-center gap-2 text-xs font-semibold backdrop-blur-sm shadow-sm";
+          quotaPill.onclick = null;
+          quotaText.innerHTML = `<i class="fa-solid fa-star text-amber-400"></i> Unlimited Developer Scans`;
+        }
+        if (schedGuestLockedCard) schedGuestLockedCard.classList.add('hidden');
+        if (schedFormCard) schedFormCard.classList.remove('hidden');
+        if (historyScopePill) {
+          historyScopePill.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1.5";
+          historyScopePill.innerHTML = `<i class="fa-solid fa-user-shield text-indigo-400"></i> Personal History (${currentUser.email})`;
+        }
+      } else {
+        if (schedGuestLockedCard) schedGuestLockedCard.classList.remove('hidden');
+        if (schedFormCard) schedFormCard.classList.add('hidden');
+        if (historyScopePill) {
+          historyScopePill.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5";
+          historyScopePill.innerHTML = `<i class="fa-solid fa-clock text-slate-400"></i> Guest Temporary History • <button onclick="openAuthModal('login')" class="text-indigo-400 hover:underline font-semibold">Sign In</button> to save`;
+        }
+
+        if (quotaPill && quotaText) {
+          if (currentQuota) {
+            const used = currentQuota.scans_used;
+            const max = currentQuota.max_scans;
+            const remaining = currentQuota.remaining_scans;
+
+            if (remaining <= 0) {
+              quotaPill.className = "px-3.5 py-2 rounded-xl border bg-rose-950/50 border-rose-500/40 text-rose-300 flex items-center gap-2 text-xs font-bold backdrop-blur-sm cursor-pointer hover:bg-rose-900/60 transition-all";
+              quotaPill.onclick = () => openAuthModal('signup');
+              quotaText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Guest Quota Reached (${used}/${max}) • <span class="text-indigo-300 underline">Sign Up Free</span>`;
+            } else {
+              quotaPill.className = "px-3.5 py-2 rounded-xl border bg-surface-900/80 border-slate-700/80 text-slate-300 flex items-center gap-2 text-xs font-medium backdrop-blur-sm shadow-sm";
+              quotaPill.onclick = null;
+              quotaText.innerHTML = `<i class="fa-solid fa-gauge text-indigo-400"></i> Guest Scans: <span class="text-white font-bold">${remaining}/${max} left today</span> • <button onclick="openAuthModal('signup')" class="text-indigo-400 hover:text-indigo-300 font-semibold underline">Sign In for Unlimited</button>`;
+            }
+          }
+        }
+      }
+    }
+
     function setAuthState(token, user) {
       if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
       if (user) {
@@ -2057,6 +2176,9 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         currentUser = user;
       }
       updateAuthUI();
+      fetchQuota();
+      loadScanHistory();
+      loadSchedules();
     }
 
     function clearAuthState() {
@@ -2064,6 +2186,9 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       localStorage.removeItem(AUTH_USER_KEY);
       currentUser = null;
       updateAuthUI();
+      fetchQuota();
+      loadScanHistory();
+      loadSchedules();
     }
 
     function updateAuthUI() {
@@ -2297,6 +2422,7 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     // Initialize defaults on load
     window.addEventListener('DOMContentLoaded', () => {
       initAuth();
+      fetchQuota();
       renderPresets('repository');
       executeScan();
     });

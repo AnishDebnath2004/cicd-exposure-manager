@@ -127,6 +127,7 @@ class ScanResult(BaseModel):
     attack_graph: Optional[AttackGraph] = None
     auto_discovery: Optional[AutoDiscoveryResult] = None
     unified_patch: Optional[str] = None
+    user_email: Optional[str] = None
 
 class ScanRequest(BaseModel):
     target: Optional[str] = None
@@ -137,6 +138,7 @@ class ScanRequest(BaseModel):
     repo_name: Optional[str] = None
     db_type: Optional[str] = None
     auto_triangulate: bool = True
+    user_email: Optional[str] = None
     fail_on_severity: SeverityLevel = Field(
         default_factory=lambda: SeverityLevel(settings.policy_gate.DEFAULT_FAIL_SEVERITY)
     )
@@ -152,6 +154,7 @@ class ScheduledScan(BaseModel):
     branch: Optional[str] = None
     interval_minutes: int = 60
     enabled: bool = True
+    user_email: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_run_at: Optional[datetime] = None
     last_scan_id: Optional[str] = None
@@ -166,6 +169,7 @@ class ScheduleCreateRequest(BaseModel):
     interval_minutes: int = 60
     fail_on_severity: SeverityLevel = SeverityLevel.HIGH
     max_allowed_pes: float = 60.0
+    user_email: Optional[str] = None
 
 class ScanHistorySummary(BaseModel):
     scan_id: str
@@ -181,3 +185,4 @@ class ScanHistorySummary(BaseModel):
     high_count: int
     policy_passed: bool
     scan_duration_seconds: float
+    user_email: Optional[str] = None

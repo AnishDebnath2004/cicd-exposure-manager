@@ -118,7 +118,8 @@ class ScanScheduler:
         branch: Optional[str] = None,
         interval_minutes: int = 60,
         fail_on_severity: SeverityLevel = SeverityLevel.HIGH,
-        max_allowed_pes: float = 60.0
+        max_allowed_pes: float = 60.0,
+        user_email: Optional[str] = None
     ) -> ScheduledScan:
         sched_id = str(uuid.uuid4())[:8]
 
@@ -145,7 +146,8 @@ class ScanScheduler:
             branch=branch,
             interval_minutes=max(1, interval_minutes),
             fail_on_severity=fail_on_severity.value if hasattr(fail_on_severity, "value") else str(fail_on_severity),
-            max_allowed_pes=max_allowed_pes
+            max_allowed_pes=max_allowed_pes,
+            user_email=user_email
         )
         return saved
 

@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Header, Depends, status
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Header, Depends, status, Request
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles
 # pyrefly: ignore [missing-import]
@@ -55,10 +55,36 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> UserR
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired session. Please sign in.",
+            detail="Authentication required. Please sign in or create an account.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+def get_client_ip(request: Optional[Request] = None) -> str:
+    """Retrieves client IP address, respecting reverse proxy headers."""
+    if not request:
+        return "127.0.0.1"
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "127.0.0.1"
+
+
+def enforce_guest_quota(request: Request = None, current_user: Optional[UserResponse] = None):
+    """Enforces 5 scans/day quota for unauthenticated guests. Logged-in users get unlimited scans."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if user or request is None:
+        return
+    client_ip = get_client_ip(request)
+    allowed, count, limit = storage.check_and_increment_guest_quota(client_ip, limit=5)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Guest daily scan quota exceeded ({count}/{limit} used). Please sign in or create an account for unlimited scans."
+        )
 
 
 @asynccontextmanager
@@ -114,13 +140,22 @@ async def serve_dashboard():
 
 
 @app.post("/api/scan", response_model=ScanResult)
-async def trigger_scan(request: ScanRequest):
+async def trigger_scan(
+    request: ScanRequest,
+    http_req: Request = None,
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
+):
     """
     Triggers a security exposure scan on any target:
     - Repository (Git URL or local path)
     - Website (HTTPS / HTTP URL)
     - Database (Connection URI or host:port)
     """
+    user = current_user if isinstance(current_user, UserResponse) else None
+    enforce_guest_quota(http_req, user)
+    if user:
+        request.user_email = user.email
+
     target = request.target or request.repo_url or request.target_path
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Target URL, path, or connection string must be provided.")
@@ -139,10 +174,14 @@ async def trigger_scan(request: ScanRequest):
 @app.post("/api/scan/website", response_model=ScanResult)
 async def scan_website(
     url: str = Query(..., description="Target website or API URL (e.g. https://example.com)"),
+    http_req: Request = None,
     fail_on_severity: SeverityLevel = Query(SeverityLevel.HIGH),
-    max_allowed_pes: float = Query(60.0)
+    max_allowed_pes: float = Query(60.0),
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
 ):
     """Dedicated endpoint to audit any live website or web API."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    enforce_guest_quota(http_req, user)
     if not url or not url.strip():
         raise HTTPException(status_code=400, detail="URL must be provided.")
     try:
@@ -150,7 +189,8 @@ async def scan_website(
             target=url.strip(),
             target_type=TargetCategory.WEBSITE,
             fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes
+            max_allowed_pes=max_allowed_pes,
+            user_email=user.email if user else None
         )
         return orchestrator.run_scan(req)
     except Exception as e:
@@ -160,11 +200,15 @@ async def scan_website(
 @app.post("/api/scan/database", response_model=ScanResult)
 async def scan_database(
     target: str = Query(..., description="Database URI (e.g. postgresql://user:pass@host:5432/db) or host:port"),
+    http_req: Request = None,
     engine: Optional[str] = Query(None, description="Database engine (postgres, mysql, redis, mongodb, elasticsearch, mssql)"),
     fail_on_severity: SeverityLevel = Query(SeverityLevel.HIGH),
-    max_allowed_pes: float = Query(60.0)
+    max_allowed_pes: float = Query(60.0),
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
 ):
     """Dedicated endpoint to audit any database posture and access security."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    enforce_guest_quota(http_req, user)
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Database target must be provided.")
     try:
@@ -173,7 +217,8 @@ async def scan_database(
             target_type=TargetCategory.DATABASE,
             db_type=engine,
             fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes
+            max_allowed_pes=max_allowed_pes,
+            user_email=user.email if user else None
         )
         return orchestrator.run_scan(req)
     except Exception as e:
@@ -183,12 +228,16 @@ async def scan_database(
 @app.post("/api/scan/upload", response_model=ScanResult)
 async def upload_and_scan(
     file: UploadFile = File(...),
+    http_req: Request = None,
     fail_on_severity: SeverityLevel = Form(SeverityLevel.HIGH),
-    max_allowed_pes: float = Form(60.0)
+    max_allowed_pes: float = Form(60.0),
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
 ):
     """
     Uploads a repository ZIP archive and runs full security audit.
     """
+    user = current_user if isinstance(current_user, UserResponse) else None
+    enforce_guest_quota(http_req, user)
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise HTTPException(status_code=400, detail="Only .zip archive files are supported.")
 
@@ -215,7 +264,8 @@ async def upload_and_scan(
             target_type=TargetCategory.REPOSITORY,
             repo_name=os.path.splitext(file.filename)[0],
             fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes
+            max_allowed_pes=max_allowed_pes,
+            user_email=user.email if user else None
         )
 
         result = orchestrator.run_scan(
@@ -241,10 +291,16 @@ async def upload_and_scan(
 async def get_scan_history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    target_type: Optional[str] = Query(None, pattern="^(repository|website|database)$")
+    target_type: Optional[str] = Query(None, pattern="^(repository|website|database)$"),
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
 ):
-    """Retrieves list of past scans across all asset types."""
-    return storage.list_scans(limit=limit, offset=offset, target_type=target_type)
+    """Retrieves list of past scans. Authenticated users see their own history; guests see guest scans."""
+    actual_limit = limit.default if hasattr(limit, "default") else int(limit)
+    actual_offset = offset.default if hasattr(offset, "default") else int(offset)
+    actual_target_type = target_type.default if hasattr(target_type, "default") else target_type
+    user = current_user if isinstance(current_user, UserResponse) else None
+    user_email = user.email if user else None
+    return storage.list_scans(limit=actual_limit, offset=actual_offset, target_type=actual_target_type, user_email=user_email)
 
 
 @app.get("/api/scans/{scan_id}", response_model=ScanResult)
@@ -340,12 +396,21 @@ async def get_scan_attack_graph(scan_id: str):
 
 
 @app.post("/api/scan/triangulate", response_model=ScanResult)
-async def scan_with_triangulation(request: ScanRequest):
+async def scan_with_triangulation(
+    request: ScanRequest,
+    http_req: Request = None,
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
+):
     """
     Automated Triangulation Scan:
     Inspects repository configs (compose, env, workflows) to auto-discover and probe
     live web endpoints and databases, linking all exposures into a unified attack graph.
     """
+    user = current_user if isinstance(current_user, UserResponse) else None
+    enforce_guest_quota(http_req, user)
+    if user:
+        request.user_email = user.email
+
     target = request.target or request.repo_url or request.target_path
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Target repository URL or path is required.")
@@ -354,16 +419,26 @@ async def scan_with_triangulation(request: ScanRequest):
     return orchestrator.run_scan(request)
 
 
-# Scheduled Scans Endpoints
+# Scheduled Scans Endpoints (Restricted to Authenticated Users)
 @app.get("/api/schedules", response_model=List[ScheduledScan])
-async def list_schedules():
-    """Lists all automated scheduled scans."""
-    return storage.get_schedules()
+async def list_schedules(current_user: UserResponse = Depends(get_current_user)):
+    """Lists continuous automated scheduled scans for the authenticated user."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
+    return storage.get_schedules(user_email=user.email)
 
 
 @app.post("/api/schedules", response_model=ScheduledScan)
-async def create_schedule(req: ScheduleCreateRequest):
-    """Creates a new recurring automated scan for any repository, website, or database."""
+async def create_schedule(
+    req: ScheduleCreateRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Creates a new recurring automated scan. Requires an authenticated account."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
+
     if not req.target or not req.target.strip():
         raise HTTPException(status_code=400, detail="Target URL, path, or connection string is required.")
 
@@ -373,25 +448,72 @@ async def create_schedule(req: ScheduleCreateRequest):
         branch=req.branch,
         interval_minutes=req.interval_minutes,
         fail_on_severity=req.fail_on_severity,
-        max_allowed_pes=req.max_allowed_pes
+        max_allowed_pes=req.max_allowed_pes,
+        user_email=user.email
     )
     return schedule
 
 
 @app.post("/api/schedules/{schedule_id}/run")
-async def trigger_schedule_now(schedule_id: str):
-    """Triggers an immediate execution of a scheduled scan in the background."""
+async def trigger_schedule_now(
+    schedule_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Triggers an immediate execution of a scheduled scan in the background. Requires authentication."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
+
     scheduler.run_scheduled_job(schedule_id)
     return {"status": "triggered", "schedule_id": schedule_id}
 
 
 @app.delete("/api/schedules/{schedule_id}")
-async def delete_schedule(schedule_id: str):
-    """Deletes a scheduled scan."""
+async def delete_schedule(
+    schedule_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Deletes a scheduled scan. Requires authentication."""
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
+
     deleted = scheduler.delete_schedule(schedule_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Schedule not found.")
     return {"status": "success", "message": f"Schedule {schedule_id} removed"}
+
+
+@app.get("/api/auth/quota")
+async def get_scan_quota(
+    http_req: Request = None,
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
+):
+    """
+    Returns scan quota status for the current client:
+    - Logged-in users receive unlimited scans.
+    - Unauthenticated guests receive up to 5 scans per day.
+    """
+    user = current_user if isinstance(current_user, UserResponse) else None
+    if user:
+        return {
+            "authenticated": True,
+            "unlimited": True,
+            "scans_used": 0,
+            "max_scans": -1,
+            "remaining_scans": -1,
+            "user_email": user.email
+        }
+    client_ip = get_client_ip(http_req)
+    used, limit = storage.get_guest_quota(client_ip, limit=5)
+    return {
+        "authenticated": False,
+        "unlimited": False,
+        "scans_used": used,
+        "max_scans": limit,
+        "remaining_scans": max(0, limit - used),
+        "user_email": None
+    }
 
 
 # ==============================================================

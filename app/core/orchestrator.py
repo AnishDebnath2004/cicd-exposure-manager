@@ -179,7 +179,8 @@ class ExposureOrchestrator:
                 toxic_combinations=toxic_combos,
                 attack_graph=attack_graph,
                 auto_discovery=auto_disc,
-                unified_patch=unified_patch
+                unified_patch=unified_patch,
+                user_email=request.user_email
             )
 
             try:
@@ -193,7 +194,8 @@ class ExposureOrchestrator:
         self,
         target_url: str,
         fail_severity: SeverityLevel = SeverityLevel.HIGH,
-        max_pes: float = 60.0
+        max_pes: float = 60.0,
+        user_email: Optional[str] = None
     ) -> ScanResult:
         """Audits live website / API endpoints for TLS, security headers, CORS, and exposed paths."""
         start_time = time.time()
@@ -236,7 +238,8 @@ class ExposureOrchestrator:
             metadata=web_meta,
             toxic_combinations=toxic_combos,
             attack_graph=attack_graph,
-            unified_patch=patch_str
+            unified_patch=patch_str,
+            user_email=user_email
         )
 
         try:
@@ -251,7 +254,8 @@ class ExposureOrchestrator:
         target_db: str,
         explicit_engine: Optional[str] = None,
         fail_severity: SeverityLevel = SeverityLevel.HIGH,
-        max_pes: float = 60.0
+        max_pes: float = 60.0,
+        user_email: Optional[str] = None
     ) -> ScanResult:
         """Audits database connection strings or endpoints for network access, credentials, and TLS."""
         start_time = time.time()
@@ -294,7 +298,8 @@ class ExposureOrchestrator:
             sbom_components=[],
             metadata=db_meta,
             toxic_combinations=toxic_combos,
-            attack_graph=attack_graph
+            attack_graph=attack_graph,
+            user_email=user_email
         )
 
         try:

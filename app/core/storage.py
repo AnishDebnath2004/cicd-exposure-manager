@@ -11,8 +11,8 @@ import csv
 import json
 import uuid
 import sqlite3
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from datetime import datetime, timedelta
+from typing import List, Optional, Dict, Any, Tuple
 from app.config import settings
 from app.models.schemas import (
     ScanResult, ScanHistorySummary, ScheduledScan, SeverityLevel, FindingCategory, TargetCategory
@@ -61,6 +61,7 @@ class StorageEngine:
                     policy_passed INTEGER NOT NULL,
                     scan_duration_seconds REAL NOT NULL,
                     scanned_files_count INTEGER NOT NULL,
+                    user_email TEXT,
                     result_json TEXT NOT NULL
                 )
             """)
@@ -75,6 +76,7 @@ class StorageEngine:
                     fail_on_severity TEXT NOT NULL,
                     max_allowed_pes REAL NOT NULL,
                     enabled INTEGER NOT NULL DEFAULT 1,
+                    user_email TEXT,
                     created_at TEXT NOT NULL,
                     last_run_at TEXT,
                     last_scan_id TEXT,
@@ -97,6 +99,14 @@ class StorageEngine:
                     last_login_at TEXT
                 )
             """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS guest_quotas (
+                    client_ip TEXT PRIMARY KEY,
+                    scan_count INTEGER NOT NULL DEFAULT 0,
+                    reset_at TEXT NOT NULL
+                )
+            """)
             
             # Migration check: ensure target_type and user_email columns exist
             cursor.execute("PRAGMA table_info(scans)")
@@ -110,6 +120,8 @@ class StorageEngine:
             sched_columns = [row["name"] for row in cursor.fetchall()]
             if "target_type" not in sched_columns:
                 cursor.execute("ALTER TABLE schedules ADD COLUMN target_type TEXT NOT NULL DEFAULT 'repository'")
+            if "user_email" not in sched_columns:
+                cursor.execute("ALTER TABLE schedules ADD COLUMN user_email TEXT")
 
             conn.commit()
 
@@ -124,8 +136,8 @@ class StorageEngine:
                     scan_id, repo_name, target_path, repo_url, branch, source_type,
                     target_type, timestamp, total_findings, critical_count, high_count, medium_count,
                     low_count, info_count, pipeline_exposure_score, risk_grade,
-                    policy_passed, scan_duration_seconds, scanned_files_count, result_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    policy_passed, scan_duration_seconds, scanned_files_count, user_email, result_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 scan.scan_id,
                 scan.repo_name,
@@ -146,6 +158,7 @@ class StorageEngine:
                 1 if s.policy_passed else 0,
                 s.scan_duration_seconds,
                 s.scanned_files_count,
+                scan.user_email,
                 scan.model_dump_json()
             ))
             conn.commit()
@@ -160,29 +173,42 @@ class StorageEngine:
                 return None
             return ScanResult.model_validate_json(row["result_json"])
 
-    def list_scans(self, limit: int = 50, offset: int = 0, target_type: Optional[str] = None) -> List[ScanHistorySummary]:
-        """Retrieves scan history list with optional target type filter."""
+    def list_scans(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        target_type: Optional[str] = None,
+        user_email: Optional[str] = None
+    ) -> List[ScanHistorySummary]:
+        """Retrieves scan history list with optional target type filter and per-user privacy scoping."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
+            query_conditions = []
+            params: list = []
+
             if target_type:
-                cursor.execute("""
-                    SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
-                           pipeline_exposure_score, risk_grade, total_findings,
-                           critical_count, high_count, policy_passed, scan_duration_seconds
-                    FROM scans
-                    WHERE target_type = ?
-                    ORDER BY timestamp DESC
-                    LIMIT ? OFFSET ?
-                """, (target_type, limit, offset))
+                query_conditions.append("target_type = ?")
+                params.append(target_type)
+
+            if user_email:
+                query_conditions.append("LOWER(user_email) = LOWER(?)")
+                params.append(user_email.strip())
             else:
-                cursor.execute("""
-                    SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
-                           pipeline_exposure_score, risk_grade, total_findings,
-                           critical_count, high_count, policy_passed, scan_duration_seconds
-                    FROM scans
-                    ORDER BY timestamp DESC
-                    LIMIT ? OFFSET ?
-                """, (limit, offset))
+                # Unauthenticated guest only sees guest scans
+                query_conditions.append("user_email IS NULL")
+
+            where_clause = " WHERE " + " AND ".join(query_conditions) if query_conditions else ""
+            query = f"""
+                SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
+                       pipeline_exposure_score, risk_grade, total_findings,
+                       critical_count, high_count, policy_passed, scan_duration_seconds, user_email
+                FROM scans
+                {where_clause}
+                ORDER BY timestamp DESC
+                LIMIT ? OFFSET ?
+            """
+            params.extend([limit, offset])
+            cursor.execute(query, tuple(params))
             rows = cursor.fetchall()
             return [
                 ScanHistorySummary(
@@ -198,7 +224,8 @@ class StorageEngine:
                     critical_count=r["critical_count"],
                     high_count=r["high_count"],
                     policy_passed=bool(r["policy_passed"]),
-                    scan_duration_seconds=r["scan_duration_seconds"]
+                    scan_duration_seconds=r["scan_duration_seconds"],
+                    user_email=r["user_email"] if "user_email" in r.keys() else None
                 )
                 for r in rows
             ]
@@ -221,7 +248,8 @@ class StorageEngine:
         branch: Optional[str],
         interval_minutes: int,
         fail_on_severity: str = "HIGH",
-        max_allowed_pes: float = 60.0
+        max_allowed_pes: float = 60.0,
+        user_email: Optional[str] = None
     ) -> ScheduledScan:
         created_at = datetime.utcnow().isoformat()
         with self._get_connection() as conn:
@@ -229,11 +257,11 @@ class StorageEngine:
             cursor.execute("""
                 INSERT OR REPLACE INTO schedules (
                     id, target, source_type, target_type, branch, interval_minutes,
-                    fail_on_severity, max_allowed_pes, enabled, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                    fail_on_severity, max_allowed_pes, enabled, user_email, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
             """, (
                 sched_id, target, source_type, target_type, branch, interval_minutes,
-                fail_on_severity, max_allowed_pes, created_at
+                fail_on_severity, max_allowed_pes, user_email, created_at
             ))
             conn.commit()
 
@@ -245,13 +273,17 @@ class StorageEngine:
             branch=branch,
             interval_minutes=interval_minutes,
             enabled=True,
+            user_email=user_email,
             created_at=datetime.fromisoformat(created_at)
         )
 
-    def get_schedules(self) -> List[ScheduledScan]:
+    def get_schedules(self, user_email: Optional[str] = None) -> List[ScheduledScan]:
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM schedules ORDER BY created_at DESC")
+            if user_email:
+                cursor.execute("SELECT * FROM schedules WHERE LOWER(user_email) = LOWER(?) ORDER BY created_at DESC", (user_email.strip(),))
+            else:
+                cursor.execute("SELECT * FROM schedules ORDER BY created_at DESC")
             rows = cursor.fetchall()
             return [
                 ScheduledScan(
@@ -262,6 +294,7 @@ class StorageEngine:
                     branch=r["branch"],
                     interval_minutes=r["interval_minutes"],
                     enabled=bool(r["enabled"]),
+                    user_email=r["user_email"] if "user_email" in r.keys() else None,
                     created_at=datetime.fromisoformat(r["created_at"]),
                     last_run_at=datetime.fromisoformat(r["last_run_at"]) if r["last_run_at"] else None,
                     last_scan_id=r["last_scan_id"],
@@ -271,6 +304,54 @@ class StorageEngine:
                 )
                 for r in rows
             ]
+
+    # Guest Scan Quota Management
+    def check_and_increment_guest_quota(self, client_ip: str, limit: int = 5) -> Tuple[bool, int, int]:
+        """
+        Checks whether client_ip has exceeded daily scan quota.
+        If quota remains, increments count and returns (True, current_count, limit).
+        If quota exceeded, returns (False, current_count, limit).
+        """
+        now = datetime.utcnow()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT scan_count, reset_at FROM guest_quotas WHERE client_ip = ?", (client_ip,))
+            row = cursor.fetchone()
+            if not row:
+                reset_at = (now + timedelta(days=1)).isoformat()
+                cursor.execute("INSERT INTO guest_quotas (client_ip, scan_count, reset_at) VALUES (?, 1, ?)", (client_ip, reset_at))
+                conn.commit()
+                return True, 1, limit
+
+            reset_at_dt = datetime.fromisoformat(row["reset_at"])
+            if now > reset_at_dt:
+                reset_at = (now + timedelta(days=1)).isoformat()
+                cursor.execute("UPDATE guest_quotas SET scan_count = 1, reset_at = ? WHERE client_ip = ?", (reset_at, client_ip))
+                conn.commit()
+                return True, 1, limit
+
+            current_count = int(row["scan_count"])
+            if current_count >= limit:
+                return False, current_count, limit
+
+            new_count = current_count + 1
+            cursor.execute("UPDATE guest_quotas SET scan_count = ? WHERE client_ip = ?", (new_count, client_ip))
+            conn.commit()
+            return True, new_count, limit
+
+    def get_guest_quota(self, client_ip: str, limit: int = 5) -> Tuple[int, int]:
+        """Returns (used_scans, max_limit) for a client IP."""
+        now = datetime.utcnow()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT scan_count, reset_at FROM guest_quotas WHERE client_ip = ?", (client_ip,))
+            row = cursor.fetchone()
+            if not row:
+                return 0, limit
+            reset_at_dt = datetime.fromisoformat(row["reset_at"])
+            if now > reset_at_dt:
+                return 0, limit
+            return int(row["scan_count"]), limit
 
     def update_schedule_execution(
         self,
