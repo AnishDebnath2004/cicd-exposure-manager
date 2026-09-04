@@ -518,6 +518,45 @@ class SQLiteStorageAdapter:
             conn.commit()
             return cursor.rowcount > 0
 
+    def list_users(self, limit: int = 100, offset: int = 0) -> List[UserResponse]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at
+                FROM users
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            """, (limit, offset))
+            rows = cursor.fetchall()
+            results = []
+            for row in rows:
+                keys = row.keys()
+                tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
+                results.append(UserResponse(
+                    id=row["id"],
+                    email=row["email"],
+                    full_name=row["full_name"],
+                    organization=row["organization"],
+                    role=row["role"] or "developer",
+                    token_version=tok_ver,
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
+                ))
+            return results
+
+    def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET role = ?, token_version = COALESCE(token_version, 1) + 1
+                WHERE id = ?
+            """, (new_role, user_id))
+            conn.commit()
+            if cursor.rowcount > 0:
+                return self.get_user_by_id(user_id)
+            return None
+
     def get_system_settings(self, defaults: Dict[str, Any]) -> Dict[str, Any]:
         merged = dict(defaults)
         with self._get_connection() as conn:
@@ -1137,6 +1176,45 @@ class PostgresStorageAdapter:
             conn.commit()
             return rc > 0
 
+    def list_users(self, limit: int = 100, offset: int = 0) -> List[UserResponse]:
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at
+                    FROM users
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                """, (limit, offset))
+                rows = cursor.fetchall()
+                results = []
+                for row in rows:
+                    tok_ver = row.get("token_version") or 1
+                    results.append(UserResponse(
+                        id=row["id"],
+                        email=row["email"],
+                        full_name=row["full_name"],
+                        organization=row["organization"],
+                        role=row["role"] or "developer",
+                        token_version=tok_ver,
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                        last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None
+                    ))
+                return results
+
+    def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET role = %s, token_version = COALESCE(token_version, 1) + 1
+                    WHERE id = %s
+                """, (new_role, user_id))
+                rc = cursor.rowcount
+            conn.commit()
+            if rc > 0:
+                return self.get_user_by_id(user_id)
+            return None
+
     def get_system_settings(self, defaults: Dict[str, Any]) -> Dict[str, Any]:
         merged = dict(defaults)
         with self._get_connection() as conn:
@@ -1333,6 +1411,12 @@ class StorageEngine:
         return self.adapter.update_user_password(
             user_id=user_id, new_password_hash=new_password_hash, salt=salt
         )
+
+    def list_users(self, limit: int = 100, offset: int = 0) -> List[UserResponse]:
+        return self.adapter.list_users(limit=limit, offset=offset)
+
+    def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
+        return self.adapter.update_user_role(user_id=user_id, new_role=new_role)
 
     def _sync_runtime_settings(self):
         """Synchronizes persisted settings into in-memory settings config."""

@@ -28,7 +28,8 @@ from app.models.schemas import (
 )
 from app.models.auth_schemas import (
     UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse,
-    UserProfileUpdateRequest, PasswordChangeRequest
+    UserProfileUpdateRequest, PasswordChangeRequest, UserRoleUpdateRequest,
+    AdminCreateUserRequest, UserListResponse
 )
 from app.core.security import (
     hash_password, verify_password, create_access_token, decode_access_token, validate_safe_url
@@ -71,6 +72,16 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> UserR
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+async def require_admin(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
+    """Dependency that mandates administrator privileges."""
+    if getattr(current_user, "role", "developer") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Administrator privileges are required to perform this action."
+        )
+    return current_user
 
 
 def get_client_ip(request: Optional[Request] = None) -> str:
@@ -727,6 +738,65 @@ async def change_password(
         "token_type": "bearer",
         "user": updated_user
     }
+
+
+# ==============================================================
+# Admin User & Role Management Endpoints (Admin Only)
+# ==============================================================
+@app.get("/api/admin/users", response_model=UserListResponse)
+async def admin_list_users(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """Lists all registered users across all domains (Admin privilege required)."""
+    users = storage.list_users(limit=limit, offset=offset)
+    return UserListResponse(total=len(users), users=users)
+
+
+@app.put("/api/admin/users/{user_id}/role", response_model=UserResponse)
+async def admin_update_user_role(
+    user_id: str,
+    req: UserRoleUpdateRequest,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """Promotes or demotes a user's role (Admin privilege required)."""
+    if user_id == admin_user.id and req.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Administrators cannot demote their own account. Another administrator must change your role."
+        )
+    updated = storage.update_user_role(user_id=user_id, new_role=req.role)
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found.")
+    storage.refresh()
+    return updated
+
+
+@app.post("/api/admin/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def admin_create_user(
+    req: AdminCreateUserRequest,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """Directly provisions a new user/admin account (Admin privilege required)."""
+    existing = storage.get_user_by_email(req.email)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email address already exists."
+        )
+
+    pw_hash, salt = hash_password(req.password)
+    user = storage.create_user(
+        email=req.email,
+        password_hash=pw_hash,
+        salt=salt,
+        full_name=req.full_name,
+        organization=req.organization,
+        role=req.role
+    )
+    storage.refresh()
+    return user
 
 
 # ==============================================================

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Literal
 from pydantic import BaseModel, Field, field_validator
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
@@ -66,4 +66,33 @@ class PasswordChangeRequest(BaseModel):
     """Payload for changing password."""
     current_password: str = Field(..., description="Existing account password")
     new_password: str = Field(..., min_length=8, description="New password (minimum 8 characters)")
+
+
+class UserRoleUpdateRequest(BaseModel):
+    """Payload for updating a user's role (Admin only)."""
+    role: Literal["admin", "developer"] = Field(..., description="Target role: 'admin' or 'developer'")
+
+
+class AdminCreateUserRequest(BaseModel):
+    """Payload for an admin provisioning a new user/admin directly."""
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., min_length=8, description="Initial account password")
+    full_name: Optional[str] = Field(None, description="User full name")
+    organization: Optional[str] = Field(None, description="Organization or team name")
+    role: Literal["admin", "developer"] = Field("admin", description="Assigned role: 'admin' or 'developer'")
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not EMAIL_REGEX.match(v):
+            raise ValueError("Invalid email format")
+        return v
+
+
+class UserListResponse(BaseModel):
+    """Admin response containing list of all registered users."""
+    total: int
+    users: List[UserResponse]
+
 
