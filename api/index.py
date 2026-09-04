@@ -38,8 +38,8 @@ class VercelPathNormalizer:
 
             # 2. Normalize if Vercel stripped the /api prefix for API routes
             cur_path = scope.get("path", "")
-            if cur_path in ("/health", "/scans", "/scan", "/schedules") or \
-               cur_path.startswith(("/scans/", "/scan/", "/schedules/", "/webhook/")):
+            if cur_path in ("/health", "/scans", "/scan", "/schedules", "/settings") or \
+               cur_path.startswith(("/scans/", "/scan/", "/schedules/", "/webhook/", "/auth/", "/settings/")):
                 scope["path"] = "/api" + cur_path
 
         await self.asgi_app(scope, receive, send)
