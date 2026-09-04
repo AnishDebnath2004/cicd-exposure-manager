@@ -164,6 +164,8 @@ class SQLiteStorageAdapter:
             user_columns = [row["name"] for row in cursor.fetchall()]
             if "token_version" not in user_columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1")
+            if "preferred_domain" not in user_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN preferred_domain TEXT DEFAULT 'domain_01'")
 
             conn.commit()
 
@@ -422,7 +424,8 @@ class SQLiteStorageAdapter:
         salt: str,
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
-        role: str = "developer"
+        role: str = "developer",
+        preferred_domain: str = "domain_01"
     ) -> UserResponse:
         user_id = str(uuid.uuid4())
         created_at_dt = datetime.utcnow()
@@ -431,13 +434,13 @@ class SQLiteStorageAdapter:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO users (
-                    id, email, password_hash, salt, full_name, organization, role, token_version, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    id, email, password_hash, salt, full_name, organization, role, token_version, preferred_domain, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id, email.lower().strip(), password_hash, salt,
                 full_name.strip() if full_name else None,
                 organization.strip() if organization else None,
-                role, 1, created_at
+                role, 1, preferred_domain, created_at
             ))
             conn.commit()
 
@@ -447,6 +450,7 @@ class SQLiteStorageAdapter:
             full_name=full_name.strip() if full_name else None,
             organization=organization.strip() if organization else None,
             role=role,
+            preferred_domain=preferred_domain,
             token_version=1,
             created_at=created_at_dt,
             last_login_at=None
@@ -464,18 +468,20 @@ class SQLiteStorageAdapter:
     def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
+            cursor.execute("SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             if not row:
                 return None
             keys = row.keys()
             tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
+            pref_dom = row["preferred_domain"] if "preferred_domain" in keys and row["preferred_domain"] else "domain_01"
             return UserResponse(
                 id=row["id"],
                 email=row["email"],
                 full_name=row["full_name"],
                 organization=row["organization"],
                 role=row["role"] or "developer",
+                preferred_domain=pref_dom,
                 token_version=tok_ver,
                 created_at=datetime.fromisoformat(row["created_at"]),
                 last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
@@ -522,7 +528,7 @@ class SQLiteStorageAdapter:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at
+                SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at
                 FROM users
                 ORDER BY created_at DESC
                 LIMIT ? OFFSET ?
@@ -532,12 +538,14 @@ class SQLiteStorageAdapter:
             for row in rows:
                 keys = row.keys()
                 tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
+                pref_dom = row["preferred_domain"] if "preferred_domain" in keys and row["preferred_domain"] else "domain_01"
                 results.append(UserResponse(
                     id=row["id"],
                     email=row["email"],
                     full_name=row["full_name"],
                     organization=row["organization"],
                     role=row["role"] or "developer",
+                    preferred_domain=pref_dom,
                     token_version=tok_ver,
                     created_at=datetime.fromisoformat(row["created_at"]),
                     last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
@@ -552,6 +560,19 @@ class SQLiteStorageAdapter:
                 SET role = ?, token_version = COALESCE(token_version, 1) + 1
                 WHERE id = ?
             """, (new_role, user_id))
+            conn.commit()
+            if cursor.rowcount > 0:
+                return self.get_user_by_id(user_id)
+            return None
+
+    def update_user_preferred_domain(self, user_id: str, domain: str) -> Optional[UserResponse]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET preferred_domain = ?
+                WHERE id = ?
+            """, (domain, user_id))
             conn.commit()
             if cursor.rowcount > 0:
                 return self.get_user_by_id(user_id)
@@ -688,7 +709,7 @@ class PostgresStorageAdapter:
                         low_count INTEGER NOT NULL,
                         info_count INTEGER NOT NULL,
                         pipeline_exposure_score DOUBLE PRECISION NOT NULL,
-                        risk_grade VARCHAR(16) NOT NULL,
+                        risk_grade VARCHAR(64) NOT NULL,
                         policy_passed INTEGER NOT NULL,
                         scan_duration_seconds DOUBLE PRECISION NOT NULL,
                         scanned_files_count INTEGER NOT NULL,
@@ -717,7 +738,7 @@ class PostgresStorageAdapter:
                         last_run_at VARCHAR(64),
                         last_scan_id VARCHAR(128),
                         last_pes DOUBLE PRECISION,
-                        last_grade VARCHAR(16),
+                        last_grade VARCHAR(64),
                         last_status VARCHAR(64)
                     );
                 """)
@@ -786,6 +807,18 @@ class PostgresStorageAdapter:
                 user_cols = [r["column_name"] for r in cursor.fetchall()]
                 if "token_version" not in user_cols:
                     cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1;")
+                if "preferred_domain" not in user_cols:
+                    cursor.execute("ALTER TABLE users ADD COLUMN preferred_domain VARCHAR(64) DEFAULT 'domain_01';")
+
+                # Ensure grade columns have sufficient capacity for descriptive grades like 'F (Critical Exposure)'
+                try:
+                    cursor.execute("ALTER TABLE scans ALTER COLUMN risk_grade TYPE VARCHAR(64);")
+                except Exception:
+                    pass
+                try:
+                    cursor.execute("ALTER TABLE schedules ALTER COLUMN last_grade TYPE VARCHAR(64);")
+                except Exception:
+                    pass
 
             conn.commit()
 
@@ -1080,7 +1113,8 @@ class PostgresStorageAdapter:
         salt: str,
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
-        role: str = "developer"
+        role: str = "developer",
+        preferred_domain: str = "domain_01"
     ) -> UserResponse:
         user_id = str(uuid.uuid4())
         created_at_dt = datetime.utcnow()
@@ -1089,13 +1123,13 @@ class PostgresStorageAdapter:
             with self._get_cursor(conn) as cursor:
                 cursor.execute("""
                     INSERT INTO users (
-                        id, email, password_hash, salt, full_name, organization, role, token_version, created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        id, email, password_hash, salt, full_name, organization, role, token_version, preferred_domain, created_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     user_id, email.lower().strip(), password_hash, salt,
                     full_name.strip() if full_name else None,
                     organization.strip() if organization else None,
-                    role, 1, created_at
+                    role, 1, preferred_domain, created_at
                 ))
             conn.commit()
 
@@ -1105,6 +1139,7 @@ class PostgresStorageAdapter:
             full_name=full_name.strip() if full_name else None,
             organization=organization.strip() if organization else None,
             role=role,
+            preferred_domain=preferred_domain,
             token_version=1,
             created_at=created_at_dt,
             last_login_at=None
@@ -1122,17 +1157,19 @@ class PostgresStorageAdapter:
     def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
             with self._get_cursor(conn) as cursor:
-                cursor.execute("SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at FROM users WHERE id = %s", (user_id,))
+                cursor.execute("SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at FROM users WHERE id = %s", (user_id,))
                 row = cursor.fetchone()
                 if not row:
                     return None
                 tok_ver = row.get("token_version") or 1
+                pref_dom = row.get("preferred_domain") or "domain_01"
                 return UserResponse(
                     id=row["id"],
                     email=row["email"],
                     full_name=row["full_name"],
                     organization=row["organization"],
                     role=row["role"] or "developer",
+                    preferred_domain=pref_dom,
                     token_version=tok_ver,
                     created_at=datetime.fromisoformat(row["created_at"]),
                     last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None
@@ -1180,7 +1217,7 @@ class PostgresStorageAdapter:
         with self._get_connection() as conn:
             with self._get_cursor(conn) as cursor:
                 cursor.execute("""
-                    SELECT id, email, full_name, organization, role, token_version, created_at, last_login_at
+                    SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at
                     FROM users
                     ORDER BY created_at DESC
                     LIMIT %s OFFSET %s
@@ -1189,12 +1226,14 @@ class PostgresStorageAdapter:
                 results = []
                 for row in rows:
                     tok_ver = row.get("token_version") or 1
+                    pref_dom = row.get("preferred_domain") or "domain_01"
                     results.append(UserResponse(
                         id=row["id"],
                         email=row["email"],
                         full_name=row["full_name"],
                         organization=row["organization"],
                         role=row["role"] or "developer",
+                        preferred_domain=pref_dom,
                         token_version=tok_ver,
                         created_at=datetime.fromisoformat(row["created_at"]),
                         last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None
@@ -1209,6 +1248,20 @@ class PostgresStorageAdapter:
                     SET role = %s, token_version = COALESCE(token_version, 1) + 1
                     WHERE id = %s
                 """, (new_role, user_id))
+                rc = cursor.rowcount
+            conn.commit()
+            if rc > 0:
+                return self.get_user_by_id(user_id)
+            return None
+
+    def update_user_preferred_domain(self, user_id: str, domain: str) -> Optional[UserResponse]:
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET preferred_domain = %s
+                    WHERE id = %s
+                """, (domain, user_id))
                 rc = cursor.rowcount
             conn.commit()
             if rc > 0:
@@ -1377,7 +1430,8 @@ class StorageEngine:
         salt: str,
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
-        role: str = "developer"
+        role: str = "developer",
+        preferred_domain: str = "domain_01"
     ) -> UserResponse:
         return self.adapter.create_user(
             email=email,
@@ -1385,7 +1439,8 @@ class StorageEngine:
             salt=salt,
             full_name=full_name,
             organization=organization,
-            role=role
+            role=role,
+            preferred_domain=preferred_domain
         )
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
@@ -1417,6 +1472,9 @@ class StorageEngine:
 
     def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
         return self.adapter.update_user_role(user_id=user_id, new_role=new_role)
+
+    def update_user_preferred_domain(self, user_id: str, domain: str) -> Optional[UserResponse]:
+        return self.adapter.update_user_preferred_domain(user_id=user_id, domain=domain)
 
     def _sync_runtime_settings(self):
         """Synchronizes persisted settings into in-memory settings config."""

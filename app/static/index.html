@@ -88,7 +88,7 @@
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-surface-950/80 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3.5 cursor-pointer" onclick="switchNavTab('audit')">
+      <div class="flex items-center space-x-3.5 cursor-pointer" onclick="switchNavTab('domain1')">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center text-xl font-black shadow-lg shadow-indigo-600/30 text-white">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
@@ -103,25 +103,22 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="hidden md:flex items-center bg-surface-900/80 border border-slate-800 p-1 rounded-xl">
-        <button onclick="switchNavTab('audit')" id="navTab-audit" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5">
-          <i class="fa-solid fa-crosshairs"></i> <span>Audit Center</span>
+      <!-- Navigation Tabs (5 Core Sections) -->
+      <nav class="hidden lg:flex items-center bg-surface-900/80 border border-slate-800 p-1 rounded-xl">
+        <button onclick="switchNavTab('domain1')" id="navTab-domain1" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5">
+          <i class="fa-solid fa-code-branch"></i> <span>Domain 01: Code & CI/CD</span>
         </button>
-        <button onclick="switchNavTab('history')" id="navTab-history" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-clock-rotate-left"></i> <span>Scan History</span>
+        <button onclick="switchNavTab('domain2')" id="navTab-domain2" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-globe"></i> <span>Domain 02: Web & API</span>
         </button>
-        <button onclick="switchNavTab('schedules')" id="navTab-schedules" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-calendar-check"></i> <span>Continuous Schedules</span>
+        <button onclick="switchNavTab('domain3')" id="navTab-domain3" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-database"></i> <span>Domain 03: DB & Cloud</span>
         </button>
-        <button onclick="switchNavTab('integration')" id="navTab-integration" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-code-merge"></i> <span>CI/CD & CLI</span>
+        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-crown text-amber-400"></i> <span>Admin</span>
         </button>
-        <button onclick="switchNavTab('settings')" id="navTab-settings" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-gear"></i> <span>Settings</span>
-        </button>
-        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn hidden px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-crown text-amber-400"></i> <span>Admin Console</span>
+        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-user-shield text-emerald-400"></i> <span>User</span>
         </button>
       </nav>
 
@@ -175,140 +172,46 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
 
     <!-- ========================================== -->
+    <!-- SECTION 1: DOMAIN 01 - CODE REPOSITORY & CI/CD SECURITY -->
     <!-- ========================================== -->
-    <!-- TAB 1: AUDIT CENTER (TRI-VECTOR DEFENSE) -->
-    <!-- ========================================== -->
-    <div id="section-audit" class="space-y-8">
-
-      <!-- Security Domain Workspaces Overview -->
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-cubes-stacked text-indigo-400"></i> Security Domain Workspaces
-            </h2>
-            <p class="text-xs text-slate-400">Select a domain workspace to audit assets, enforce policies, and monitor exposures.</p>
-          </div>
-          <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono bg-surface-900 border border-slate-800 text-slate-400">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 3 Domains Active
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Domain Card 1: Code & CI/CD Pipelines -->
-          <div onclick="setAssetCategory('repository')" id="domainCard-repository" class="domain-card glass-card rounded-2xl p-5 border-2 border-indigo-500 bg-indigo-950/20 shadow-lg shadow-indigo-600/10 cursor-pointer transition-all hover:scale-[1.01] flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  Domain 01
-                </span>
-                <div class="w-8 h-8 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-sm shadow-inner">
-                  <i class="fa-solid fa-code-branch"></i>
-                </div>
-              </div>
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                Code & CI/CD Pipelines
-              </h3>
-              <p class="text-xs text-slate-400 mt-1 line-clamp-2">
-                Audit source codebases, CI workflows (.github/workflows), secret leaks, branch protections & dependencies.
-              </p>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-              <span class="domain-status-text text-indigo-400 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[9px]"></i> Active Workspace</span>
-              <span class="text-slate-500 font-mono">Git / ZIP / Local</span>
-            </div>
-          </div>
-
-          <!-- Domain Card 2: Web & API Perimeter -->
-          <div onclick="setAssetCategory('website')" id="domainCard-website" class="domain-card glass-card rounded-2xl p-5 border-2 border-transparent hover:border-slate-700 bg-surface-900/60 cursor-pointer transition-all hover:scale-[1.01] flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/30">
-                  Domain 02
-                </span>
-                <div class="w-8 h-8 rounded-xl bg-sky-600/20 text-sky-400 border border-sky-500/30 flex items-center justify-center text-sm shadow-inner">
-                  <i class="fa-solid fa-globe"></i>
-                </div>
-              </div>
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                Web & API Perimeter
-              </h3>
-              <p class="text-xs text-slate-400 mt-1 line-clamp-2">
-                Audit live endpoints, SSL/TLS certificate health, HSTS/CSP security headers, CORS flaws & exposed routes.
-              </p>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-              <span class="domain-status-text text-slate-500 flex items-center gap-1.5"><i class="fa-regular fa-circle text-[9px]"></i> Switch Domain</span>
-              <span class="text-slate-500 font-mono">HTTPS / REST / GraphQL</span>
-            </div>
-          </div>
-
-          <!-- Domain Card 3: Database & Cloud Infrastructure -->
-          <div onclick="setAssetCategory('database')" id="domainCard-database" class="domain-card glass-card rounded-2xl p-5 border-2 border-transparent hover:border-slate-700 bg-surface-900/60 cursor-pointer transition-all hover:scale-[1.01] flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Domain 03
-                </span>
-                <div class="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-sm shadow-inner">
-                  <i class="fa-solid fa-database"></i>
-                </div>
-              </div>
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                Database & Cloud Infra
-              </h3>
-              <p class="text-xs text-slate-400 mt-1 line-clamp-2">
-                Audit Postgres, MySQL, Redis & Mongo for open ports, missing auth, default passwords & TLS enforcement.
-              </p>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-              <span class="domain-status-text text-slate-500 flex items-center gap-1.5"><i class="fa-regular fa-circle text-[9px]"></i> Switch Domain</span>
-              <span class="text-slate-500 font-mono">URI / Port Probe</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div id="section-domain1" class="space-y-8">
       
-      <!-- Primary Tri-Vector Ingestion Panel -->
-      <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <!-- Domain 01 Header & Workstation Controls -->
+      <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden border border-indigo-500/30">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <!-- Active Domain Ingestion Workspace Header -->
+        <!-- Workstation Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <span id="activeDomainTag" class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Domain 01 Active</span>
-              <span class="text-xs text-slate-500">&bull; Tri-Vector Exposure Engine</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 tracking-wider">Domain 01 Active &bull; Code &amp; CI/CD Pipelines</span>
+              <span id="domain1PrefBadge" class="hidden text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30 font-semibold"><i class="fa-solid fa-star text-amber-400 mr-1"></i>Your Preferred Workspace</span>
             </div>
-            <h2 id="activeDomainTitle" class="text-xl font-bold text-white flex items-center gap-2.5">
-              <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code Repository & CI/CD Security
+            <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code Repository &amp; CI/CD Security
             </h2>
-            <p id="activeDomainDesc" class="text-sm text-slate-400 mt-1">Audit source code, Git branches, CI/CD pipeline manifests, secret tokens, and vulnerable dependencies.</p>
+            <p class="text-sm text-slate-400 mt-1">Audit source codebases, Git branches, CI/CD pipeline manifests (.github/workflows), secret token leaks, and vulnerable dependencies.</p>
           </div>
           
-          <!-- Domain Switcher Pills -->
-          <div class="flex bg-surface-950 p-1 rounded-xl border border-slate-800 self-start md:self-auto shadow-inner">
-            <button onclick="setAssetCategory('repository')" id="assetBtn-repository" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-2">
-              <i class="fa-solid fa-code-branch"></i> Code / CI-CD
+          <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
+            <button onclick="switchNavTab('domain2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web &amp; API
             </button>
-            <button onclick="setAssetCategory('website')" id="assetBtn-website" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
-              <i class="fa-solid fa-globe"></i> Web & API
-            </button>
-            <button onclick="setAssetCategory('database')" id="assetBtn-database" class="asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
-              <i class="fa-solid fa-database"></i> Database
+            <button onclick="switchNavTab('domain3')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-database text-emerald-400"></i> Domain 03: DB &amp; Cloud
             </button>
           </div>
         </div>
 
-        <!-- ==================== VECTOR 1: REPOSITORY ==================== -->
-        <div id="vectorPanel-repository" class="space-y-4">
-          <!-- Sub-mode buttons for repo (Git URL, ZIP Upload, Local Path) -->
+        <!-- Ingestion Form -->
+        <div class="space-y-4">
+          <!-- Sub-mode buttons -->
           <div class="flex items-center gap-2 mb-3">
-            <span class="text-xs text-slate-400 font-semibold mr-1">Source:</span>
-            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Git URL</button>
+            <span class="text-xs text-slate-400 font-semibold mr-1">Code Source:</span>
+            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Git Remote URL</button>
             <button onclick="setRepoSubmode('upload')" id="repoSubBtn-upload" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">ZIP Upload</button>
-            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Local Path</button>
+            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Local Directory</button>
           </div>
 
           <!-- Git URL Input Form -->
@@ -318,26 +221,32 @@
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <i class="fa-brands fa-git-alt text-base"></i>
                 </div>
-                <input id="gitRepoUrl" type="text" placeholder="https://github.com/owner/repository or owner/repo..." value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+                <input type="text" id="gitRepoUrl" placeholder="https://github.com/owner/repository.git" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
               </div>
               <div class="md:col-span-4 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <i class="fa-solid fa-code-branch text-xs"></i>
+                  <i class="fa-solid fa-code-commit text-xs"></i>
                 </div>
-                <input id="gitBranch" type="text" placeholder="Branch (optional, e.g. main)" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+                <input type="text" id="gitBranch" placeholder="main (default branch)" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
               </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+              <span><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Public &amp; Authenticated Repos</span>
+              <span><i class="fa-solid fa-code-fork text-indigo-400 mr-1"></i> Commit Graph &amp; Workflows</span>
+              <span><i class="fa-solid fa-key text-rose-400 mr-1"></i> Leaked Secrets &amp; Credentials</span>
             </div>
           </div>
 
-          <!-- ZIP Upload Dropzone -->
+          <!-- ZIP Upload Form -->
           <div id="repoForm-upload" class="hidden space-y-4">
-            <div id="dropZone" onclick="document.getElementById('zipFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-7 text-center cursor-pointer bg-surface-950/60 transition-all group">
-              <input type="file" id="zipFileInput" accept=".zip" class="hidden" onchange="handleFileSelect(event)" />
-              <div class="w-12 h-12 mx-auto rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl group-hover:scale-110 transition mb-2">
+            <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-500/80 hover:bg-indigo-950/10 transition-all">
+              <input type="file" id="fileInput" accept=".zip" class="hidden" onchange="handleFileSelect(event)">
+              <div class="w-12 h-12 rounded-xl bg-surface-850 text-indigo-400 flex items-center justify-center mx-auto mb-3 text-xl border border-slate-700">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
               </div>
-              <p id="uploadFileName" class="text-sm font-semibold text-slate-200">Drag & drop your repository .zip archive here, or <span class="text-indigo-400 underline">browse files</span></p>
-              <p class="text-xs text-slate-500 mt-1">Full codebases up to 50MB. Audited in isolated sandbox and cleaned up automatically.</p>
+              <p class="text-sm font-semibold text-slate-200">Drag &amp; drop your zipped codebase archive here</p>
+              <p class="text-xs text-slate-500 mt-1">Supports standard .zip packages up to 50MB (scans Dockerfiles, code, dependencies, and CI configs)</p>
+              <div id="uploadFileName" class="mt-3 text-xs font-semibold text-indigo-400"></div>
             </div>
           </div>
 
@@ -347,64 +256,20 @@
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                 <i class="fa-solid fa-folder-open text-base"></i>
               </div>
-              <input id="localRepoPath" type="text" value="./sample_vulnerable_repo" placeholder="Enter relative or absolute path (e.g. ./sample_vulnerable_repo)..." class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
+              <input type="text" id="localRepoPath" placeholder="./sample_vulnerable_repo or /workspace/project" value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
             </div>
-          </div>
-        </div>
-
-        <!-- ==================== VECTOR 2: WEBSITE / API ==================== -->
-        <div id="vectorPanel-website" class="hidden space-y-4">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-              <i class="fa-solid fa-globe text-base text-indigo-400"></i>
-            </div>
-            <input id="webTargetUrl" type="text" placeholder="https://example.com or https://api.mycompany.com..." value="https://example.com" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
-          </div>
-          <div class="flex items-center gap-4 text-xs text-slate-400">
-            <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> SSL/TLS Posture</span>
-            <span><i class="fa-solid fa-lock text-sky-400 mr-1"></i> HSTS & CSP Headers</span>
-            <span><i class="fa-solid fa-user-shield text-purple-400 mr-1"></i> CORS Audit</span>
-            <span><i class="fa-solid fa-eye-slash text-amber-400 mr-1"></i> .env & /actuator Probes</span>
-          </div>
-        </div>
-
-        <!-- ==================== VECTOR 3: DATABASE ==================== -->
-        <div id="vectorPanel-database" class="hidden space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-            <div class="md:col-span-8 relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-solid fa-database text-base text-emerald-400"></i>
-              </div>
-              <input id="dbTargetUri" type="text" placeholder="postgresql://user:pass@host:5432/db, redis://127.0.0.1:6379, or host:port..." value="redis://127.0.0.1:6379" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-mono" />
-            </div>
-            <div class="md:col-span-4 relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-solid fa-server text-xs"></i>
-              </div>
-              <select id="dbEngineSelect" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-                <option value="">Auto-Detect Engine</option>
-                <option value="postgres">PostgreSQL (5432)</option>
-                <option value="mysql">MySQL / MariaDB (3306)</option>
-                <option value="redis" selected>Redis (6379)</option>
-                <option value="mongodb">MongoDB (27017)</option>
-                <option value="elasticsearch">Elasticsearch (9200)</option>
-                <option value="mssql">SQL Server (1433)</option>
-              </select>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 text-xs text-slate-400">
-            <span><i class="fa-solid fa-network-wired text-rose-400 mr-1"></i> Public Port Exposure</span>
-            <span><i class="fa-solid fa-unlock-keyhole text-amber-400 mr-1"></i> Unauthenticated Access</span>
-            <span><i class="fa-solid fa-key text-yellow-400 mr-1"></i> Default / Weak Password</span>
-            <span><i class="fa-solid fa-shield-virus text-sky-400 mr-1"></i> TLS Encryption Enforcement</span>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Scan local directories on the host or runner filesystem directly without network transmission.</p>
           </div>
         </div>
 
         <!-- Presets & Quality Gate Settings Toolbar -->
         <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
           <!-- Presets -->
-          <div id="presetsContainer" class="flex flex-wrap items-center gap-2">
-            <!-- Dynamically populated per category -->
+          <div id="presetsContainer-domain1" class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
+            <button onclick="applyPreset('repo-sample')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚠️ Local Sample Repo</button>
+            <button onclick="applyPreset('repo-github')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐙 GitHub Octocat Demo</button>
+            <button onclick="applyPreset('repo-current')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📁 Current Workspace (.)</button>
           </div>
 
           <!-- Quality Gate Settings -->
@@ -419,14 +284,14 @@
                   <label class="text-[11px] text-slate-400 block mb-1">Fail Gate On Severity:</label>
                   <select id="failSeverityInput" class="w-full bg-surface-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
                     <option value="CRITICAL">CRITICAL Only</option>
-                    <option value="HIGH" selected>HIGH & CRITICAL</option>
-                    <option value="MEDIUM">MEDIUM, HIGH & CRITICAL</option>
+                    <option value="HIGH" selected>HIGH &amp; CRITICAL</option>
+                    <option value="MEDIUM">MEDIUM, HIGH &amp; CRITICAL</option>
                     <option value="LOW">ANY (LOW+)</option>
                   </select>
                 </div>
                 <div>
                   <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                    <span>Max Allowable PES/AES:</span>
+                    <span>Max Allowable PES:</span>
                     <span id="pesThresholdVal" class="text-indigo-400 font-bold font-mono">60</span>
                   </div>
                   <input id="maxPesInput" type="range" min="10" max="100" value="60" oninput="document.getElementById('pesThresholdVal').innerText = this.value" class="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
@@ -436,9 +301,8 @@
           </div>
         </div>
 
-        <!-- Scan Trigger Button & Quota Pill -->
+        <!-- Scan Trigger Button & Quota Banner -->
         <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <!-- Dynamic Quota Badge -->
           <div id="scanQuotaBanner" class="w-full sm:w-auto">
             <div id="quotaPill" class="px-3.5 py-2 rounded-xl border bg-surface-900/80 border-slate-700/80 text-slate-300 flex items-center gap-2 text-xs font-medium backdrop-blur-sm shadow-sm transition-all">
               <i class="fa-solid fa-gauge text-indigo-400"></i>
@@ -446,27 +310,215 @@
             </div>
           </div>
 
-          <button onclick="executeScan()" id="scanBtn" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-[1.01] active:scale-[0.99]">
-            <i class="fa-solid fa-bolt-lightning text-amber-300"></i> Run Deep Exposure Audit
+          <button onclick="executeDomainScan('repository')" id="scanBtn-domain1" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/30 hover:scale-[1.01] active:scale-[0.99]">
+            <i class="fa-solid fa-bolt-lightning text-amber-300"></i> Audit Code Repository &amp; CI/CD
           </button>
         </div>
 
         <!-- Progress Indicator -->
-        <div id="scanProgressBox" class="hidden mt-6 pt-4 border-t border-slate-800">
+        <div id="scanProgressBox-domain1" class="hidden mt-6 pt-4 border-t border-slate-800">
           <div class="flex items-center justify-between text-xs mb-2">
-            <span id="scanProgressMsg" class="font-medium text-indigo-400 flex items-center gap-2">
-              <i class="fa-solid fa-spinner fa-spin"></i> Initializing security analyzers...
+            <span id="scanProgressMsg-domain1" class="font-medium text-indigo-400 flex items-center gap-2">
+              <i class="fa-solid fa-spinner fa-spin"></i> Initializing code repository analyzers...
             </span>
-            <span id="scanProgressStep" class="text-slate-500 font-mono">Running Audit</span>
+            <span class="text-slate-500 font-mono">Domain 01 Audit</span>
           </div>
           <div class="w-full bg-surface-950 rounded-full h-2 overflow-hidden border border-slate-800">
-            <div id="scanProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full w-1/3 transition-all duration-500"></div>
+            <div id="scanProgressBar-domain1" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full w-1/3 transition-all duration-500"></div>
           </div>
         </div>
       </section>
 
-      <!-- Results Display Section -->
-      <div id="resultsSection" class="hidden space-y-8">
+      <!-- Active Scan Results for Domain 01 -->
+      <div id="domainResults-repository"></div>
+    </div>
+    
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: DOMAIN 02 - WEB & API PERIMETER -->
+    <!-- ========================================== -->
+    <div id="section-domain2" class="hidden space-y-8">
+      
+      <!-- Domain 02 Header & Workstation Controls -->
+      <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden border border-sky-500/30">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-sky-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Workstation Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/40 tracking-wider">Domain 02 Active &bull; Web &amp; API Perimeter</span>
+              <span id="domain2PrefBadge" class="hidden text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30 font-semibold"><i class="fa-solid fa-star text-amber-400 mr-1"></i>Your Preferred Workspace</span>
+            </div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web &amp; API Perimeter Defense
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">Audit live endpoints, SSL/TLS certificates, HSTS/CSP security headers, CORS flaws, open Swagger specs, and exposed sensitive routes.</p>
+          </div>
+          
+          <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
+            <button onclick="switchNavTab('domain1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
+            </button>
+            <button onclick="switchNavTab('domain3')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-database text-emerald-400"></i> Domain 03: DB
+            </button>
+          </div>
+        </div>
+
+        <!-- Ingestion Form -->
+        <div class="space-y-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-globe text-base"></i>
+            </div>
+            <input type="url" id="webTargetUrl" placeholder="https://app.company.com or https://api.service.io" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono transition-all">
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
+            <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> SSL/TLS Expiry &amp; Cipher Strength</span>
+            <span><i class="fa-solid fa-lock text-sky-400 mr-1"></i> HSTS, CSP, X-Frame-Options</span>
+            <span><i class="fa-solid fa-arrows-split-up-and-left text-amber-400 mr-1"></i> CORS Wildcards</span>
+            <span><i class="fa-solid fa-folder-tree text-rose-400 mr-1"></i> .env, .git, &amp; Swagger Exposure</span>
+          </div>
+        </div>
+
+        <!-- Presets Toolbar -->
+        <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
+            <button onclick="applyPreset('web-example')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🌐 example.com (Standard)</button>
+            <button onclick="applyPreset('web-httpbin')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📡 httpbin.org (REST API)</button>
+          </div>
+        </div>
+
+        <!-- Scan Trigger Button -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-end">
+          <button onclick="executeDomainScan('website')" id="scanBtn-domain2" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-sky-600 via-sky-500 to-sky-600 hover:from-sky-500 hover:to-sky-400 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-sky-600/30 hover:scale-[1.01] active:scale-[0.99]">
+            <i class="fa-solid fa-radar text-amber-300"></i> Audit Web &amp; API Perimeter
+          </button>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="scanProgressBox-domain2" class="hidden mt-6 pt-4 border-t border-slate-800">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span id="scanProgressMsg-domain2" class="font-medium text-sky-400 flex items-center gap-2">
+              <i class="fa-solid fa-spinner fa-spin"></i> Probing web perimeter and SSL ciphers...
+            </span>
+            <span class="text-slate-500 font-mono">Domain 02 Audit</span>
+          </div>
+          <div class="w-full bg-surface-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="scanProgressBar-domain2" class="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 h-full w-1/3 transition-all duration-500"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Scan Results for Domain 02 -->
+      <div id="domainResults-website"></div>
+    </div>
+    
+
+    <!-- ========================================== -->
+    <!-- SECTION 3: DOMAIN 03 - DATABASE & CLOUD INFRASTRUCTURE -->
+    <!-- ========================================== -->
+    <div id="section-domain3" class="hidden space-y-8">
+      
+      <!-- Domain 03 Header & Workstation Controls -->
+      <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden border border-emerald-500/30">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Workstation Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tracking-wider">Domain 03 Active &bull; Database &amp; Cloud Infrastructure</span>
+              <span id="domain3PrefBadge" class="hidden text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30 font-semibold"><i class="fa-solid fa-star text-amber-400 mr-1"></i>Your Preferred Workspace</span>
+            </div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-database text-emerald-400"></i> Domain 03: Database &amp; Cloud Infrastructure
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">Audit database engines (PostgreSQL, MySQL, Redis, Mongo), public port exposure, unauthenticated access, default credentials, and TLS transport encryption.</p>
+          </div>
+          
+          <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
+            <button onclick="switchNavTab('domain1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
+            </button>
+            <button onclick="switchNavTab('domain2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web
+            </button>
+          </div>
+        </div>
+
+        <!-- Ingestion Form -->
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="md:col-span-8 relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <i class="fa-solid fa-database text-base"></i>
+              </div>
+              <input type="text" id="dbTargetUri" placeholder="postgresql://user:pass@host:5432/app or redis://127.0.0.1:6379" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono transition-all">
+            </div>
+            <div class="md:col-span-4 relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <i class="fa-solid fa-server text-xs"></i>
+              </div>
+              <select id="dbEngineSelect" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 font-sans">
+                <option value="">Auto-Detect Engine</option>
+                <option value="postgres">PostgreSQL (5432)</option>
+                <option value="mysql">MySQL / MariaDB (3306)</option>
+                <option value="redis" selected>Redis (6379)</option>
+                <option value="mongodb">MongoDB (27017)</option>
+                <option value="elasticsearch">Elasticsearch (9200)</option>
+                <option value="mssql">SQL Server (1433)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
+            <span><i class="fa-solid fa-network-wired text-rose-400 mr-1"></i> Public Port Exposure</span>
+            <span><i class="fa-solid fa-unlock-keyhole text-amber-400 mr-1"></i> Unauthenticated Access</span>
+            <span><i class="fa-solid fa-key text-yellow-400 mr-1"></i> Default / Weak Password</span>
+            <span><i class="fa-solid fa-shield-virus text-sky-400 mr-1"></i> TLS Encryption Enforcement</span>
+          </div>
+        </div>
+
+        <!-- Presets Toolbar -->
+        <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
+            <button onclick="applyPreset('db-redis')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚡ Local Redis (6379)</button>
+            <button onclick="applyPreset('db-postgres')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐘 PostgreSQL (5432)</button>
+            <button onclick="applyPreset('db-elastic')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🔍 Elasticsearch (9200)</button>
+          </div>
+        </div>
+
+        <!-- Scan Trigger Button -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-end">
+          <button onclick="executeDomainScan('database')" id="scanBtn-domain3" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99]">
+            <i class="fa-solid fa-shield-cat text-amber-300"></i> Audit Database Infrastructure
+          </button>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="scanProgressBox-domain3" class="hidden mt-6 pt-4 border-t border-slate-800">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span id="scanProgressMsg-domain3" class="font-medium text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-spinner fa-spin"></i> Probing database ports, credentials, and TLS...
+            </span>
+            <span class="text-slate-500 font-mono">Domain 03 Audit</span>
+          </div>
+          <div class="w-full bg-surface-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="scanProgressBar-domain3" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 h-full w-1/3 transition-all duration-500"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Scan Results for Domain 03 -->
+      <div id="domainResults-database"></div>
+    </div>
+    
+<div id="sharedResultsHolder" class="hidden"><div id="resultsSection" class="hidden space-y-8">
         
         <!-- Asset Header & Export Toolbar -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-900/70 border border-slate-800 shadow-xl">
@@ -734,67 +786,192 @@
           </div>
         </section>
 
-      </div>
-    </div>
+      </div></div>
 
     <!-- ========================================== -->
-    <!-- TAB 2: SCAN HISTORY & TIMELINE -->
+    <!-- SECTION 4: ADMINISTRATOR CONSOLE & TEAM GOVERNANCE -->
     <!-- ========================================== -->
-    <div id="section-history" class="hidden space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div id="section-admin" class="hidden space-y-6">
+
+      <!-- Admin Header & Action Bar -->
+      <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden border border-amber-500/30">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2.5 flex-wrap">
-            <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Scan History Timeline
-            <span id="historyScopePill" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-spinner fa-spin text-xs"></i> Loading scope...
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-mono">
+              <i class="fa-solid fa-crown text-[9px]"></i> Admin Exclusive &bull; Multi-Domain Control Hub
             </span>
+            <span class="text-xs text-slate-500">&bull; Role-Based Access Control</span>
+          </div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+            <i class="fa-solid fa-user-shield text-amber-400"></i> Administrator Console &amp; Team Governance
           </h2>
-          <p class="text-sm text-slate-400 mt-1">Audit trail across all Repositories, Websites, and Databases over time.</p>
+          <p class="text-sm text-slate-400 mt-1">
+            Full administrative control over all 3 security domains. Promote team members, provision accounts, and manage platform schedules &amp; policies.
+          </p>
         </div>
-        <div class="flex items-center gap-2">
-          <select id="historyFilterType" onchange="loadScanHistory()" class="bg-surface-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200">
-            <option value="">All Security Domains</option>
-            <option value="repository">💻 Domain 1: Code & CI/CD</option>
-            <option value="website">🌐 Domain 2: Web & API Perimeter</option>
-            <option value="database">🗄️ Domain 3: Database & Cloud</option>
-          </select>
-          <button onclick="loadScanHistory()" class="px-4 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2">
-            <i class="fa-solid fa-rotate"></i> Refresh
+        <div class="flex items-center gap-3">
+          <button onclick="loadAdminUsers()" class="px-4 py-2.5 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-rotate text-indigo-400"></i> Refresh
+          </button>
+          <button onclick="openAdminCreateModal()" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-600/30 border border-amber-400/40 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-slate-950"></i> Add New User / Admin
           </button>
         </div>
       </div>
 
-      <div class="glass-card rounded-2xl overflow-hidden shadow-xl">
+      <!-- Admin Sub-navigation Tabs -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800/80">
+        <button onclick="switchAdminSubTab('overview')" id="adminSubTab-overview" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25">
+          <i class="fa-solid fa-cubes-stacked"></i> Multi-Domain Hub
+        </button>
+        <button onclick="switchAdminSubTab('users')" id="adminSubTab-users" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-users-gear"></i> User Directory &amp; RBAC
+        </button>
+        <button onclick="switchAdminSubTab('schedules')" id="adminSubTab-schedules" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-calendar-check"></i> Continuous Schedules
+        </button>
+        <button onclick="switchAdminSubTab('history')" id="adminSubTab-history" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left"></i> Global Scan History
+        </button>
+        <button onclick="switchAdminSubTab('settings')" id="adminSubTab-settings" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-sliders"></i> System Posture &amp; Gates
+        </button>
+      </div>
+
+      <!-- Subpanel 1: Multi-Domain Control Hub Overview -->
+      <div id="adminSubPanel-overview" class="space-y-6">
+        <!-- 3 Domain Control Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Domain 1 Card -->
+          <div class="glass-card rounded-2xl p-5 border border-indigo-500/40 bg-indigo-950/20 shadow-lg flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">Domain 01</span>
+                <div class="w-8 h-8 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-sm"><i class="fa-solid fa-code-branch"></i></div>
+              </div>
+              <h3 class="text-sm font-bold text-white">Code &amp; CI/CD Pipelines</h3>
+              <p class="text-xs text-slate-400 mt-1">Source repositories, git branch history, secrets &amp; CI/CD manifests.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-xs text-indigo-400 font-semibold"><i class="fa-solid fa-circle-check text-[10px]"></i> Operational</span>
+              <button onclick="switchNavTab('domain1')" class="px-3 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 rounded-lg text-xs font-semibold transition">Open Workstation &rarr;</button>
+            </div>
+          </div>
+
+          <!-- Domain 2 Card -->
+          <div class="glass-card rounded-2xl p-5 border border-sky-500/40 bg-sky-950/20 shadow-lg flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/40">Domain 02</span>
+                <div class="w-8 h-8 rounded-xl bg-sky-600/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-globe"></i></div>
+              </div>
+              <h3 class="text-sm font-bold text-white">Web &amp; API Perimeter</h3>
+              <p class="text-xs text-slate-400 mt-1">SSL certificates, HSTS/CSP security headers, CORS flaws &amp; route leaks.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-xs text-sky-400 font-semibold"><i class="fa-solid fa-circle-check text-[10px]"></i> Operational</span>
+              <button onclick="switchNavTab('domain2')" class="px-3 py-1 bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 rounded-lg text-xs font-semibold transition">Open Workstation &rarr;</button>
+            </div>
+          </div>
+
+          <!-- Domain 3 Card -->
+          <div class="glass-card rounded-2xl p-5 border border-emerald-500/40 bg-emerald-950/20 shadow-lg flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Domain 03</span>
+                <div class="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-sm"><i class="fa-solid fa-database"></i></div>
+              </div>
+              <h3 class="text-sm font-bold text-white">Database &amp; Cloud Infra</h3>
+              <p class="text-xs text-slate-400 mt-1">Port exposure, weak/default credentials, unauthenticated access &amp; TLS.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check text-[10px]"></i> Operational</span>
+              <button onclick="switchNavTab('domain3')" class="px-3 py-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 rounded-lg text-xs font-semibold transition">Open Workstation &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Governance Stat Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
+              <span>Total Registered Users</span>
+              <i class="fa-solid fa-users text-indigo-400"></i>
+            </div>
+            <div id="adminStatTotalUsers" class="text-3xl font-black text-white font-mono mt-3">0</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Active across all security domains</span>
+          </div>
+          <div class="glass-card rounded-2xl p-5 border border-amber-500/20 bg-amber-950/10">
+            <div class="flex items-center justify-between text-xs text-amber-300 font-semibold uppercase">
+              <span>System Administrators</span>
+              <i class="fa-solid fa-crown text-amber-400"></i>
+            </div>
+            <div id="adminStatAdmins" class="text-3xl font-black text-amber-300 font-mono mt-3">0</div>
+            <span class="text-[11px] text-amber-400/70 mt-1 block">Full governance &amp; delegation authority</span>
+          </div>
+          <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
+              <span>Developers / Engineers</span>
+              <i class="fa-solid fa-code text-sky-400"></i>
+            </div>
+            <div id="adminStatDevelopers" class="text-3xl font-black text-slate-200 font-mono mt-3">0</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Domain-specific development permissions</span>
+          </div>
+          <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
+              <span>Active Admin Session</span>
+              <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+            </div>
+            <div id="adminStatCurrentAdmin" class="text-xs font-bold text-emerald-400 truncate mt-3 font-mono">--</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Primary administrator rights active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subpanel 2: User Directory Table Card -->
+      <div id="adminSubPanel-users" class="hidden glass-card rounded-2xl overflow-hidden shadow-xl border border-slate-800/80">
+        <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-950/60">
+          <div class="flex items-center gap-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-address-book text-indigo-400"></i> User Directory &amp; Access Delegation
+            </h3>
+            <span id="adminUserCountBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">0 Users</span>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </div>
+            <input id="adminUserSearchInput" oninput="filterAdminUsersTable()" type="text" placeholder="Search by name or email..." class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all" />
+          </div>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-slate-300">
-            <thead class="bg-surface-950 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
+            <thead class="bg-surface-950 text-[11px] uppercase text-slate-400 border-b border-slate-800 font-mono">
               <tr>
-                <th class="px-5 py-3.5">Asset Name</th>
-                <th class="px-5 py-3.5">Type</th>
-                <th class="px-5 py-3.5">Source</th>
-                <th class="px-5 py-3.5">Scan Date</th>
-                <th class="px-5 py-3.5">Exposure Score</th>
-                <th class="px-5 py-3.5">Risk Grade</th>
-                <th class="px-5 py-3.5">Gate Status</th>
-                <th class="px-5 py-3.5 text-right">Actions</th>
+                <th class="px-5 py-3.5">User Identity</th>
+                <th class="px-5 py-3.5">Organization</th>
+                <th class="px-5 py-3.5">Access Role</th>
+                <th class="px-5 py-3.5">Preferred Domain</th>
+                <th class="px-5 py-3.5">Registered</th>
+                <th class="px-5 py-3.5 text-right">Role Delegation</th>
               </tr>
             </thead>
-            <tbody id="historyTableBody" class="divide-y divide-slate-800">
+            <tbody id="adminUsersTableBody" class="divide-y divide-slate-800 text-xs">
               <tr>
-                <td colspan="8" class="px-5 py-10 text-center text-slate-500">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading history records...
+                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user directory...
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
 
-    <!-- ========================================== -->
-    <!-- TAB 3: CONTINUOUS SCHEDULES -->
-    <!-- ========================================== -->
-    <div id="section-schedules" class="hidden space-y-6">
+      <!-- Subpanel 3: Embedded Schedules -->
+      <div id="adminSubPanel-schedules" class="hidden space-y-6">
+        <div id="adminSchedulesContainer" class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
@@ -894,93 +1071,69 @@
     <!-- ========================================== -->
     <!-- TAB 4: CI/CD & INTEGRATIONS -->
     <!-- ========================================== -->
-    <div id="section-integration" class="hidden space-y-6">
-      <div>
-        <h2 class="text-xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-code-merge text-indigo-400"></i> CI/CD Pipeline & Multi-Vector CLI
-        </h2>
-        <p class="text-sm text-slate-400 mt-1">Integrate ShieldCI into any CI/CD runner, audit live websites or databases via CLI, and trigger automated scans via webhooks anytime.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Card 1: CLI Universal Commands -->
-        <div class="glass-card rounded-2xl p-6 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-terminal text-emerald-400"></i> CLI Universal Commands
-            </h3>
-            <button onclick="copyCode('code-cli')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-              <i class="fa-regular fa-copy"></i> Copy
-            </button>
-          </div>
-          <pre id="code-cli" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto border border-slate-800"># 1. Audit any live Website / API
-python -m app.cli --web https://example.com --sarif web.sarif
-
-# 2. Audit any Database (URI or host:port)
-python -m app.cli --db postgresql://localhost:5432/db --sarif db.sarif
-python -m app.cli --db redis://127.0.0.1:6379
-
-# 3. Audit any remote Git repository
-python -m app.cli --url https://github.com/org/repo --sarif repo.sarif
-
-# 4. View recent audit history across all assets
-python -m app.cli --history</pre>
+      <!-- Subpanel 4: Embedded History -->
+      <div id="adminSubPanel-history" class="hidden space-y-6">
+        <div id="adminHistoryContainer" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2.5 flex-wrap">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Scan History Timeline
+            <span id="historyScopePill" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-spinner fa-spin text-xs"></i> Loading scope...
+            </span>
+          </h2>
+          <p class="text-sm text-slate-400 mt-1">Audit trail across all Repositories, Websites, and Databases over time.</p>
         </div>
-
-        <!-- Card 2: GitHub Actions -->
-        <div class="glass-card rounded-2xl p-6 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-brands fa-github text-indigo-400"></i> GitHub Actions Quality Gate
-            </h3>
-            <button onclick="copyCode('code-gh')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-              <i class="fa-regular fa-copy"></i> Copy
-            </button>
-          </div>
-          <pre id="code-gh" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-indigo-200 overflow-x-auto border border-slate-800">name: ShieldCI Posture Gate
-on: [push, pull_request]
-jobs:
-  security-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run ShieldCI Exposure Scan
-        run: |
-          python -m app.cli --path . --fail-on HIGH --max-pes 60 --sarif results.sarif
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: results.sarif</pre>
+        <div class="flex items-center gap-2">
+          <select id="historyFilterType" onchange="loadScanHistory()" class="bg-surface-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200">
+            <option value="">All Security Domains</option>
+            <option value="repository">💻 Domain 1: Code & CI/CD</option>
+            <option value="website">🌐 Domain 2: Web & API Perimeter</option>
+            <option value="database">🗄️ Domain 3: Database & Cloud</option>
+          </select>
+          <button onclick="loadScanHistory()" class="px-4 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
         </div>
+      </div>
 
-        <!-- Card 3: Instant REST APIs -->
-        <div class="glass-card rounded-2xl p-6 space-y-3 md:col-span-2">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-satellite-dish text-pink-400"></i> Direct REST API Endpoints
-            </h3>
-            <button onclick="copyCode('code-api')" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-              <i class="fa-regular fa-copy"></i> Copy
-            </button>
-          </div>
-          <pre id="code-api" class="bg-surface-950 p-4 rounded-xl text-xs font-mono text-pink-300 overflow-x-auto border border-slate-800"># Audit a Website:
-curl -X POST "http://127.0.0.1:8000/api/scan/website?url=https://example.com"
-
-# Audit a Database:
-curl -X POST "http://127.0.0.1:8000/api/scan/database?target=redis://127.0.0.1:6379"
-
-# Audit a Git Repo:
-curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" \
-  -d '{"repo_url": "https://github.com/octocat/Hello-World"}'</pre>
+      <div class="glass-card rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-surface-950 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
+              <tr>
+                <th class="px-5 py-3.5">Asset Name</th>
+                <th class="px-5 py-3.5">Type</th>
+                <th class="px-5 py-3.5">Source</th>
+                <th class="px-5 py-3.5">Scan Date</th>
+                <th class="px-5 py-3.5">Exposure Score</th>
+                <th class="px-5 py-3.5">Risk Grade</th>
+                <th class="px-5 py-3.5">Gate Status</th>
+                <th class="px-5 py-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody" class="divide-y divide-slate-800">
+              <tr>
+                <td colspan="8" class="px-5 py-10 text-center text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading history records...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 5: SETTINGS & POSTURE CONFIGURATION -->
+    <!-- TAB 3: CONTINUOUS SCHEDULES -->
     <!-- ========================================== -->
-    <div id="section-settings" class="hidden space-y-6">
+      </div>
+
+      <!-- Subpanel 5: Embedded Settings -->
+      <div id="adminSubPanel-settings" class="hidden space-y-6">
+        <div id="adminSettingsContainer" class="space-y-6">
 
       <!-- Settings Header & Action Bar -->
       <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1390,111 +1543,276 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     <!-- ========================================== -->
     <!-- TAB 6: ADMINISTRATOR GOVERNANCE & RBAC -->
     <!-- ========================================== -->
-    <div id="section-admin" class="hidden space-y-6">
-
-      <!-- Admin Header & Action Bar -->
-      <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
-        <div class="absolute -right-12 -top-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-mono">
-              <i class="fa-solid fa-crown text-[9px]"></i> Admin Exclusive
-            </span>
-            <span class="text-xs text-slate-500">&bull; Role-Based Access Control</span>
-          </div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
-            <i class="fa-solid fa-user-shield text-amber-400"></i> Administrator Console & Team Governance
-          </h2>
-          <p class="text-sm text-slate-400 mt-1">
-            Manage user permissions across security domains. Promote team engineers to Admin or provision new administrative accounts.
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button onclick="loadAdminUsers()" class="px-4 py-2.5 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-2 shadow-sm">
-            <i class="fa-solid fa-rotate text-indigo-400"></i> Refresh Users
-          </button>
-          <button onclick="openAdminCreateModal()" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-600/30 border border-amber-400/40 transition-all flex items-center gap-2">
-            <i class="fa-solid fa-user-plus text-slate-950"></i> Add New Admin
-          </button>
-        </div>
       </div>
 
-      <!-- Domain Governance Stat Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
-          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>Total Registered Users</span>
-            <i class="fa-solid fa-users text-indigo-400"></i>
-          </div>
-          <div id="adminStatTotalUsers" class="text-3xl font-black text-white font-mono mt-3">0</div>
-          <span class="text-[11px] text-slate-500 mt-1 block">Active across all security domains</span>
-        </div>
-        <div class="glass-card rounded-2xl p-5 border border-amber-500/20 bg-amber-950/10">
-          <div class="flex items-center justify-between text-xs text-amber-300 font-semibold uppercase">
-            <span>System Administrators</span>
-            <i class="fa-solid fa-crown text-amber-400"></i>
-          </div>
-          <div id="adminStatAdmins" class="text-3xl font-black text-amber-300 font-mono mt-3">0</div>
-          <span class="text-[11px] text-amber-400/70 mt-1 block">Full governance & delegation authority</span>
-        </div>
-        <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
-          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>Developers / Engineers</span>
-            <i class="fa-solid fa-code text-sky-400"></i>
-          </div>
-          <div id="adminStatDevelopers" class="text-3xl font-black text-slate-200 font-mono mt-3">0</div>
-          <span class="text-[11px] text-slate-500 mt-1 block">Scan access & remediation permissions</span>
-        </div>
-        <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
-          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
-            <span>Active Admin Session</span>
-            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-          </div>
-          <div id="adminStatCurrentAdmin" class="text-xs font-bold text-emerald-400 truncate mt-3 font-mono">--</div>
-          <span class="text-[11px] text-slate-500 mt-1 block">Primary administrator rights active</span>
-        </div>
-      </div>
+    </div>
+    
 
-      <!-- User Directory Table Card -->
-      <div class="glass-card rounded-2xl overflow-hidden shadow-xl border border-slate-800/80">
-        <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-950/60">
-          <div class="flex items-center gap-3">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-address-book text-indigo-400"></i> User Directory & Access Delegation
-            </h3>
-            <span id="adminUserCountBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">0 Users</span>
-          </div>
-          <div class="relative w-full sm:w-64">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+    <!-- ========================================== -->
+    <!-- SECTION 5: USER PORTAL (SELF-SERVICE SCANNER) -->
+    <!-- ========================================== -->
+    <div id="section-user" class="hidden space-y-8">
+      
+      <!-- User Portal Header -->
+      <section class="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden border border-emerald-500/30">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800/80">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tracking-wider">
+                <i class="fa-solid fa-user-shield text-[9px] mr-1"></i> User Portal &bull; Self-Service Audit
+              </span>
+              <span class="text-xs text-slate-500">&bull; Repositories &bull; Websites &bull; Databases</span>
             </div>
-            <input id="adminUserSearchInput" oninput="filterAdminUsersTable()" type="text" placeholder="Search by name or email..." class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all" />
+            <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-circle-nodes text-emerald-400"></i> User Security Portal
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">
+              Submit your Git repository URL, website URL, or database connection to run an instant exposure audit and view comprehensive security findings.
+            </p>
+          </div>
+
+          <!-- User Session Pill / Login status -->
+          <div id="userSectionAuthStatus" class="self-start md:self-auto">
+            <!-- Dynamically populated: Guest or User welcome badge -->
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-300">
-            <thead class="bg-surface-950 text-[11px] uppercase text-slate-400 border-b border-slate-800 font-mono">
-              <tr>
-                <th class="px-5 py-3.5">User Identity</th>
-                <th class="px-5 py-3.5">Organization</th>
-                <th class="px-5 py-3.5">Access Role</th>
-                <th class="px-5 py-3.5">Registered</th>
-                <th class="px-5 py-3.5 text-right">Role Delegation</th>
-              </tr>
-            </thead>
-            <tbody id="adminUsersTableBody" class="divide-y divide-slate-800 text-xs">
-              <tr>
-                <td colspan="5" class="px-5 py-12 text-center text-slate-500">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user directory...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Dedicated User Sign In / Sign Up Form Card (Shown if not signed in as user) -->
+        <div id="userGuestAuthCard" class="p-6 rounded-2xl bg-surface-950/80 border border-emerald-500/30 shadow-xl space-y-4 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-user-lock text-emerald-400"></i> User Authentication Portal
+              </h3>
+              <p class="text-xs text-slate-400">Sign up or sign in directly to run scans and view full reports in the User Portal.</p>
+            </div>
+            <div class="flex p-1 bg-surface-900 rounded-xl border border-slate-800">
+              <button onclick="switchUserAuthMode('login')" id="userAuthTabBtn-login" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm">
+                Sign In
+              </button>
+              <button onclick="switchUserAuthMode('signup')" id="userAuthTabBtn-signup" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+                Create Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Alert notification for user auth -->
+          <div id="userAuthAlert" class="hidden p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30">
+            <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-400"></i>
+            <span id="userAuthAlertMsg" class="flex-1 font-medium"></span>
+          </div>
+
+          <!-- Inline User Login Form -->
+          <form id="userLoginForm" onsubmit="handleUserLoginSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+                <input id="userLoginEmail" type="email" required placeholder="user@company.com" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                <input id="userLoginPassword" type="password" required placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono" />
+              </div>
+            </div>
+            <div class="flex items-center justify-end">
+              <button id="userLoginBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to User Portal
+              </button>
+            </div>
+          </form>
+
+          <!-- Inline User Sign Up Form -->
+          <form id="userSignupForm" onsubmit="handleUserSignupSubmit(event)" class="hidden space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+                <input id="userSignupName" type="text" placeholder="Jane Doe" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-sans" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address <span class="text-rose-400">*</span></label>
+                <input id="userSignupEmail" type="email" required placeholder="jane@company.com" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Password <span class="text-rose-400">*</span> (min 8 chars)</label>
+                <input id="userSignupPassword" type="password" required minlength="8" placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono" />
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-info-circle text-emerald-400 mr-1"></i> Account role will be set to <b>User</b> automatically.</span>
+              <button id="userSignupBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-user-plus"></i> Create User Account
+              </button>
+            </div>
+          </form>
         </div>
+
+        <!-- 3-in-1 Simple Target Input Widget -->
+        <div class="space-y-5">
+          <!-- Target Type Selector -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Select Target Type:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" onclick="setUserTargetType('repository')" id="userTargetBtn-repository" class="p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-950/20 text-white font-bold text-xs flex items-center gap-2.5 transition">
+                <div class="w-7 h-7 rounded-lg bg-emerald-600/30 text-emerald-300 flex items-center justify-center text-sm"><i class="fa-solid fa-code-branch"></i></div>
+                <div class="text-left">
+                  <div class="text-xs font-bold text-white">Repository URL</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Git Codebase</div>
+                </div>
+              </button>
+              <button type="button" onclick="setUserTargetType('website')" id="userTargetBtn-website" class="p-3.5 rounded-xl border-2 border-slate-800 hover:border-slate-700 bg-surface-900/70 text-slate-300 font-bold text-xs flex items-center gap-2.5 transition">
+                <div class="w-7 h-7 rounded-lg bg-sky-600/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-globe"></i></div>
+                <div class="text-left">
+                  <div class="text-xs font-bold text-white">Website / API URL</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Public Endpoint</div>
+                </div>
+              </button>
+              <button type="button" onclick="setUserTargetType('database')" id="userTargetBtn-database" class="p-3.5 rounded-xl border-2 border-slate-800 hover:border-slate-700 bg-surface-900/70 text-slate-300 font-bold text-xs flex items-center gap-2.5 transition">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-sm"><i class="fa-solid fa-database"></i></div>
+                <div class="text-left">
+                  <div class="text-xs font-bold text-white">Database URL</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Connection URI / Host</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Single Input Field -->
+          <div class="space-y-2">
+            <label id="userTargetInputLabel" class="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <i id="userTargetInputIcon" class="fa-solid fa-code-branch text-emerald-400"></i> Enter Git Repository URL:
+            </label>
+            <div class="relative">
+              <input type="text" id="userTargetInput" placeholder="https://github.com/owner/repo.git" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-4 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono transition-all">
+            </div>
+            <p id="userTargetInputHint" class="text-xs text-slate-400">Enter the HTTPS or Git clone link of the repository you want to audit.</p>
+          </div>
+
+          <!-- Run Audit Button -->
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-xs text-slate-500"><i class="fa-solid fa-shield-check text-emerald-400 mr-1"></i> Full exposure scans complete in seconds.</span>
+            <button onclick="executeUserScan()" id="userScanBtn" class="px-8 py-3.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99]">
+              <i class="fa-solid fa-bolt text-amber-300"></i> Run Security Scan
+            </button>
+          </div>
+
+          <!-- User Progress Indicator -->
+          <div id="userScanProgressBox" class="hidden mt-4 pt-4 border-t border-slate-800">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span id="userScanProgressMsg" class="font-medium text-emerald-400 flex items-center gap-2">
+                <i class="fa-solid fa-spinner fa-spin"></i> Running security audit on target...
+              </span>
+              <span class="text-slate-500 font-mono">User Audit</span>
+            </div>
+            <div class="w-full bg-surface-950 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div id="userScanProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 h-full w-1/3 transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- USER SCAN OUTPUT RESULTS VIEW              -->
+      <!-- ========================================== -->
+      <div id="userResultsArea" class="hidden space-y-6">
+        
+        <!-- Summary Header Card -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+          <div class="flex items-center gap-4">
+            <div id="userResIcon" class="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shadow-inner">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h3 id="userResTargetName" class="text-lg font-bold text-white tracking-tight">sample_target</h3>
+                <span id="userResTypeBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono uppercase">REPOSITORY</span>
+              </div>
+              <p id="userResTargetPath" class="text-xs text-slate-400 font-mono truncate max-w-xl mt-0.5">Target audited</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="exportUserScan('json')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-file-code text-indigo-400"></i> Download JSON
+            </button>
+            <button onclick="exportUserScan('markdown')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+              <i class="fa-solid fa-file-lines"></i> Download Report (MD)
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Key Metric Cards for User -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Card 1: Score & Grade -->
+          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Security Exposure Score</span>
+            <div class="flex items-baseline gap-2 my-2">
+              <span id="userResPesScore" class="text-4xl font-black text-rose-500 font-mono">0</span>
+              <span class="text-slate-500 text-sm">/ 100</span>
+            </div>
+            <span id="userResRiskGrade" class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 w-fit">Grade F</span>
+          </div>
+
+          <!-- Card 2: Security Gate -->
+          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Policy Compliance Gate</span>
+            <div id="userResGateStatus" class="text-2xl font-black my-2 text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check"></i> PASSED
+            </div>
+            <span class="text-xs text-slate-400">Security gate evaluation</span>
+          </div>
+
+          <!-- Card 3: Total Findings -->
+          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Detected Issues</span>
+            <span id="userResTotalFindings" class="text-4xl font-black text-white font-mono my-2">0</span>
+            <span id="userResScanStats" class="text-xs text-slate-400 font-mono">Audited successfully</span>
+          </div>
+
+          <!-- Card 4: Severity Breakdown -->
+          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Issues By Severity</span>
+            <div class="flex items-center gap-2 my-2 text-xs font-mono font-bold flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30"><span id="userResCritCount">0</span> Critical</span>
+              <span class="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/30"><span id="userResHighCount">0</span> High</span>
+              <span class="px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/30"><span id="userResMedCount">0</span> Med</span>
+              <span class="px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30"><span id="userResLowCount">0</span> Low</span>
+            </div>
+            <span class="text-xs text-slate-500">Categorized by CVSS weight</span>
+          </div>
+        </div>
+
+        <!-- Full Findings Table for User -->
+        <section class="glass-card rounded-2xl p-6 shadow-xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-emerald-400"></i> All Detected Security Findings
+            </h4>
+            <span id="userFindingsCountBadge" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">0 findings</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+              <thead class="bg-surface-950 text-xs uppercase text-slate-400 border-b border-slate-800 font-mono">
+                <tr>
+                  <th class="px-4 py-3">Severity</th>
+                  <th class="px-4 py-3">Category</th>
+                  <th class="px-4 py-3">Issue &amp; Location</th>
+                  <th class="px-4 py-3">Remediation Action</th>
+                </tr>
+              </thead>
+              <tbody id="userFindingsTableBody" class="divide-y divide-slate-800/60 font-sans">
+                <!-- Dynamically populated findings -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
     </div>
-
+    
   </main>
 
   <!-- Footer -->
@@ -1520,26 +1838,33 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     let severityChartInst = null;
     let categoryChartInst = null;
 
-    // Navigation Tab Switching
+    // Navigation Tab Switching (5 Core Sections)
     function switchNavTab(tabName) {
+      if (tabName === 'audit') {
+        const pref = currentUser && currentUser.preferred_domain;
+        tabName = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
+      }
+
       if (tabName === 'admin') {
         if (!currentUser || currentUser.role !== 'admin') {
-          showToast("Administrator privileges are required to access this console.", "error");
-          switchNavTab('audit');
+          showToast("Administrator privileges are required to access the Admin console.", "error");
+          switchNavTab('domain1');
           return;
         }
       }
 
-      const tabs = ['audit', 'history', 'schedules', 'integration', 'settings', 'admin'];
+      const tabs = ['domain1', 'domain2', 'domain3', 'admin', 'user'];
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         const btn = document.getElementById(`navTab-${t}`);
         if (sec) sec.classList.add('hidden');
         if (btn) {
           if (t === 'admin') {
-            btn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5";
+            btn.className = "nav-tab-btn hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5";
+          } else if (t === 'user') {
+            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5";
           } else {
-            btn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5";
+            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5";
           }
         }
       });
@@ -1549,16 +1874,88 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       if (targetSec) targetSec.classList.remove('hidden');
       if (targetBtn) {
         if (tabName === 'admin') {
-          targetBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-400/50 flex items-center gap-1.5";
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-400/50 flex items-center gap-1.5";
+        } else if (tabName === 'user') {
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 border border-emerald-500/50 flex items-center gap-1.5";
         } else {
-          targetBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5";
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5";
         }
       }
 
-      if (tabName === 'history') loadScanHistory();
-      if (tabName === 'schedules') loadSchedules();
-      if (tabName === 'settings') loadSettings();
-      if (tabName === 'admin') loadAdminUsers();
+      // Update developer preferred domain badges
+      const d1Badge = document.getElementById('domain1PrefBadge');
+      const d2Badge = document.getElementById('domain2PrefBadge');
+      const d3Badge = document.getElementById('domain3PrefBadge');
+      if (d1Badge) d1Badge.classList.add('hidden');
+      if (d2Badge) d2Badge.classList.add('hidden');
+      if (d3Badge) d3Badge.classList.add('hidden');
+      if (currentUser && currentUser.role === 'developer') {
+        if (currentUser.preferred_domain === 'domain_01' && d1Badge) d1Badge.classList.remove('hidden');
+        if (currentUser.preferred_domain === 'domain_02' && d2Badge) d2Badge.classList.remove('hidden');
+        if (currentUser.preferred_domain === 'domain_03' && d3Badge) d3Badge.classList.remove('hidden');
+      }
+
+      // Domain Category synchronization
+      if (tabName === 'domain1') {
+        currentAssetCategory = 'repository';
+        renderPresets('repository');
+        attachResultsToDomain('repository');
+      } else if (tabName === 'domain2') {
+        currentAssetCategory = 'website';
+        renderPresets('website');
+        attachResultsToDomain('website');
+      } else if (tabName === 'domain3') {
+        currentAssetCategory = 'database';
+        renderPresets('database');
+        attachResultsToDomain('database');
+      } else if (tabName === 'admin') {
+        loadAdminUsers();
+        loadSchedules();
+        loadScanHistory();
+        loadSettings();
+      } else if (tabName === 'user') {
+        updateUserPortalUI();
+      }
+
+      updateAuthUI();
+    }
+
+    function attachResultsToDomain(category) {
+      const resSec = document.getElementById('resultsSection');
+      const targetContainer = document.getElementById(`domainResults-${category}`);
+      if (resSec && targetContainer && currentScanData) {
+        targetContainer.appendChild(resSec);
+        resSec.classList.remove('hidden');
+      }
+    }
+
+    function executeDomainScan(category) {
+      currentAssetCategory = category;
+      executeScan();
+    }
+
+    function switchAdminSubTab(subTab) {
+      const subtabs = ['overview', 'users', 'schedules', 'history', 'settings'];
+      subtabs.forEach(s => {
+        const panel = document.getElementById(`adminSubPanel-${s}`);
+        const btn = document.getElementById(`adminSubTab-${s}`);
+        if (panel) panel.classList.add('hidden');
+        if (btn) {
+          btn.className = "px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2";
+        }
+      });
+
+      const activePanel = document.getElementById(`adminSubPanel-${subTab}`);
+      const activeBtn = document.getElementById(`adminSubTab-${subTab}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25";
+      }
+
+      if (subTab === 'users') loadAdminUsers();
+      if (subTab === 'schedules') loadSchedules();
+      if (subTab === 'history') loadScanHistory();
+      if (subTab === 'settings') loadSettings();
     }
 
     // Asset Category Switching: Repository | Website | Database
@@ -1893,7 +2290,13 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
     // Render Results
     function renderResults(data) {
-      document.getElementById('resultsSection').classList.remove('hidden');
+      const activeContainer = document.getElementById(`domainResults-${data.target_type || currentAssetCategory}`);
+      const resSec = document.getElementById('resultsSection');
+      if (activeContainer && resSec) {
+        activeContainer.appendChild(resSec);
+      }
+      resSec.classList.remove('hidden');
+      resSec.scrollIntoView({ behavior: 'smooth' });
       const s = data.summary;
 
       // Meta header & Badges
@@ -2943,8 +3346,20 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         currentUser = user;
       }
       updateAuthUI();
-      // Auto-refresh all database state and records upon login or signup
       refreshDatabaseState();
+
+      // Role-based automatic workstation redirection
+      if (user) {
+        if (user.role === 'developer') {
+          const pref = user.preferred_domain || 'domain_01';
+          const target = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
+          switchNavTab(target);
+          showToast(`Logged in as Developer. Active Workspace: ${pref === 'domain_02' ? 'Domain 02: Web & API' : (pref === 'domain_03' ? 'Domain 03: DB & Cloud' : 'Domain 01: Code & CI/CD')}!`, "success");
+        } else if (user.role === 'user') {
+          switchNavTab('user');
+          showToast(`Welcome to the User Security Portal, ${user.full_name || user.email}!`, "success");
+        }
+      }
     }
 
     function clearAuthState() {
@@ -3165,10 +3580,11 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> <span>Creating Account...</span>`;
 
       try {
+        const preferred_domain = document.getElementById('signupPreferredDomain')?.value || 'domain_01';
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, full_name, organization })
+          body: JSON.stringify({ email, password, full_name, organization, role: 'developer', preferred_domain })
         });
 
         const data = await res.json();
@@ -3672,45 +4088,64 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       if (!tbody) return;
 
       if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-500 font-medium">No users found matching query.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 font-medium">No users found matching query.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = '';
       users.forEach(u => {
         const isSelf = currentUser && (u.id === currentUser.id || u.email === currentUser.email);
-        const isAdmin = u.role === 'admin';
+        const role = u.role || 'developer';
+        const prefDom = u.preferred_domain || 'domain_01';
         const initial = (u.full_name ? u.full_name[0] : (u.email ? u.email[0] : 'U')).toUpperCase();
         const joinedDate = u.created_at ? new Date(u.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-surface-850/50 transition-colors";
 
-        let roleBadge = isAdmin
-          ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 w-fit"><i class="fa-solid fa-crown text-[10px]"></i> Admin</span>`
-          : `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 w-fit"><i class="fa-solid fa-code text-[10px]"></i> Developer</span>`;
+        let roleBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/30 flex items-center gap-1.5 w-fit"><i class="fa-solid fa-code text-[10px]"></i> Developer</span>`;
+        if (role === 'admin') {
+          roleBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 w-fit"><i class="fa-solid fa-crown text-[10px]"></i> Admin</span>`;
+        } else if (role === 'user') {
+          roleBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 w-fit"><i class="fa-solid fa-user text-[10px]"></i> User</span>`;
+        }
+
+        let domainBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">💻 Domain 01: Code</span>`;
+        if (prefDom === 'domain_02') {
+          domainBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950/60 text-sky-300 border border-sky-500/30">🌐 Domain 02: Web</span>`;
+        } else if (prefDom === 'domain_03') {
+          domainBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">🗄️ Domain 03: DB</span>`;
+        }
 
         let actionHtml = '';
         if (isSelf) {
-          actionHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-semibold"><i class="fa-solid fa-user-check text-[10px]"></i> You (Active Admin)</span>`;
-        } else if (!isAdmin) {
-          actionHtml = `
-            <button onclick="changeUserRole('${u.id}', 'admin', '${u.email}')" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 shadow-md shadow-amber-500/20 border border-amber-400/40 transition-all flex items-center gap-1.5 ml-auto">
-              <i class="fa-solid fa-crown text-[10px]"></i> Make Admin
-            </button>
-          `;
+          actionHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold"><i class="fa-solid fa-crown text-[10px]"></i> You (Active Admin)</span>`;
         } else {
           actionHtml = `
-            <button onclick="changeUserRole('${u.id}', 'developer', '${u.email}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/30 hover:bg-rose-900/50 border border-rose-500/30 hover:border-rose-500/60 transition-all flex items-center gap-1.5 ml-auto">
-              <i class="fa-solid fa-user-minus text-[10px]"></i> Demote to Dev
-            </button>
+            <div class="flex items-center justify-end gap-1.5 flex-wrap">
+              ${role !== 'admin' ? `
+                <button onclick="changeUserRole('${u.id}', 'admin', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 shadow-sm border border-amber-400/40 transition flex items-center gap-1" title="Promote to Admin">
+                  <i class="fa-solid fa-crown text-[9px]"></i> Make Admin
+                </button>
+              ` : ''}
+              ${role !== 'developer' ? `
+                <button onclick="changeUserRole('${u.id}', 'developer', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition flex items-center gap-1" title="Assign Developer role">
+                  <i class="fa-solid fa-code text-[9px]"></i> Make Dev
+                </button>
+              ` : ''}
+              ${role !== 'user' ? `
+                <button onclick="changeUserRole('${u.id}', 'user', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1" title="Assign User role">
+                  <i class="fa-solid fa-user text-[9px]"></i> Make User
+                </button>
+              ` : ''}
+            </div>
           `;
         }
 
         tr.innerHTML = `
           <td class="px-5 py-3.5">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl ${isAdmin ? 'bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950' : 'bg-gradient-to-tr from-indigo-600 to-sky-500 text-white'} flex items-center justify-center font-bold text-xs shadow">
+              <div class="w-8 h-8 rounded-xl ${role === 'admin' ? 'bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950' : (role === 'user' ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white' : 'bg-gradient-to-tr from-indigo-600 to-sky-500 text-white')} flex items-center justify-center font-bold text-xs shadow">
                 ${initial}
               </div>
               <div>
@@ -3724,6 +4159,9 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
           </td>
           <td class="px-5 py-3.5">
             ${roleBadge}
+          </td>
+          <td class="px-5 py-3.5">
+            ${domainBadge}
           </td>
           <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">
             ${joinedDate}
@@ -3752,7 +4190,7 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
     }
 
     async function changeUserRole(userId, newRole, userEmail) {
-      const actionName = newRole === 'admin' ? 'promote to Administrator' : 'demote to Developer';
+      const actionName = newRole === 'admin' ? 'promote to Administrator' : (newRole === 'user' ? 'change role to User' : 'change role to Developer');
       if (!confirm(`Are you sure you want to ${actionName} for user: ${userEmail}?`)) {
         return;
       }
@@ -3805,6 +4243,7 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       const email = document.getElementById('adminNewEmail').value.trim();
       const org = document.getElementById('adminNewOrg').value.trim() || null;
       const role = document.querySelector('input[name="adminNewRole"]:checked')?.value || 'admin';
+      const preferred_domain = document.getElementById('adminNewPreferredDomain')?.value || 'domain_01';
       const password = document.getElementById('adminNewPassword').value;
 
       if (!fullName || !email || !password) {
@@ -3841,6 +4280,7 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
             email: email,
             organization: org,
             role: role,
+            preferred_domain: preferred_domain,
             password: password
           })
         });
@@ -3866,6 +4306,302 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Provision Account`;
       }
+    }
+
+
+    // ==============================================================
+    // SECTION 5: USER PORTAL LOGIC (SELF-SERVICE SCANNER)
+    // ==============================================================
+    let currentUserTargetType = 'repository';
+    let currentUserScanData = null;
+
+    function switchUserAuthMode(mode) {
+      const loginBtn = document.getElementById('userAuthTabBtn-login');
+      const signupBtn = document.getElementById('userAuthTabBtn-signup');
+      const loginForm = document.getElementById('userLoginForm');
+      const signupForm = document.getElementById('userSignupForm');
+      hideUserAuthAlert();
+      if (mode === 'login') {
+        if (loginBtn) loginBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm";
+        if (signupBtn) signupBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        if (loginForm) loginForm.classList.remove('hidden');
+        if (signupForm) signupForm.classList.add('hidden');
+      } else {
+        if (signupBtn) signupBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm";
+        if (loginBtn) loginBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        if (signupForm) signupForm.classList.remove('hidden');
+        if (loginForm) loginForm.classList.add('hidden');
+      }
+    }
+
+    function showUserAuthAlert(msg) {
+      const box = document.getElementById('userAuthAlert');
+      const text = document.getElementById('userAuthAlertMsg');
+      if (box && text) {
+        text.textContent = msg;
+        box.classList.remove('hidden');
+      }
+    }
+
+    function hideUserAuthAlert() {
+      const box = document.getElementById('userAuthAlert');
+      if (box) box.classList.add('hidden');
+    }
+
+    async function handleUserLoginSubmit(event) {
+      event.preventDefault();
+      const email = document.getElementById('userLoginEmail').value.trim();
+      const password = document.getElementById('userLoginPassword').value;
+      const btn = document.getElementById('userLoginBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing In...`;
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Login failed. Please check credentials.");
+        setAuthState(data.access_token, data.user);
+        switchNavTab('user');
+      } catch (err) {
+        showUserAuthAlert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to User Portal`;
+      }
+    }
+
+    async function handleUserSignupSubmit(event) {
+      event.preventDefault();
+      const full_name = document.getElementById('userSignupName').value.trim() || null;
+      const email = document.getElementById('userSignupEmail').value.trim();
+      const password = document.getElementById('userSignupPassword').value;
+      const btn = document.getElementById('userSignupBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...`;
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, full_name, role: 'user', preferred_domain: 'domain_01' })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Sign up failed");
+        setAuthState(data.access_token, data.user);
+        switchNavTab('user');
+      } catch (err) {
+        showUserAuthAlert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create User Account`;
+      }
+    }
+
+    function setUserTargetType(type) {
+      currentUserTargetType = type;
+      const types = ['repository', 'website', 'database'];
+      types.forEach(t => {
+        const btn = document.getElementById(`userTargetBtn-${t}`);
+        if (btn) {
+          if (t === type) {
+            btn.className = "p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-950/20 text-white font-bold text-xs flex items-center gap-2.5 transition";
+          } else {
+            btn.className = "p-3.5 rounded-xl border-2 border-slate-800 hover:border-slate-700 bg-surface-900/70 text-slate-300 font-bold text-xs flex items-center gap-2.5 transition";
+          }
+        }
+      });
+
+      const label = document.getElementById('userTargetInputLabel');
+      const input = document.getElementById('userTargetInput');
+      const hint = document.getElementById('userTargetInputHint');
+      if (type === 'repository') {
+        if (label) label.innerHTML = `<i class="fa-solid fa-code-branch text-emerald-400"></i> Enter Git Repository URL:`;
+        if (input) input.placeholder = "https://github.com/owner/repo.git";
+        if (hint) hint.textContent = "Enter the HTTPS clone URL of your Git repository.";
+      } else if (type === 'website') {
+        if (label) label.innerHTML = `<i class="fa-solid fa-globe text-sky-400"></i> Enter Website or API Endpoint URL:`;
+        if (input) input.placeholder = "https://app.company.com or https://api.service.io";
+        if (hint) hint.textContent = "Enter the public URL of the website or API endpoint you wish to audit.";
+      } else if (type === 'database') {
+        if (label) label.innerHTML = `<i class="fa-solid fa-database text-indigo-400"></i> Enter Database Connection URL / Host:`;
+        if (input) input.placeholder = "postgresql://user:pass@host:5432/app or redis://127.0.0.1:6379";
+        if (hint) hint.textContent = "Enter the database connection URI or host:port to test for open ports and weak credentials.";
+      }
+    }
+
+    function updateUserPortalUI() {
+      const authCard = document.getElementById('userGuestAuthCard');
+      const statusDiv = document.getElementById('userSectionAuthStatus');
+      if (currentUser) {
+        if (authCard) authCard.classList.add('hidden');
+        if (statusDiv) {
+          statusDiv.innerHTML = `
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-900 border border-slate-800 text-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-slate-300">Logged in: <b class="text-emerald-400">${currentUser.full_name || currentUser.email}</b> (${currentUser.role})</span>
+              <button onclick="handleLogout()" class="ml-2 text-slate-400 hover:text-rose-400 text-xs" title="Sign Out"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+          `;
+        }
+      } else {
+        if (authCard) authCard.classList.remove('hidden');
+        if (statusDiv) {
+          statusDiv.innerHTML = `
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Guest User Mode (Sign in below for personal history)</span>
+            </div>
+          `;
+        }
+      }
+    }
+
+    async function executeUserScan() {
+      const target = document.getElementById('userTargetInput').value.trim();
+      if (!target) {
+        showToast("Please enter a target URL or database connection URI.", "error");
+        return;
+      }
+
+      const btn = document.getElementById('userScanBtn');
+      const progressBox = document.getElementById('userScanProgressBox');
+      const progressBar = document.getElementById('userScanProgressBar');
+      const progressMsg = document.getElementById('userScanProgressMsg');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Auditing Target...`;
+      progressBox.classList.remove('hidden');
+      progressBar.style.width = '30%';
+      progressMsg.textContent = `Analyzing ${currentUserTargetType} target: ${target}...`;
+
+      try {
+        const payload = {
+          target: target,
+          target_type: currentUserTargetType,
+          repo_url: currentUserTargetType === 'repository' ? target : undefined,
+          fail_on_severity: 'HIGH',
+          max_allowed_pes: 60.0
+        };
+
+        progressBar.style.width = '60%';
+        const res = await fetch('/api/scan', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Scan request failed");
+        }
+
+        progressBar.style.width = '100%';
+        const data = await res.json();
+        currentUserScanData = data;
+        renderUserResults(data);
+        showToast("Audit completed! Full security findings loaded.", "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-bolt text-amber-300"></i> Run Security Scan`;
+        setTimeout(() => { progressBox.classList.add('hidden'); }, 800);
+      }
+    }
+
+    function renderUserResults(data) {
+      const area = document.getElementById('userResultsArea');
+      if (!area) return;
+      area.classList.remove('hidden');
+
+      const s = data.summary;
+      document.getElementById('userResTargetName').textContent = data.repo_name || data.target_path || 'Audited Target';
+      document.getElementById('userResTargetPath').textContent = data.target_path || data.repo_url || '-';
+      document.getElementById('userResTypeBadge').textContent = (data.target_type || 'repository').toUpperCase();
+
+      const pesElem = document.getElementById('userResPesScore');
+      if (pesElem) {
+        pesElem.textContent = s.pipeline_exposure_score;
+        pesElem.className = s.pipeline_exposure_score > 50 ? "text-4xl font-black text-rose-500 font-mono" : "text-4xl font-black text-emerald-400 font-mono";
+      }
+
+      const gradeElem = document.getElementById('userResRiskGrade');
+      if (gradeElem) {
+        gradeElem.textContent = s.risk_grade;
+        gradeElem.className = s.risk_grade === 'A' || s.risk_grade === 'B' ? "text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 w-fit" : "text-xs font-bold px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 w-fit";
+      }
+
+      const gateElem = document.getElementById('userResGateStatus');
+      if (gateElem) {
+        if (s.policy_passed) {
+          gateElem.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> PASSED`;
+          gateElem.className = "text-2xl font-black my-2 text-emerald-400 flex items-center gap-2";
+        } else {
+          gateElem.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500"></i> BLOCKED`;
+          gateElem.className = "text-2xl font-black my-2 text-rose-500 flex items-center gap-2";
+        }
+      }
+
+      document.getElementById('userResTotalFindings').textContent = s.total_findings;
+      document.getElementById('userResScanStats').textContent = `Audited in ${s.scan_duration_seconds}s`;
+      document.getElementById('userResCritCount').textContent = s.critical_count;
+      document.getElementById('userResHighCount').textContent = s.high_count;
+      document.getElementById('userResMedCount').textContent = s.medium_count;
+      document.getElementById('userResLowCount').textContent = s.low_count;
+      document.getElementById('userFindingsCountBadge').textContent = `${(data.findings || []).length} findings`;
+
+      const tbody = document.getElementById('userFindingsTableBody');
+      tbody.innerHTML = '';
+
+      if (!data.findings || data.findings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-10 text-center text-slate-500 font-medium"><i class="fa-solid fa-shield-check text-emerald-400 text-xl block mb-2"></i> No security issues detected in this target!</td></tr>`;
+        return;
+      }
+
+      data.findings.forEach(f => {
+        let badgeStyle = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+        if (f.severity === "HIGH") badgeStyle = "bg-orange-500/10 text-orange-400 border-orange-500/30";
+        if (f.severity === "MEDIUM") badgeStyle = "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
+        if (f.severity === "LOW") badgeStyle = "bg-sky-500/10 text-sky-400 border-sky-500/30";
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-surface-850/50 transition-colors";
+        tr.innerHTML = `
+          <td class="px-4 py-3.5 align-top">
+            <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg border font-mono ${badgeStyle}">${f.severity}</span>
+          </td>
+          <td class="px-4 py-3.5 align-top text-xs text-slate-400 font-medium whitespace-nowrap">
+            ${f.category}
+          </td>
+          <td class="px-4 py-3.5 align-top">
+            <div class="font-bold text-white text-sm tracking-tight">${f.title}</div>
+            <div class="text-xs text-slate-400 mt-1 font-mono flex items-center gap-1.5">
+              <i class="fa-regular fa-compass text-emerald-400"></i> ${f.file_path}${f.line_number ? ` : Line ${f.line_number}` : ''}
+            </div>
+            ${f.snippet ? `<pre class="mt-2 p-2 bg-surface-950 rounded-lg text-xs text-rose-300 font-mono overflow-x-auto border border-slate-800">${escapeHtml(f.snippet)}</pre>` : ''}
+          </td>
+          <td class="px-4 py-3.5 align-top text-xs text-emerald-300">
+            <div class="p-2.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl space-y-1">
+              <div class="font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-wrench text-emerald-400"></i> Remediation:</div>
+              <p class="text-emerald-200 text-xs">${f.remediation_advice}</p>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      area.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function exportUserScan(format) {
+      if (!currentUserScanData || !currentUserScanData.scan_id) {
+        showToast("Run a scan first to export results.", "error");
+        return;
+      }
+      window.location.href = `/api/scans/${currentUserScanData.scan_id}/export?format=${format}`;
+      showToast(`Downloading report in ${format.toUpperCase()} format...`, "success");
     }
 
     // Initialize defaults on load
@@ -3956,6 +4692,17 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
         <!-- SIGN UP FORM -->
         <form id="signupForm" onsubmit="handleSignupSubmit(event)" class="hidden space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-indigo-400"></i> Preferred Development Domain <span class="text-rose-400">*</span></span>
+              <span class="text-[10px] text-indigo-400 font-mono">Workspace on login</span>
+            </label>
+            <select id="signupPreferredDomain" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
+              <option value="domain_01" selected>Domain 01: Code Repository &amp; CI/CD Security</option>
+              <option value="domain_02">Domain 02: Web &amp; API Perimeter</option>
+              <option value="domain_03">Domain 03: Database &amp; Cloud Infrastructure</option>
+            </select>
+          </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-user text-indigo-400"></i> Full Name <span class="text-[10px] text-slate-500 font-normal">(Optional)</span>
@@ -4081,22 +4828,37 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1.5">Access Role</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 cursor-pointer">
+          <div class="grid grid-cols-3 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-amber-500/40 bg-amber-500/10 cursor-pointer">
               <input type="radio" name="adminNewRole" value="admin" checked class="accent-amber-500" />
               <div>
                 <span class="text-xs font-bold text-amber-300 block"><i class="fa-solid fa-crown text-[10px] mr-1"></i> Admin</span>
-                <span class="text-[10px] text-slate-400 block">Full Governance</span>
+                <span class="text-[9px] text-slate-400 block">Governance</span>
               </div>
             </label>
-            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-700 bg-surface-900 cursor-pointer">
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-700 bg-surface-900 cursor-pointer">
               <input type="radio" name="adminNewRole" value="developer" class="accent-indigo-500" />
               <div>
                 <span class="text-xs font-bold text-slate-300 block"><i class="fa-solid fa-code text-[10px] mr-1"></i> Developer</span>
-                <span class="text-[10px] text-slate-400 block">Scan & View</span>
+                <span class="text-[9px] text-slate-400 block">Workstations</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-700 bg-surface-900 cursor-pointer">
+              <input type="radio" name="adminNewRole" value="user" class="accent-emerald-500" />
+              <div>
+                <span class="text-xs font-bold text-slate-300 block"><i class="fa-solid fa-user text-[10px] mr-1"></i> User</span>
+                <span class="text-[9px] text-slate-400 block">Scan Portal</span>
               </div>
             </label>
           </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Preferred Domain (For Developers / Users)</label>
+          <select id="adminNewPreferredDomain" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500 font-sans">
+            <option value="domain_01" selected>Domain 01: Code Repository &amp; CI/CD</option>
+            <option value="domain_02">Domain 02: Web &amp; API Perimeter</option>
+            <option value="domain_03">Domain 03: Database &amp; Cloud Infra</option>
+          </select>
         </div>
 
         <div>

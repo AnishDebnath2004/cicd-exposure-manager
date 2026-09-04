@@ -12,6 +12,8 @@ class UserSignupRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Password (at least 8 characters)")
     full_name: Optional[str] = Field(None, description="User full name or display name")
     organization: Optional[str] = Field(None, description="Organization or team name")
+    role: Literal["developer", "user"] = Field("developer", description="User role: 'developer' or 'user'")
+    preferred_domain: Optional[str] = Field("domain_01", description="Preferred development domain (e.g. domain_01, domain_02, domain_03)")
 
     @field_validator("email")
     @classmethod
@@ -43,6 +45,7 @@ class UserResponse(BaseModel):
     full_name: Optional[str] = None
     organization: Optional[str] = None
     role: str = "developer"
+    preferred_domain: Optional[str] = "domain_01"
     token_version: int = 1
     created_at: datetime
     last_login_at: Optional[datetime] = None
@@ -60,6 +63,7 @@ class UserProfileUpdateRequest(BaseModel):
     """Payload for updating user profile information."""
     full_name: Optional[str] = Field(None, description="User full or display name")
     organization: Optional[str] = Field(None, description="Organization or team name")
+    preferred_domain: Optional[str] = Field(None, description="Preferred development domain")
 
 
 class PasswordChangeRequest(BaseModel):
@@ -70,7 +74,7 @@ class PasswordChangeRequest(BaseModel):
 
 class UserRoleUpdateRequest(BaseModel):
     """Payload for updating a user's role (Admin only)."""
-    role: Literal["admin", "developer"] = Field(..., description="Target role: 'admin' or 'developer'")
+    role: Literal["admin", "developer", "user"] = Field(..., description="Target role: 'admin', 'developer', or 'user'")
 
 
 class AdminCreateUserRequest(BaseModel):
@@ -79,7 +83,8 @@ class AdminCreateUserRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Initial account password")
     full_name: Optional[str] = Field(None, description="User full name")
     organization: Optional[str] = Field(None, description="Organization or team name")
-    role: Literal["admin", "developer"] = Field("admin", description="Assigned role: 'admin' or 'developer'")
+    role: Literal["admin", "developer", "user"] = Field("admin", description="Assigned role: 'admin', 'developer', or 'user'")
+    preferred_domain: Optional[str] = Field("domain_01", description="Preferred domain")
 
     @field_validator("email")
     @classmethod

@@ -611,7 +611,9 @@ async def signup(req: UserSignupRequest):
         password_hash=pw_hash,
         salt=salt,
         full_name=req.full_name,
-        organization=req.organization
+        organization=req.organization,
+        role=req.role if req.role in ("developer", "user") else "developer",
+        preferred_domain=req.preferred_domain or "domain_01"
     )
     token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
     storage.refresh()
@@ -694,12 +696,14 @@ async def update_profile(
     req: UserProfileUpdateRequest,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Updates user profile display name and organization."""
+    """Updates user profile display name, organization, and preferred domain."""
     user = storage.update_user_profile(
         user_id=current_user.id,
         full_name=req.full_name,
         organization=req.organization
     )
+    if req.preferred_domain:
+        user = storage.update_user_preferred_domain(current_user.id, req.preferred_domain)
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     return user
@@ -793,7 +797,8 @@ async def admin_create_user(
         salt=salt,
         full_name=req.full_name,
         organization=req.organization,
-        role=req.role
+        role=req.role,
+        preferred_domain=req.preferred_domain or "domain_01"
     )
     storage.refresh()
     return user
