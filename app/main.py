@@ -691,7 +691,21 @@ async def change_password(
     if not updated:
         raise HTTPException(status_code=500, detail="Failed to update password.")
 
-    return {"status": "success", "message": "Password changed successfully."}
+    # Retrieve updated user record to get new token_version and issue fresh session token
+    updated_user = storage.get_user_by_id(current_user.id)
+    new_token = create_access_token(
+        user_id=current_user.id,
+        email=current_user.email,
+        token_version=getattr(updated_user, "token_version", 1)
+    )
+
+    return {
+        "status": "success",
+        "message": "Password changed successfully.",
+        "access_token": new_token,
+        "token_type": "bearer",
+        "user": updated_user
+    }
 
 
 # ==============================================================

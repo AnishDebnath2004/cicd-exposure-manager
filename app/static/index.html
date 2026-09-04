@@ -3120,6 +3120,12 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
         const data = await res.json();
         if (!res.ok) {
+          if (res.status === 401) {
+            clearAuthState();
+            openAuthModal('login');
+            showToast("Your session expired. Please sign in again.", "warning");
+            return;
+          }
           throw new Error(data.detail || "Profile update failed");
         }
 
@@ -3167,12 +3173,23 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
 
         const data = await res.json();
         if (!res.ok) {
+          if (res.status === 401) {
+            clearAuthState();
+            openAuthModal('login');
+            showToast("Your session has expired. Please sign in again.", "warning");
+            return;
+          }
           throw new Error(data.detail || "Password change failed");
+        }
+
+        // Seamlessly update session with rotated token
+        if (data.access_token) {
+          setAuthState(data.access_token, data.user || currentUser);
         }
 
         document.getElementById('settingsCurrentPassword').value = '';
         document.getElementById('settingsNewPassword').value = '';
-        showToast("Password updated successfully!", "success");
+        showToast("Password updated successfully! Session updated.", "success");
       } catch (err) {
         showToast(`Password change failed: ${err.message}`, "error");
       } finally {

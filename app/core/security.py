@@ -21,15 +21,36 @@ from app.models.auth_schemas import UserResponse
 
 
 # Secret key for HMAC token signing
-_ENV_SECRET = os.getenv("SHIELDCI_SECRET_KEY")
-if not _ENV_SECRET:
-    # If in production without explicit key, generate secure random key per instance
+def _resolve_secret_key() -> str:
+    env_secret = os.getenv("SHIELDCI_SECRET_KEY")
+    if env_secret and env_secret.strip():
+        return env_secret.strip()
+
+    # In production without explicit secret key, read or create persistent key in data dir
     if os.getenv("APP_ENV", "development").lower() in ("production", "prod"):
-        SECRET_KEY = secrets.token_hex(32)
-    else:
-        SECRET_KEY = "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
-else:
-    SECRET_KEY = _ENV_SECRET
+        data_dir = os.getenv(
+            "SHIELDCI_DATA_DIR",
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        )
+        secret_file = os.path.join(data_dir, ".shieldci_secret")
+        try:
+            if os.path.isfile(secret_file):
+                with open(secret_file, "r", encoding="utf-8") as f:
+                    saved = f.read().strip()
+                    if saved:
+                        return saved
+            os.makedirs(data_dir, exist_ok=True)
+            generated = secrets.token_hex(32)
+            with open(secret_file, "w", encoding="utf-8") as f:
+                f.write(generated)
+            return generated
+        except Exception:
+            return "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
+
+    return "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
+
+
+SECRET_KEY = _resolve_secret_key()
 
 HASH_ITERATIONS = 200_000
 
