@@ -1,8 +1,11 @@
-# Environments & Virtualenvs
+# Environments & Secrets
+.env
+.env*.local
 venv/
 .venv/
 env/
 ENV/
+
 
 # Python bytecode & cache
 __pycache__/

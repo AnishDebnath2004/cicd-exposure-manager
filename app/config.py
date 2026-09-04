@@ -11,6 +11,28 @@ from typing import Set, Dict, Optional
 from pydantic import BaseModel, Field
 
 
+def _load_env_file():
+    """Loads key=value pairs from root .env file into os.environ if present."""
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(root_dir, ".env")
+    if os.path.isfile(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, val = line.partition("=")
+                    key = key.strip()
+                    val = val.strip().strip("'\"")
+                    if key and key not in os.environ:
+                        os.environ[key] = val
+        except Exception:
+            pass
+
+_load_env_file()
+
+
 class ExposureScoringWeights(BaseModel):
     """Weight multipliers used to calculate the Pipeline Exposure Score (PES)."""
     CRITICAL: float = 25.0
@@ -129,6 +151,50 @@ class AppConfig(BaseModel):
             )
         )
     )
+
+    # Remote Database URL (PostgreSQL / Supabase / Neon / RDS / Render)
+    # When provided, ShieldCI connects to PostgreSQL with connection pooling.
+    # When absent, ShieldCI defaults to local SQLite at DB_PATH.
+    DATABASE_URL: Optional[str] = Field(
+        default_factory=lambda: (
+            os.getenv("DATABASE_URL")
+            or os.getenv("POSTGRES_URL")
+            or os.getenv("POSTGRESQL_URL")
+            or os.getenv("POSTGRES_PRISMA_URL")
+        )
+    )
+
+    @property
+    def normalized_database_url(self) -> Optional[str]:
+        """Normalizes postgres:// -> postgresql:// and automatically URL-encodes special characters in credentials."""
+        if not self.DATABASE_URL:
+            return None
+        url = self.DATABASE_URL.strip()
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://"):]
+
+        # Handle passwords with unencoded '@' characters (e.g., postgresql://user:p@ss@host:5432/db)
+        try:
+            if "://" in url and "@" in url:
+                scheme, rest = url.split("://", 1)
+                if rest.count("@") > 1 and "/" in rest:
+                    auth_part, host_part = rest.rsplit("@", 1)
+                    if ":" in auth_part:
+                        user, password = auth_part.split(":", 1)
+                        import urllib.parse
+                        if "@" in password:
+                            encoded_pw = urllib.parse.quote_plus(password)
+                            url = f"{scheme}://{user}:{encoded_pw}@{host_part}"
+        except Exception:
+            pass
+
+        return url
+
+    @property
+    def is_postgres(self) -> bool:
+        """Returns True if a PostgreSQL connection string is configured."""
+        url = self.normalized_database_url
+        return bool(url and (url.startswith("postgresql://") or url.startswith("postgres://")))
 
     # Ingestion & Timeout Settings
     GIT_TIMEOUT_SECONDS: int = int(os.getenv("SHIELDCI_GIT_TIMEOUT", "60"))

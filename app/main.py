@@ -809,11 +809,16 @@ async def github_webhook(payload: dict):
 
 @app.get("/api/health")
 async def health_check():
+    db_connected = storage.check_connection()
     return {
-        "status": "healthy",
+        "status": "healthy" if db_connected else "degraded",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "environment": settings.APP_ENV,
+        "database": {
+            "engine": storage.engine_type,
+            "connected": db_connected
+        },
         "features": {
             "repository_scanner": True,
             "website_scanner": True,
@@ -828,9 +833,11 @@ async def health_check():
             "history": True,
             "sarif_export": True,
             "user_authentication": True,
-            "settings": True
+            "settings": True,
+            "postgresql_support": True
         }
     }
+
 
 
 if __name__ == "__main__":
