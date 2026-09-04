@@ -643,6 +643,25 @@ async def login(req: UserLoginRequest):
             detail="Invalid email or password."
         )
 
+    # Enforce role matching if a specific portal or role was requested
+    user_role = user_record.get("role", "developer")
+    if req.required_role:
+        if req.required_role == "admin" and user_role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Account '{req.email}' does not possess Administrator privileges. Administrator login is strictly disabled for other users and developers."
+            )
+        elif req.required_role == "user" and user_role not in ("user", "admin"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Account '{req.email}' is registered as a Developer. Please sign in via Developer Sign In."
+            )
+        elif req.required_role == "developer" and user_role not in ("developer", "admin"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Account '{req.email}' is registered as a User. Please sign in via User Sign In."
+            )
+
     storage.update_last_login(user_record["id"])
     storage.refresh()
     user = storage.get_user_by_id(user_record["id"])

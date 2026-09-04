@@ -28,6 +28,9 @@ class UserLoginRequest(BaseModel):
     """Payload for user login."""
     email: str = Field(..., description="User email address")
     password: str = Field(..., description="User password")
+    required_role: Optional[Literal["admin", "developer", "user"]] = Field(
+        None, description="Enforce that the authenticating account matches this specific role"
+    )
 
     @field_validator("email")
     @classmethod
