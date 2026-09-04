@@ -103,21 +103,21 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs (5 Core Sections) -->
-      <nav class="hidden lg:flex items-center bg-surface-900/80 border border-slate-800 p-1 rounded-xl">
-        <button onclick="switchNavTab('domain1')" id="navTab-domain1" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5">
-          <i class="fa-solid fa-code-branch"></i> <span>Domain 01: Code & CI/CD</span>
+      <!-- Navigation Tabs (5 Core Sections - Always Visible & Responsive) -->
+      <nav class="flex items-center bg-surface-900/90 border border-slate-800 p-1 rounded-xl overflow-x-auto max-w-full gap-1 shadow-inner">
+        <button onclick="switchNavTab('domain1')" id="navTab-domain1" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-code-branch"></i> <span>Domain 01: Code</span>
         </button>
-        <button onclick="switchNavTab('domain2')" id="navTab-domain2" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-globe"></i> <span>Domain 02: Web & API</span>
+        <button onclick="switchNavTab('domain2')" id="navTab-domain2" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-globe"></i> <span>Domain 02: Web</span>
         </button>
-        <button onclick="switchNavTab('domain3')" id="navTab-domain3" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-database"></i> <span>Domain 03: DB & Cloud</span>
+        <button onclick="switchNavTab('domain3')" id="navTab-domain3" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-database"></i> <span>Domain 03: Cloud</span>
         </button>
-        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5">
+        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Section 4: Administrator Governance">
           <i class="fa-solid fa-crown text-amber-400"></i> <span>Admin</span>
         </button>
-        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5">
+        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Section 5: User Scan Portal">
           <i class="fa-solid fa-user-shield text-emerald-400"></i> <span>User</span>
         </button>
       </nav>
@@ -169,7 +169,35 @@
   </header>
 
   <!-- Main Content Area -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
+
+    <!-- 5-Section Quick Switcher Bar -->
+    <div class="glass-card rounded-2xl p-2.5 border border-slate-800 bg-surface-900/60 backdrop-blur-md flex items-center justify-between gap-3 overflow-x-auto shadow-md">
+      <div class="flex items-center gap-1.5 flex-nowrap min-w-max">
+        <span class="text-[10px] font-mono font-bold text-slate-500 uppercase px-2 tracking-wider flex items-center gap-1">
+          <i class="fa-solid fa-layer-group text-indigo-400"></i> Sections:
+        </span>
+        <button onclick="switchNavTab('domain1')" id="subQuickTab-domain1" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30">
+          <i class="fa-solid fa-code-branch text-indigo-400"></i> 1. Domain 01: Code &amp; CI/CD
+        </button>
+        <button onclick="switchNavTab('domain2')" id="subQuickTab-domain2" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-850">
+          <i class="fa-solid fa-globe text-sky-400"></i> 2. Domain 02: Web &amp; API
+        </button>
+        <button onclick="switchNavTab('domain3')" id="subQuickTab-domain3" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-850">
+          <i class="fa-solid fa-database text-indigo-400"></i> 3. Domain 03: DB &amp; Cloud
+        </button>
+        <button onclick="switchNavTab('admin')" id="subQuickTab-admin" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
+          <i class="fa-solid fa-crown text-amber-400"></i> 4. Admin
+        </button>
+        <button onclick="switchNavTab('user')" id="subQuickTab-user" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30">
+          <i class="fa-solid fa-user-shield text-emerald-400"></i> 5. User Portal
+        </button>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-[11px] text-slate-400 font-mono pr-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Tri-Vector Defense Engine Active</span>
+      </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- SECTION 1: DOMAIN 01 - CODE REPOSITORY & CI/CD SECURITY -->
@@ -792,6 +820,48 @@
     <!-- SECTION 4: ADMINISTRATOR CONSOLE & TEAM GOVERNANCE -->
     <!-- ========================================== -->
     <div id="section-admin" class="hidden space-y-6">
+
+      <!-- Admin Gate Box (Shown when not logged in as Admin) -->
+      <div id="adminGateBox" class="glass-card rounded-2xl p-8 sm:p-12 border border-amber-500/40 bg-gradient-to-b from-amber-950/20 via-surface-900/90 to-surface-950 text-center space-y-6 max-w-2xl mx-auto my-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-3xl mx-auto shadow-xl shadow-amber-500/25 border border-amber-300/40">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <div>
+          <span class="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1.5">
+            <i class="fa-solid fa-lock text-[10px]"></i> Section 4 &bull; Administrator Console
+          </span>
+          <h2 class="text-2xl font-black text-white mt-4 tracking-tight">Administrator Governance &amp; Multi-Domain Control</h2>
+          <p class="text-sm text-slate-300 mt-2.5 max-w-lg mx-auto leading-relaxed">
+            This section provides complete administrative control across <b>Domain 01</b> (Code &amp; CI/CD), <b>Domain 02</b> (Web &amp; API), and <b>Domain 03</b> (Database &amp; Cloud Infra), as well as team user roster management, role delegation, continuous background monitors, and security policy gates.
+          </p>
+        </div>
+
+        <div class="p-4 bg-surface-900/90 border border-amber-500/30 rounded-2xl text-xs space-y-2 text-left max-w-md mx-auto">
+          <div class="flex items-center gap-2 font-bold text-amber-300">
+            <i class="fa-solid fa-circle-info"></i> Designated Administrator Account:
+          </div>
+          <div class="font-mono text-slate-200 bg-surface-950 px-3 py-2 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span>debnathanish19@gmail.com</span>
+            <span class="text-[10px] text-amber-400 font-sans font-bold">Admin</span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Sign in with this administrator account to unlock full multi-domain governance and user management.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button onclick="openAuthModal('login')" class="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 shadow-lg shadow-amber-500/30 border border-amber-400/50 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-arrow-right-to-bracket text-slate-950"></i> Sign In as Administrator
+          </button>
+          <button onclick="switchNavTab('domain1')" class="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-800 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-code-branch text-indigo-400"></i> Explore Domain 01: Code &amp; CI/CD
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Main Panel (Shown when signed in as Administrator) -->
+      <div id="adminMainContent" class="hidden space-y-6">
 
       <!-- Admin Header & Action Bar -->
       <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden border border-amber-500/30">
@@ -1544,6 +1614,7 @@
     <!-- TAB 6: ADMINISTRATOR GOVERNANCE & RBAC -->
     <!-- ========================================== -->
       </div>
+      </div>
 
     </div>
     
@@ -1845,40 +1916,72 @@
         tabName = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
       }
 
-      if (tabName === 'admin') {
-        if (!currentUser || currentUser.role !== 'admin') {
-          showToast("Administrator privileges are required to access the Admin console.", "error");
-          switchNavTab('domain1');
-          return;
-        }
-      }
-
       const tabs = ['domain1', 'domain2', 'domain3', 'admin', 'user'];
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         const btn = document.getElementById(`navTab-${t}`);
+        const subBtn = document.getElementById(`subQuickTab-${t}`);
         if (sec) sec.classList.add('hidden');
         if (btn) {
           if (t === 'admin') {
-            btn.className = "nav-tab-btn hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5";
+            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
           } else if (t === 'user') {
-            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5";
+            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
           } else {
-            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5";
+            btn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
+          }
+        }
+        if (subBtn) {
+          if (t === 'admin') {
+            subBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30";
+          } else if (t === 'user') {
+            subBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30";
+          } else {
+            subBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-850";
           }
         }
       });
 
       const targetSec = document.getElementById(`section-${tabName}`);
       const targetBtn = document.getElementById(`navTab-${tabName}`);
+      const targetSubBtn = document.getElementById(`subQuickTab-${tabName}`);
       if (targetSec) targetSec.classList.remove('hidden');
       if (targetBtn) {
         if (tabName === 'admin') {
-          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-400/50 flex items-center gap-1.5";
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-400/50 flex items-center gap-1.5 whitespace-nowrap";
         } else if (tabName === 'user') {
-          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 border border-emerald-500/50 flex items-center gap-1.5";
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 border border-emerald-500/50 flex items-center gap-1.5 whitespace-nowrap";
         } else {
-          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5";
+          targetBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 flex items-center gap-1.5 whitespace-nowrap";
+        }
+      }
+      if (targetSubBtn) {
+        if (tabName === 'admin') {
+          targetSubBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25 border border-amber-400/50";
+        } else if (tabName === 'user') {
+          targetSubBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500/50";
+        } else {
+          targetSubBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/20";
+        }
+      }
+
+      // Section 4 (Admin) Access Control View Management
+      if (tabName === 'admin') {
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        const gateBox = document.getElementById('adminGateBox');
+        const mainContent = document.getElementById('adminMainContent');
+        if (gateBox && mainContent) {
+          if (isAdmin) {
+            gateBox.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            loadAdminUsers();
+            loadSchedules();
+            loadScanHistory();
+            loadSettings();
+          } else {
+            gateBox.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+          }
         }
       }
 
@@ -3396,18 +3499,42 @@
           userAvatar.textContent = initial;
         }
 
-        // Show admin console tab only if user is an Administrator
+        // Keep admin nav tab always visible with appropriate status title
         if (adminNavTab) {
+          adminNavTab.classList.remove('hidden');
           if (currentUser.role === 'admin') {
-            adminNavTab.classList.remove('hidden');
+            adminNavTab.title = "Section 4: Administrator Console (Full Governance Active)";
           } else {
-            adminNavTab.classList.add('hidden');
+            adminNavTab.title = "Section 4: Administrator Console (Restricted)";
+          }
+        }
+
+        // If currently on admin section, update gate vs main view
+        const adminSec = document.getElementById('section-admin');
+        if (adminSec && !adminSec.classList.contains('hidden')) {
+          const gateBox = document.getElementById('adminGateBox');
+          const mainContent = document.getElementById('adminMainContent');
+          if (currentUser.role === 'admin') {
+            if (gateBox) gateBox.classList.add('hidden');
+            if (mainContent) mainContent.classList.remove('hidden');
+            loadAdminUsers();
+          } else {
+            if (gateBox) gateBox.classList.remove('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
           }
         }
       } else {
         if (guestControls) guestControls.classList.remove('hidden');
         if (userControls) userControls.classList.add('hidden');
-        if (adminNavTab) adminNavTab.classList.add('hidden');
+        if (adminNavTab) adminNavTab.classList.remove('hidden');
+
+        const adminSec = document.getElementById('section-admin');
+        if (adminSec && !adminSec.classList.contains('hidden')) {
+          const gateBox = document.getElementById('adminGateBox');
+          const mainContent = document.getElementById('adminMainContent');
+          if (gateBox) gateBox.classList.remove('hidden');
+          if (mainContent) mainContent.classList.add('hidden');
+        }
       }
     }
 
