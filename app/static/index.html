@@ -245,25 +245,36 @@
           <!-- Sub-mode buttons -->
           <div class="flex items-center gap-2 mb-3">
             <span class="text-xs text-slate-400 font-semibold mr-1">Code Source:</span>
-            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Git Remote URL</button>
+            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Local Directory</button>
+            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Git Remote URL</button>
             <button onclick="setRepoSubmode('upload')" id="repoSubBtn-upload" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">ZIP Upload</button>
-            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Local Directory</button>
+          </div>
+
+          <!-- Local Path Form -->
+          <div id="repoForm-local" class="space-y-4">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <i class="fa-solid fa-folder-open text-base"></i>
+              </div>
+              <input type="text" id="localRepoPath" placeholder="./sample_vulnerable_repo or /workspace/project" value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
+            </div>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Scan local directories on the host or runner filesystem directly without network transmission.</p>
           </div>
 
           <!-- Git URL Input Form -->
-          <div id="repoForm-git" class="space-y-4">
+          <div id="repoForm-git" class="hidden space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div class="md:col-span-8 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <i class="fa-brands fa-git-alt text-base"></i>
                 </div>
-                <input type="text" id="gitRepoUrl" placeholder="https://github.com/owner/repository.git" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
+                <input type="text" id="gitRepoUrl" placeholder="https://github.com/owner/repository.git" value="https://github.com/octocat/Hello-World" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
               </div>
               <div class="md:col-span-4 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <i class="fa-solid fa-code-commit text-xs"></i>
                 </div>
-                <input type="text" id="gitBranch" placeholder="main (default branch)" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
+                <input type="text" id="gitBranch" placeholder="main (default branch)" value="master" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
               </div>
             </div>
             <div class="flex items-center gap-4 text-xs text-slate-400">
@@ -284,17 +295,6 @@
               <p class="text-xs text-slate-500 mt-1">Supports standard .zip packages up to 50MB (scans Dockerfiles, code, dependencies, and CI configs)</p>
               <div id="uploadFileName" class="mt-3 text-xs font-semibold text-indigo-400"></div>
             </div>
-          </div>
-
-          <!-- Local Path Form -->
-          <div id="repoForm-local" class="hidden space-y-4">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-solid fa-folder-open text-base"></i>
-              </div>
-              <input type="text" id="localRepoPath" placeholder="./sample_vulnerable_repo or /workspace/project" value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
-            </div>
-            <p class="text-xs text-slate-400"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Scan local directories on the host or runner filesystem directly without network transmission.</p>
           </div>
         </div>
 
@@ -409,7 +409,7 @@
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
               <i class="fa-solid fa-globe text-base"></i>
             </div>
-            <input type="url" id="webTargetUrl" placeholder="https://app.company.com or https://api.service.io" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono transition-all">
+            <input type="url" id="webTargetUrl" placeholder="https://app.company.com or https://api.service.io" value="https://example.com" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono transition-all">
           </div>
           <div class="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
             <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> SSL/TLS Expiry &amp; Cipher Strength</span>
@@ -421,7 +421,7 @@
 
         <!-- Presets Toolbar -->
         <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex flex-wrap items-center gap-2">
+          <div id="presetsContainer-domain2" class="flex flex-wrap items-center gap-2">
             <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
             <button onclick="applyPreset('web-example')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🌐 example.com (Standard)</button>
             <button onclick="applyPreset('web-httpbin')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📡 httpbin.org (REST API)</button>
@@ -494,7 +494,7 @@
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                 <i class="fa-solid fa-database text-base"></i>
               </div>
-              <input type="text" id="dbTargetUri" placeholder="postgresql://user:pass@host:5432/app or redis://127.0.0.1:6379" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono transition-all">
+              <input type="text" id="dbTargetUri" placeholder="postgresql://user:pass@host:5432/app or redis://127.0.0.1:6379" value="redis://127.0.0.1:6379" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono transition-all">
             </div>
             <div class="md:col-span-4 relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -521,7 +521,7 @@
 
         <!-- Presets Toolbar -->
         <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex flex-wrap items-center gap-2">
+          <div id="presetsContainer-domain3" class="flex flex-wrap items-center gap-2">
             <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
             <button onclick="applyPreset('db-redis')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚡ Local Redis (6379)</button>
             <button onclick="applyPreset('db-postgres')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐘 PostgreSQL (5432)</button>
@@ -1951,7 +1951,7 @@
     let currentScanData = null;
     let selectedZipFile = null;
     let currentAssetCategory = 'repository';
-    let currentRepoSubmode = 'git';
+    let currentRepoSubmode = 'local';
     let severityChartInst = null;
     let categoryChartInst = null;
 
@@ -2073,14 +2073,16 @@
       const resSec = document.getElementById('resultsSection');
       const targetContainer = document.getElementById(`domainResults-${category}`);
       if (resSec && targetContainer && currentScanData) {
-        targetContainer.appendChild(resSec);
-        resSec.classList.remove('hidden');
+        if (!currentScanData.target_type || currentScanData.target_type === category) {
+          targetContainer.appendChild(resSec);
+          resSec.classList.remove('hidden');
+        }
       }
     }
 
     function executeDomainScan(category) {
       currentAssetCategory = category;
-      executeScan();
+      executeScan(category);
     }
 
     function switchAdminSubTab(subTab) {
@@ -2110,73 +2112,9 @@
     // Asset Category Switching: Repository | Website | Database
     function setAssetCategory(cat) {
       currentAssetCategory = cat;
-      const cats = ['repository', 'website', 'database'];
-      cats.forEach(c => {
-        const panel = document.getElementById(`vectorPanel-${c}`);
-        const btn = document.getElementById(`assetBtn-${c}`);
-        const card = document.getElementById(`domainCard-${c}`);
-        if (panel) panel.classList.add('hidden');
-        if (btn) {
-          btn.className = "asset-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2";
-        }
-        if (card) {
-          card.className = "domain-card glass-card rounded-2xl p-5 border-2 border-transparent hover:border-slate-700 bg-surface-900/60 cursor-pointer transition-all hover:scale-[1.01] flex flex-col justify-between";
-          const statusSpan = card.querySelector('.domain-status-text');
-          if (statusSpan) {
-            statusSpan.className = "domain-status-text text-slate-500 flex items-center gap-1.5";
-            statusSpan.innerHTML = `<i class="fa-regular fa-circle text-[9px]"></i> Switch Domain`;
-          }
-        }
-      });
-
-      const activePanel = document.getElementById(`vectorPanel-${cat}`);
-      const activeBtn = document.getElementById(`assetBtn-${cat}`);
-      const activeCard = document.getElementById(`domainCard-${cat}`);
-      if (activePanel) activePanel.classList.remove('hidden');
-      if (activeBtn) {
-        activeBtn.className = "asset-btn px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-2";
-      }
-      if (activeCard) {
-        let borderClass = "border-indigo-500 bg-indigo-950/20 shadow-lg shadow-indigo-600/10";
-        let textClass = "text-indigo-400";
-        if (cat === 'website') {
-          borderClass = "border-sky-500 bg-sky-950/20 shadow-lg shadow-sky-600/10";
-          textClass = "text-sky-400";
-        } else if (cat === 'database') {
-          borderClass = "border-emerald-500 bg-emerald-950/20 shadow-lg shadow-emerald-600/10";
-          textClass = "text-emerald-400";
-        }
-        activeCard.className = `domain-card glass-card rounded-2xl p-5 border-2 ${borderClass} cursor-pointer transition-all hover:scale-[1.01] flex flex-col justify-between`;
-        const statusSpan = activeCard.querySelector('.domain-status-text');
-        if (statusSpan) {
-          statusSpan.className = `domain-status-text ${textClass} font-semibold flex items-center gap-1.5`;
-          statusSpan.innerHTML = `<i class="fa-solid fa-circle-check text-[9px]"></i> Active Workspace`;
-        }
-      }
-
-      // Update active domain header texts
-      const domainTitle = document.getElementById('activeDomainTitle');
-      const domainDesc = document.getElementById('activeDomainDesc');
-      const domainTag = document.getElementById('activeDomainTag');
-      if (domainTitle && domainDesc && domainTag) {
-        if (cat === 'repository') {
-          domainTag.textContent = "Domain 01 Active";
-          domainTag.className = "px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
-          domainTitle.innerHTML = `<i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code Repository & CI/CD Security`;
-          domainDesc.textContent = "Audit source code, Git branches, CI/CD pipeline manifests, secret tokens, and vulnerable dependencies.";
-        } else if (cat === 'website') {
-          domainTag.textContent = "Domain 02 Active";
-          domainTag.className = "px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/30";
-          domainTitle.innerHTML = `<i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web & API Perimeter Defense`;
-          domainDesc.textContent = "Audit public-facing web applications, SSL/TLS certificates, security headers, CORS policies, and exposed routes.";
-        } else if (cat === 'database') {
-          domainTag.textContent = "Domain 03 Active";
-          domainTag.className = "px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-          domainTitle.innerHTML = `<i class="fa-solid fa-database text-emerald-400"></i> Domain 03: Database & Cloud Infrastructure`;
-          domainDesc.textContent = "Audit database engines, public port exposure, unauthenticated access, default credentials, and TLS enforcement.";
-        }
-      }
-
+      if (cat === 'repository') switchNavTab('domain1');
+      else if (cat === 'website') switchNavTab('domain2');
+      else if (cat === 'database') switchNavTab('domain3');
       renderPresets(cat);
     }
 
@@ -2203,7 +2141,10 @@
 
     // Presets Management
     function renderPresets(category) {
-      const container = document.getElementById('presetsContainer');
+      const domId = category === 'website' ? 'domain2' : (category === 'database' ? 'domain3' : 'domain1');
+      const container = document.getElementById('presetsContainer') || document.getElementById(`presetsContainer-${domId}`);
+      if (!container) return;
+      // If dynamic container exists, populate it
       container.innerHTML = `<span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Quick Presets:</span>`;
 
       if (category === 'repository') {
@@ -2228,43 +2169,55 @@
 
     function applyPreset(preset) {
       if (preset === 'repo-sample') {
-        setAssetCategory('repository');
+        switchNavTab('domain1');
         setRepoSubmode('local');
-        document.getElementById('localRepoPath').value = './sample_vulnerable_repo';
+        const el = document.getElementById('localRepoPath');
+        if (el) el.value = './sample_vulnerable_repo';
         showToast("Applied sample vulnerable repository preset", "info");
       } else if (preset === 'repo-github') {
-        setAssetCategory('repository');
+        switchNavTab('domain1');
         setRepoSubmode('git');
-        document.getElementById('gitRepoUrl').value = 'https://github.com/octocat/Hello-World';
-        document.getElementById('gitBranch').value = 'master';
+        const urlEl = document.getElementById('gitRepoUrl');
+        if (urlEl) urlEl.value = 'https://github.com/octocat/Hello-World';
+        const brEl = document.getElementById('gitBranch');
+        if (brEl) brEl.value = 'master';
         showToast("Applied GitHub Octocat preset", "info");
       } else if (preset === 'repo-current') {
-        setAssetCategory('repository');
+        switchNavTab('domain1');
         setRepoSubmode('local');
-        document.getElementById('localRepoPath').value = '.';
+        const el = document.getElementById('localRepoPath');
+        if (el) el.value = '.';
         showToast("Applied current workspace preset", "info");
       } else if (preset === 'web-example') {
-        setAssetCategory('website');
-        document.getElementById('webTargetUrl').value = 'https://example.com';
+        switchNavTab('domain2');
+        const el = document.getElementById('webTargetUrl');
+        if (el) el.value = 'https://example.com';
         showToast("Applied example.com website preset", "info");
       } else if (preset === 'web-httpbin') {
-        setAssetCategory('website');
-        document.getElementById('webTargetUrl').value = 'https://httpbin.org';
+        switchNavTab('domain2');
+        const el = document.getElementById('webTargetUrl');
+        if (el) el.value = 'https://httpbin.org';
         showToast("Applied httpbin.org API preset", "info");
       } else if (preset === 'db-redis') {
-        setAssetCategory('database');
-        document.getElementById('dbTargetUri').value = 'redis://127.0.0.1:6379';
-        document.getElementById('dbEngineSelect').value = 'redis';
+        switchNavTab('domain3');
+        const el = document.getElementById('dbTargetUri');
+        if (el) el.value = 'redis://127.0.0.1:6379';
+        const sel = document.getElementById('dbEngineSelect');
+        if (sel) sel.value = 'redis';
         showToast("Applied local Redis preset", "info");
       } else if (preset === 'db-postgres') {
-        setAssetCategory('database');
-        document.getElementById('dbTargetUri').value = 'postgresql://postgres:postgres@127.0.0.1:5432/app';
-        document.getElementById('dbEngineSelect').value = 'postgres';
+        switchNavTab('domain3');
+        const el = document.getElementById('dbTargetUri');
+        if (el) el.value = 'postgresql://postgres:postgres@127.0.0.1:5432/app';
+        const sel = document.getElementById('dbEngineSelect');
+        if (sel) sel.value = 'postgres';
         showToast("Applied PostgreSQL preset", "info");
       } else if (preset === 'db-elastic') {
-        setAssetCategory('database');
-        document.getElementById('dbTargetUri').value = 'http://127.0.0.1:9200';
-        document.getElementById('dbEngineSelect').value = 'elasticsearch';
+        switchNavTab('domain3');
+        const el = document.getElementById('dbTargetUri');
+        if (el) el.value = 'http://127.0.0.1:9200';
+        const sel = document.getElementById('dbEngineSelect');
+        if (sel) sel.value = 'elasticsearch';
         showToast("Applied Elasticsearch preset", "info");
       }
     }
@@ -2294,7 +2247,11 @@
     }
 
     // Universal Scan Execution
-    async function executeScan() {
+    async function executeScan(category) {
+      if (category) {
+        currentAssetCategory = category;
+      }
+
       // Guest Quota Guard
       if (!currentUser && currentQuota && currentQuota.remaining_scans <= 0) {
         showToast("Daily guest scan quota reached (5/5). Please sign in for unlimited scans.", "error");
@@ -2302,26 +2259,45 @@
         return;
       }
 
-      const btn = document.getElementById('scanBtn');
-      const progressBox = document.getElementById('scanProgressBox');
-      const progressMsg = document.getElementById('scanProgressMsg');
-      const progressBar = document.getElementById('scanProgressBar');
-      const failSeverity = document.getElementById('failSeverityInput').value;
-      const maxPes = parseFloat(document.getElementById('maxPesInput').value) || 60.0;
+      let domainKey = 'domain1';
+      let defaultBtnHtml = '<i class="fa-solid fa-bolt-lightning text-amber-300"></i> Audit Code Repository &amp; CI/CD';
+      if (currentAssetCategory === 'website') {
+        domainKey = 'domain2';
+        defaultBtnHtml = '<i class="fa-solid fa-radar text-amber-300"></i> Audit Web &amp; API Perimeter';
+      } else if (currentAssetCategory === 'database') {
+        domainKey = 'domain3';
+        defaultBtnHtml = '<i class="fa-solid fa-shield-cat text-amber-300"></i> Audit Database Infrastructure';
+      }
 
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Auditing Asset...`;
-      progressBox.classList.remove('hidden');
-      progressBar.style.width = '20%';
+      const btn = document.getElementById(`scanBtn-${domainKey}`) || document.getElementById('scanBtn');
+      const progressBox = document.getElementById(`scanProgressBox-${domainKey}`) || document.getElementById('scanProgressBox');
+      const progressMsg = document.getElementById(`scanProgressMsg-${domainKey}`) || document.getElementById('scanProgressMsg');
+      const progressBar = document.getElementById(`scanProgressBar-${domainKey}`) || document.getElementById('scanProgressBar');
+      const failSeverityEl = document.getElementById('failSeverityInput');
+      const failSeverity = failSeverityEl ? failSeverityEl.value : 'HIGH';
+      const maxPesEl = document.getElementById('maxPesInput');
+      const maxPes = maxPesEl ? (parseFloat(maxPesEl.value) || 60.0) : 60.0;
+
+      const setProgress = (width, msgHtml) => {
+        if (progressBar) progressBar.style.width = width;
+        if (progressMsg && msgHtml) progressMsg.innerHTML = msgHtml;
+      };
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Auditing Asset...`;
+      }
+      if (progressBox) progressBox.classList.remove('hidden');
+      setProgress('20%', `<i class="fa-solid fa-spinner fa-spin"></i> Initializing scan engine...`);
 
       try {
         let response;
 
         if (currentAssetCategory === 'website') {
-          const url = document.getElementById('webTargetUrl').value.trim();
-          if (!url) throw new Error("Please enter a website or API URL.");
-          progressMsg.innerHTML = `<i class="fa-solid fa-globe fa-fade"></i> Inspecting SSL/TLS, headers, and endpoints for ${url}...`;
-          progressBar.style.width = '50%';
+          const urlInput = document.getElementById('webTargetUrl');
+          const url = urlInput ? urlInput.value.trim() : '';
+          if (!url) throw new Error("Please enter a website or API URL (e.g. https://example.com) or click a Preset.");
+          setProgress('50%', `<i class="fa-solid fa-globe fa-fade"></i> Inspecting SSL/TLS, headers, and endpoints for ${url}...`);
 
           response = await fetch('/api/scan', {
             method: 'POST',
@@ -2335,11 +2311,12 @@
           });
 
         } else if (currentAssetCategory === 'database') {
-          const target = document.getElementById('dbTargetUri').value.trim();
-          const engine = document.getElementById('dbEngineSelect').value || null;
-          if (!target) throw new Error("Please enter a database connection URI or host:port.");
-          progressMsg.innerHTML = `<i class="fa-solid fa-database fa-fade"></i> Auditing database posture, port exposure, and credentials...`;
-          progressBar.style.width = '50%';
+          const dbInput = document.getElementById('dbTargetUri');
+          const target = dbInput ? dbInput.value.trim() : '';
+          const engineSelect = document.getElementById('dbEngineSelect');
+          const engine = engineSelect ? (engineSelect.value || null) : null;
+          if (!target) throw new Error("Please enter a database connection URI or host:port (e.g. redis://127.0.0.1:6379) or click a Preset.");
+          setProgress('50%', `<i class="fa-solid fa-database fa-fade"></i> Auditing database posture, port exposure, and credentials...`);
 
           response = await fetch('/api/scan', {
             method: 'POST',
@@ -2357,9 +2334,8 @@
           // Repository Scan
           if (currentRepoSubmode === 'upload') {
             if (!selectedZipFile) throw new Error("Please select or drop a .zip archive first.");
-            progressMsg.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading & extracting repository archive...`;
-            progressBar.style.width = '40%';
-            
+            setProgress('40%', `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading &amp; extracting repository archive...`);
+
             const formData = new FormData();
             formData.append('file', selectedZipFile);
             formData.append('fail_on_severity', failSeverity);
@@ -2371,11 +2347,12 @@
               body: formData
             });
           } else if (currentRepoSubmode === 'git') {
-            const url = document.getElementById('gitRepoUrl').value.trim();
-            const branch = document.getElementById('gitBranch').value.trim() || null;
-            if (!url) throw new Error("Please enter a Git repository URL.");
-            progressMsg.innerHTML = `<i class="fa-brands fa-git-alt fa-fade"></i> Shallow cloning remote Git repository...`;
-            progressBar.style.width = '40%';
+            const gitUrlEl = document.getElementById('gitRepoUrl');
+            const url = gitUrlEl ? gitUrlEl.value.trim() : '';
+            const gitBranchEl = document.getElementById('gitBranch');
+            const branch = gitBranchEl ? (gitBranchEl.value.trim() || null) : null;
+            if (!url) throw new Error("Please enter a Git repository URL (e.g. https://github.com/octocat/Hello-World) or switch to Local Directory.");
+            setProgress('40%', `<i class="fa-brands fa-git-alt fa-fade"></i> Shallow cloning remote Git repository...`);
 
             response = await fetch('/api/scan', {
               method: 'POST',
@@ -2390,10 +2367,10 @@
               })
             });
           } else {
-            const path = document.getElementById('localRepoPath').value.trim();
-            if (!path) throw new Error("Please enter a local filesystem path.");
-            progressMsg.innerHTML = `<i class="fa-solid fa-folder-open fa-fade"></i> Auditing local codebase...`;
-            progressBar.style.width = '40%';
+            const localPathEl = document.getElementById('localRepoPath');
+            const path = localPathEl ? localPathEl.value.trim() : './sample_vulnerable_repo';
+            if (!path) throw new Error("Please enter a local filesystem path (e.g. ./sample_vulnerable_repo).");
+            setProgress('40%', `<i class="fa-solid fa-folder-open fa-fade"></i> Auditing local codebase...`);
 
             response = await fetch('/api/scan', {
               method: 'POST',
@@ -2409,8 +2386,7 @@
           }
         }
 
-        progressMsg.innerHTML = `<i class="fa-solid fa-shield-halved fa-fade"></i> Computing exposure score and risk grades...`;
-        progressBar.style.width = '85%';
+        setProgress('85%', `<i class="fa-solid fa-shield-halved fa-fade"></i> Computing exposure score and risk grades...`);
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -2423,7 +2399,7 @@
         }
 
         const data = await response.json();
-        progressBar.style.width = '100%';
+        if (progressBar) progressBar.style.width = '100%';
         currentScanData = data;
         renderResults(data);
         showToast("Exposure audit completed successfully!", "success");
@@ -2431,9 +2407,13 @@
       } catch (err) {
         showToast(err.message, "error");
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-bolt-lightning text-amber-300"></i> Run Deep Exposure Audit`;
-        setTimeout(() => { progressBox.classList.add('hidden'); }, 1000);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = defaultBtnHtml;
+        }
+        if (progressBox) {
+          setTimeout(() => { progressBox.classList.add('hidden'); }, 1000);
+        }
       }
     }
 
@@ -3302,16 +3282,17 @@
     }
 
     function probeDiscoveredTarget(target, type) {
-      switchNavTab('audit');
       if (type === 'website') {
-        setAssetCategory('website');
-        document.getElementById('webTargetUrl').value = target;
+        switchNavTab('domain2');
+        const el = document.getElementById('webTargetUrl');
+        if (el) el.value = target;
       } else if (type === 'database') {
-        setAssetCategory('database');
-        document.getElementById('dbTargetUri').value = target;
+        switchNavTab('domain3');
+        const el = document.getElementById('dbTargetUri');
+        if (el) el.value = target;
       }
       showToast(`Pre-filled ${type} target from auto-discovery. Starting audit...`, "info");
-      executeScan();
+      executeScan(type);
     }
 
     // ==============================================================
@@ -4904,7 +4885,7 @@
       initAuth();
       fetchQuota();
       renderPresets('repository');
-      executeScan();
+      executeScan('repository');
     });
   </script>
 
