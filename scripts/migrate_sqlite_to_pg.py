@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("migrate_to_pg")
 
 
-def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False):
+def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_test_users: bool = False):
     if not os.path.isfile(sqlite_path):
         logger.error(f"SQLite database file not found at: {sqlite_path}")
         sys.exit(1)
@@ -50,7 +50,13 @@ def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False):
     try:
         sqlite_cur.execute("SELECT * FROM users")
         user_rows = sqlite_cur.fetchall()
-        logger.info(f"Found {len(user_rows)} users in SQLite.")
+        total_found = len(user_rows)
+        if not include_test_users:
+            user_rows = [u for u in user_rows if not u["email"].lower().endswith("@shieldci.io")]
+            skipped = total_found - len(user_rows)
+            if skipped > 0:
+                logger.info(f"Skipping {skipped} automated test accounts (@shieldci.io). Migrating {len(user_rows)} real users.")
+        logger.info(f"Found {len(user_rows)} users in SQLite to migrate.")
         if not dry_run and user_rows:
             with pg_adapter._get_connection() as conn:
                 with pg_adapter._get_cursor(conn) as cur:
@@ -245,6 +251,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Perform a dry run to inspect SQLite records without modifying PostgreSQL."
     )
+    parser.add_argument(
+        "--include-test-users",
+        action="store_true",
+        help="Include automated test accounts (@shieldci.io) in migration (default: False, test accounts are excluded)."
+    )
 
     args = parser.parse_args()
 
@@ -252,4 +263,9 @@ if __name__ == "__main__":
         logger.error("No PostgreSQL connection URL provided. Set DATABASE_URL in .env or pass --pg-url.")
         sys.exit(1)
 
-    migrate_data(args.sqlite_path, args.pg_url or "", dry_run=args.dry_run)
+    migrate_data(
+        args.sqlite_path,
+        args.pg_url or "",
+        dry_run=args.dry_run,
+        include_test_users=args.include_test_users
+    )
