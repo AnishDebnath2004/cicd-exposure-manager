@@ -123,11 +123,18 @@
       </nav>
 
       <!-- Auth Controls & Status -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5">
         <!-- Live Status indicator -->
-        <span class="hidden xl:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="hidden 2xl:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span> Defense Active
         </span>
+
+        <!-- Database Engine & Refresh Status Badge -->
+        <button onclick="refreshDatabaseState(true)" id="dbStatusBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium bg-surface-900/90 hover:bg-surface-800 border border-slate-700/80 hover:border-slate-600 text-slate-300 transition-all cursor-pointer shadow-sm" title="Active Database Backend (Click to refresh)">
+          <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-indigo-400"></span>
+          <i id="dbStatusIcon" class="fa-solid fa-database text-indigo-400 text-[11px]"></i>
+          <span id="dbStatusText">Checking DB...</span>
+        </button>
 
         <!-- Guest Controls (Logged Out) -->
         <div id="authGuestControls" class="flex items-center gap-2">
@@ -2583,6 +2590,61 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       }
     }
 
+    async function updateDatabaseStatusBadge() {
+      const dot = document.getElementById('dbStatusDot');
+      const icon = document.getElementById('dbStatusIcon');
+      const text = document.getElementById('dbStatusText');
+      try {
+        const res = await fetch('/api/health');
+        if (!res.ok) throw new Error("Health check failed");
+        const data = await res.json();
+        const engine = data.database?.engine || 'sqlite';
+        const connected = Boolean(data.database?.connected);
+
+        if (text) {
+          if (engine === 'postgresql') {
+            text.textContent = connected ? 'PostgreSQL (Connected)' : 'PostgreSQL (Degraded)';
+          } else {
+            text.textContent = connected ? 'SQLite (Local)' : 'SQLite (Offline)';
+          }
+        }
+        if (dot) {
+          dot.className = `w-2 h-2 rounded-full ${connected ? (engine === 'postgresql' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400') : 'bg-rose-400'}`;
+        }
+        if (icon) {
+          icon.className = `fa-solid fa-database ${connected ? (engine === 'postgresql' ? 'text-emerald-400' : 'text-amber-400') : 'text-rose-400'} text-[11px]`;
+        }
+      } catch (e) {
+        if (text) text.textContent = 'DB Offline';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        if (icon) icon.className = 'fa-solid fa-database text-rose-400 text-[11px]';
+      }
+    }
+
+    async function refreshDatabaseState(manualToast = false) {
+      const icon = document.getElementById('dbStatusIcon');
+      if (icon) icon.classList.add('fa-spin');
+
+      try {
+        await Promise.allSettled([
+          updateDatabaseStatusBadge(),
+          loadScanHistory(),
+          loadSchedules(),
+          fetchQuota(),
+          loadSettings()
+        ]);
+        renderSettingsAccountView();
+
+        if (manualToast) {
+          showToast("Database state and records synchronized.", "info");
+        }
+      } finally {
+        if (icon) {
+          setTimeout(() => icon.classList.remove('fa-spin'), 600);
+        }
+      }
+    }
+
     function setAuthState(token, user) {
       if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
       if (user) {
@@ -2590,10 +2652,8 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
         currentUser = user;
       }
       updateAuthUI();
-      fetchQuota();
-      loadScanHistory();
-      loadSchedules();
-      renderSettingsAccountView();
+      // Auto-refresh all database state and records upon login or signup
+      refreshDatabaseState();
     }
 
     function clearAuthState() {
@@ -2601,10 +2661,8 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
       localStorage.removeItem(AUTH_USER_KEY);
       currentUser = null;
       updateAuthUI();
-      fetchQuota();
-      loadScanHistory();
-      loadSchedules();
-      renderSettingsAccountView();
+      // Auto-refresh all database state and records upon logout
+      refreshDatabaseState();
     }
 
     function updateAuthUI() {
@@ -2658,9 +2716,12 @@ curl -X POST http://127.0.0.1:8000/api/scan -H "Content-Type: application/json" 
           }
         } catch (err) {
           console.warn("Could not verify auth session with server:", err);
+          updateAuthUI();
+          refreshDatabaseState();
         }
       } else {
         updateAuthUI();
+        refreshDatabaseState();
       }
     }
 

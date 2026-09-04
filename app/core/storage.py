@@ -1342,6 +1342,15 @@ class StorageEngine:
         except Exception:
             pass
 
+    def refresh(self) -> Dict[str, Any]:
+        """Synchronizes runtime settings and verifies health of active database backend."""
+        self._sync_runtime_settings()
+        connected = self.check_connection()
+        return {
+            "engine": self.engine_type,
+            "connected": connected
+        }
+
     @staticmethod
     def get_default_settings_dict() -> Dict[str, Any]:
         """Returns factory default settings dictionary."""

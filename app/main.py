@@ -603,6 +603,7 @@ async def signup(req: UserSignupRequest):
         organization=req.organization
     )
     token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
+    storage.refresh()
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -614,6 +615,7 @@ async def signup(req: UserSignupRequest):
 async def login(req: UserLoginRequest):
     """
     Authenticates a user with email and password, returning a cryptographically signed access token.
+    Auto-refreshes database state upon login.
     """
     user_record = storage.get_user_by_email(req.email)
     if not user_record:
@@ -629,6 +631,7 @@ async def login(req: UserLoginRequest):
         )
 
     storage.update_last_login(user_record["id"])
+    storage.refresh()
     user = storage.get_user_by_id(user_record["id"])
     if not user:
         raise HTTPException(status_code=500, detail="User lookup failed.")
@@ -652,9 +655,27 @@ async def get_my_profile(current_user: UserResponse = Depends(get_current_user))
 @app.post("/api/auth/logout")
 async def logout():
     """
-    Logs out the current user session.
+    Logs out the current user session and synchronizes database state.
     """
-    return {"status": "success", "message": "Successfully logged out."}
+    db_status = storage.refresh()
+    return {
+        "status": "success",
+        "message": "Successfully logged out.",
+        "database": db_status
+    }
+
+
+@app.post("/api/database/refresh")
+async def refresh_database():
+    """
+    Explicitly re-validates database connectivity and synchronizes runtime posture settings.
+    """
+    db_status = storage.refresh()
+    orchestrator.reload_scanner_settings()
+    return {
+        "status": "refreshed",
+        "database": db_status
+    }
 
 
 @app.put("/api/auth/profile", response_model=UserResponse)
