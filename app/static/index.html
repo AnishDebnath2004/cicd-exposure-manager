@@ -236,7 +236,6 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
             <button onclick="switchNavTab('domain2')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web &amp; API
             </button>
@@ -396,7 +395,6 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
             <button onclick="switchNavTab('domain1')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
             </button>
@@ -477,7 +475,6 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
             <button onclick="switchNavTab('domain1')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
             </button>
@@ -1925,12 +1922,12 @@
                   <span id="settingsUserRoleBadge" class="inline-block px-3 py-1 rounded-md text-xs font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">developer</span>
                 </div>
                 <div id="settingsUserDomainCard" class="hidden space-y-1">
-                  <label class="block text-xs font-semibold text-slate-400 mb-1">Assigned Security Domain</label>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Preferred Security Domain</label>
                   <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
-                    <span id="settingsUserDomainText" class="font-mono text-indigo-300 font-semibold"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i> Domain 01: Code &amp; CI/CD</span>
-                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30 font-bold">Locked Domain</span>
+                    <span id="settingsUserDomainText" class="font-mono text-indigo-300 font-semibold"><i class="fa-solid fa-code-branch text-indigo-400 mr-1.5"></i> Domain 01: Code &amp; CI/CD</span>
+                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-bold">Primary Domain</span>
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-1"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>Developers are permanently restricted to their chosen domain. To work in another domain, you must register a separate account with another email address.</p>
+                  <p class="text-[11px] text-slate-400 mt-1"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>Primary workspace on login. You have unrestricted access to navigate and scan across all domains.</p>
                 </div>
                 <button onclick="updateProfileSettings()" id="updateProfileBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2">
                   <i class="fa-solid fa-check"></i> Update Profile
@@ -2037,10 +2034,7 @@
         currentUserActiveSubTab = tabName;
       } else if (tabName === 'user') {
         currentMainTab = 'user';
-        if (currentUser && currentUser.role === 'developer') {
-          const dom = currentUser.preferred_domain || 'domain_01';
-          currentUserActiveSubTab = dom === 'domain_02' ? 'domain2' : (dom === 'domain_03' ? 'domain3' : 'domain1');
-        } else if (!currentUserActiveSubTab) {
+        if (!currentUserActiveSubTab) {
           currentUserActiveSubTab = 'domain1';
         }
       } else if (tabName === 'admin') {
@@ -2116,17 +2110,6 @@
     }
 
     function switchUserSubTab(subTab, force = false) {
-      // Check Developer Domain Restriction
-      if (!force && currentUser && currentUser.role === 'developer') {
-        const assignedDom = currentUser.preferred_domain || 'domain_01';
-        const targetDomMap = { 'domain1': 'domain_01', 'domain2': 'domain_02', 'domain3': 'domain_03' };
-        if (targetDomMap[subTab] && targetDomMap[subTab] !== assignedDom) {
-          const domNames = { 'domain_01': 'Domain 01: Code & CI/CD', 'domain_02': 'Domain 02: Web & API', 'domain_03': 'Domain 03: DB & Cloud' };
-          showToast(`Domain restricted: You are registered as a developer for ${domNames[assignedDom] || assignedDom}. To work in another domain, please sign up with another email.`, "warning");
-          return;
-        }
-      }
-
       currentUserActiveSubTab = subTab;
       const subtabs = ['domain1', 'domain2', 'domain3', 'portal'];
       subtabs.forEach(s => {
@@ -2200,20 +2183,11 @@
           const badge = subTabBtn.querySelector('.domain-subtab-assigned');
           if (badge) badge.remove();
 
-          if (isDev) {
-            if (assignedDom === d.id) {
-              subTabBtn.insertAdjacentHTML('beforeend', '<span class="domain-subtab-assigned ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">Assigned</span>');
-              subTabBtn.removeAttribute('title');
-              subTabBtn.classList.remove('opacity-60');
-            } else {
-              subTabBtn.insertAdjacentHTML('beforeend', '<i class="domain-subtab-lock fa-solid fa-lock text-rose-400 text-[10px] ml-1"></i>');
-              subTabBtn.setAttribute('title', `Locked to ${assignedDom === 'domain_01' ? 'Domain 01' : (assignedDom === 'domain_02' ? 'Domain 02' : 'Domain 03')} Developer (Sign up with another email to access)`);
-              subTabBtn.classList.add('opacity-60');
-            }
-          } else {
-            subTabBtn.classList.remove('opacity-60');
-            subTabBtn.removeAttribute('title');
+          if (isDev && assignedDom === d.id) {
+            subTabBtn.insertAdjacentHTML('beforeend', '<span class="domain-subtab-assigned ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-semibold">Primary</span>');
           }
+          subTabBtn.classList.remove('opacity-60');
+          subTabBtn.removeAttribute('title');
         }
       });
 
@@ -2223,8 +2197,7 @@
         if (!currentUser) {
           headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800/80 text-slate-400 border border-slate-700/60"><i class="fa-solid fa-user-clock mr-1 text-slate-400"></i> Guest Workspace</span>`;
         } else if (currentUser.role === 'developer') {
-          const domName = assignedDom === 'domain_01' ? 'Domain 01 (Code)' : (assignedDom === 'domain_02' ? 'Domain 02 (Web)' : 'Domain 03 (Cloud)');
-          headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"><i class="fa-solid fa-code text-indigo-400 mr-1"></i> Developer &bull; ${domName}</span>`;
+          headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30"><i class="fa-solid fa-code text-indigo-400 mr-1"></i> Developer &bull; All Domains Unlocked</span>`;
         } else if (currentUser.role === 'admin') {
           headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-crown text-amber-400 mr-1"></i> Administrator Global View</span>`;
         } else {
@@ -2237,7 +2210,7 @@
         btn.classList.remove('hidden');
       });
       document.querySelectorAll('.cross-domain-lock-badge').forEach(badge => {
-        badge.classList.add('hidden');
+        badge.remove();
       });
     }
 
@@ -3798,7 +3771,7 @@
           const pref = user.preferred_domain || 'domain_01';
           const target = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
           switchNavTab(target);
-          showToast(`Logged in as Developer. Active Workspace: ${pref === 'domain_02' ? 'Domain 02: Web & API' : (pref === 'domain_03' ? 'Domain 03: DB & Cloud' : 'Domain 01: Code & CI/CD')}!`, "success");
+          showToast(`Logged in as Developer. Starting Workspace: ${pref === 'domain_02' ? 'Domain 02: Web & API' : (pref === 'domain_03' ? 'Domain 03: DB & Cloud' : 'Domain 01: Code & CI/CD')} (All Domains Unlocked)!`, "success");
         } else if (user.role === 'user') {
           switchNavTab('user');
           showToast(`Welcome to the User Security Portal, ${user.full_name || user.email}!`, "success");
@@ -5699,7 +5672,7 @@
             <option value="domain_03">🗄️ Domain 03: Database &amp; Cloud Infrastructure</option>
           </select>
           <p id="delegateDomainHint" class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-            <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Developers are restricted to audits in their designated domain.
+            <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Preferred starting landing workspace for the developer.
           </p>
         </div>
 
