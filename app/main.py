@@ -4,12 +4,15 @@ FastAPI Server for DevSecOps CI/CD Exposure Manager (ShieldCI).
 Provides REST APIs for on-demand & scheduled scanning across Repositories, Websites, and Databases.
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional, Union
+
 
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Header, Depends, status, Request
