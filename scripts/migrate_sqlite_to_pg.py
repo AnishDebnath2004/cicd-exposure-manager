@@ -26,6 +26,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("migrate_to_pg")
 
 
+TEST_DOMAINS = ("@shieldci.io", "@shieldci.test", "@shieldci.local", "@example.com")
+TEST_PREFIXES = ("dev_", "test_", "sched_test_", "history_user_", "unlimited_", "session_test_", "settings_test_")
+
+
+def is_test_email(email: str) -> bool:
+    if not email:
+        return False
+    e = email.strip().lower()
+    return any(e.endswith(d) for d in TEST_DOMAINS) or any(e.startswith(p) for p in TEST_PREFIXES)
+
+
 def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_test_users: bool = False):
     if not os.path.isfile(sqlite_path):
         logger.error(f"SQLite database file not found at: {sqlite_path}")
@@ -52,10 +63,10 @@ def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_t
         user_rows = sqlite_cur.fetchall()
         total_found = len(user_rows)
         if not include_test_users:
-            user_rows = [u for u in user_rows if not u["email"].lower().endswith("@shieldci.io")]
+            user_rows = [u for u in user_rows if not is_test_email(u["email"])]
             skipped = total_found - len(user_rows)
             if skipped > 0:
-                logger.info(f"Skipping {skipped} automated test accounts (@shieldci.io). Migrating {len(user_rows)} real users.")
+                logger.info(f"Skipping {skipped} automated test accounts (@shieldci.io, @shieldci.test, dev_*). Migrating {len(user_rows)} real users.")
         logger.info(f"Found {len(user_rows)} users in SQLite to migrate.")
         if not dry_run and user_rows:
             with pg_adapter._get_connection() as conn:
@@ -109,7 +120,9 @@ def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_t
     try:
         sqlite_cur.execute("SELECT * FROM schedules")
         sched_rows = sqlite_cur.fetchall()
-        logger.info(f"Found {len(sched_rows)} schedules in SQLite.")
+        if not include_test_users:
+            sched_rows = [sc for sc in sched_rows if not is_test_email(sc["user_email"] if "user_email" in sc.keys() else None)]
+        logger.info(f"Found {len(sched_rows)} schedules in SQLite to migrate.")
         if not dry_run and sched_rows:
             with pg_adapter._get_connection() as conn:
                 with pg_adapter._get_cursor(conn) as cur:
@@ -154,7 +167,9 @@ def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_t
     try:
         sqlite_cur.execute("SELECT * FROM scans")
         scan_rows = sqlite_cur.fetchall()
-        logger.info(f"Found {len(scan_rows)} scans in SQLite.")
+        if not include_test_users:
+            scan_rows = [s for s in scan_rows if not is_test_email(s["user_email"] if "user_email" in s.keys() else None)]
+        logger.info(f"Found {len(scan_rows)} scans in SQLite to migrate.")
         if not dry_run and scan_rows:
             with pg_adapter._get_connection() as conn:
                 with pg_adapter._get_cursor(conn) as cur:

@@ -161,7 +161,20 @@ def test_user_profile_and_password_update():
         assert verify_password("NewSecureP@ssw0rd456!", raw["password_hash"], raw["salt"]) is True
         print("[OK] Password update and verification passed")
     finally:
+        try:
+            with storage.adapter._get_connection() as conn:
+                if storage.engine_type == "postgresql":
+                    with storage.adapter._get_cursor(conn) as cur:
+                        cur.execute("DELETE FROM users WHERE email = %s", (test_email.lower(),))
+                else:
+                    cur = conn.cursor()
+                    cur.execute("DELETE FROM users WHERE email = ?", (test_email.lower(),))
+                conn.commit()
+            storage.refresh()
+        except Exception:
+            pass
         loop.close()
+
 
 
 if __name__ == "__main__":

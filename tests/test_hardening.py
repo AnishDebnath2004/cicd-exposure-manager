@@ -168,7 +168,20 @@ def test_session_revocation_on_password_change():
 
         print("[OK] Session Token Revocation on Password Change verified")
     finally:
+        try:
+            with storage.adapter._get_connection() as conn:
+                if storage.engine_type == "postgresql":
+                    with storage.adapter._get_cursor(conn) as cur:
+                        cur.execute("DELETE FROM users WHERE email = %s", (email.lower(),))
+                else:
+                    cur = conn.cursor()
+                    cur.execute("DELETE FROM users WHERE email = ?", (email.lower(),))
+                conn.commit()
+            storage.refresh()
+        except Exception:
+            pass
         loop.close()
+
 
 
 if __name__ == "__main__":

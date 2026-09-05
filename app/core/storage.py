@@ -642,7 +642,8 @@ class PostgresStorageAdapter:
                     min_size=1,
                     max_size=10,
                     timeout=15.0,
-                    open=True
+                    open=True,
+                    kwargs={"prepare_threshold": None}
                 )
             except Exception as e:
                 logger.warning(f"Failed to open ConnectionPool: {e}. Falling back to on-demand connections.")
@@ -659,13 +660,12 @@ class PostgresStorageAdapter:
 
     @contextmanager
     def _get_connection(self):
-
         """Context manager yielding an active database connection."""
         if self._pool is not None:
             with self._pool.connection() as conn:
                 yield conn
         elif self._driver == "psycopg":
-            conn = psycopg.connect(self.connection_url, autocommit=False)
+            conn = psycopg.connect(self.connection_url, autocommit=False, prepare_threshold=None)
             try:
                 yield conn
             finally:

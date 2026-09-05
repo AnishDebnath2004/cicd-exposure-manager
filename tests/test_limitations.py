@@ -47,7 +47,8 @@ def test_continuous_schedules_require_auth():
     auth_resp = asyncio.run(signup(UserSignupRequest(
         email=user_email,
         password="TestPassword123!",
-        full_name="Schedule Admin"
+        full_name="Schedule Admin",
+        preferred_domain="domain_02"
     )))
     user = auth_resp.user
 
@@ -154,13 +155,37 @@ def test_guest_scan_quota_and_unlimited_auth():
     print("[OK] Authenticated user enjoys Unlimited scans, bypassing guest quota")
 
 
+def cleanup_limitation_test_data():
+    try:
+        with storage.adapter._get_connection() as conn:
+            if storage.engine_type == "postgresql":
+                with storage.adapter._get_cursor(conn) as cur:
+                    cur.execute("DELETE FROM schedules WHERE user_email LIKE %s OR user_email LIKE %s", ('%@shieldci.io', 'sched_test_%'))
+                    cur.execute("DELETE FROM scans WHERE user_email LIKE %s OR user_email LIKE %s OR user_email LIKE %s", ('%@shieldci.io', 'history_user_%', 'unlimited_%'))
+                    cur.execute("DELETE FROM users WHERE email LIKE %s", ('%@shieldci.io',))
+            else:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM schedules WHERE user_email LIKE '%@shieldci.io' OR user_email LIKE 'sched_test_%'")
+                cur.execute("DELETE FROM scans WHERE user_email LIKE '%@shieldci.io' OR user_email LIKE 'history_user_%' OR user_email LIKE 'unlimited_%'")
+                cur.execute("DELETE FROM users WHERE email LIKE '%@shieldci.io'")
+            conn.commit()
+        storage.refresh()
+    except Exception as e:
+        print(f"Warning during limitations cleanup: {e}")
+
+
 if __name__ == "__main__":
     print("==================================================")
     print(" ShieldCI Guest Limitations Verification Suite ")
     print("==================================================")
-    test_continuous_schedules_require_auth()
-    test_private_scan_history_scoping()
-    test_guest_scan_quota_and_unlimited_auth()
-    print("==================================================")
-    print(" ALL GUEST LIMITATION TESTS COMPLETED SUCCESSFULLY! ")
-    print("==================================================")
+    cleanup_limitation_test_data()
+    try:
+        test_continuous_schedules_require_auth()
+        test_private_scan_history_scoping()
+        test_guest_scan_quota_and_unlimited_auth()
+        print("==================================================")
+        print(" ALL GUEST LIMITATION TESTS COMPLETED SUCCESSFULLY! ")
+        print("==================================================")
+    finally:
+        cleanup_limitation_test_data()
+

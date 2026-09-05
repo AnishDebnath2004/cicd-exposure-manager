@@ -23,6 +23,26 @@ from app.main import (
 from app.core.storage import storage
 
 
+def cleanup_test_domain_users():
+    """Removes any test developer accounts and test scans/schedules from storage."""
+    try:
+        with storage.adapter._get_connection() as conn:
+            if storage.engine_type == "postgresql":
+                with storage.adapter._get_cursor(conn) as cur:
+                    cur.execute("DELETE FROM schedules WHERE user_email LIKE %s", ('%@shieldci.test',))
+                    cur.execute("DELETE FROM scans WHERE user_email LIKE %s", ('%@shieldci.test',))
+                    cur.execute("DELETE FROM users WHERE email LIKE %s", ('%@shieldci.test',))
+            else:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM schedules WHERE user_email LIKE '%@shieldci.test'")
+                cur.execute("DELETE FROM scans WHERE user_email LIKE '%@shieldci.test'")
+                cur.execute("DELETE FROM users WHERE email LIKE '%@shieldci.test'")
+            conn.commit()
+        storage.refresh()
+    except Exception as e:
+        print(f"Warning during test domain cleanup: {e}")
+
+
 def create_test_dev(domain: str) -> tuple[UserResponse, str]:
     """Helper to register a developer user with a specific preferred domain."""
     email = f"dev_{domain}_{uuid.uuid4().hex[:8]}@shieldci.test"
@@ -237,8 +257,13 @@ def test_admin_multi_domain_access():
 
 
 if __name__ == "__main__":
-    test_domain_01_developer_permissions_and_restrictions()
-    test_domain_02_developer_permissions_and_restrictions()
-    test_domain_03_developer_permissions_and_restrictions()
-    test_admin_multi_domain_access()
-    print("ALL DOMAIN ISOLATION TESTS PASSED!")
+    cleanup_test_domain_users()
+    try:
+        test_domain_01_developer_permissions_and_restrictions()
+        test_domain_02_developer_permissions_and_restrictions()
+        test_domain_03_developer_permissions_and_restrictions()
+        test_admin_multi_domain_access()
+        print("ALL DOMAIN ISOLATION TESTS PASSED!")
+    finally:
+        cleanup_test_domain_users()
+
