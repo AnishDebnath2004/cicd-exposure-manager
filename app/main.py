@@ -110,6 +110,57 @@ def enforce_guest_quota(request: Request = None, current_user: Optional[UserResp
         )
 
 
+DOMAIN_MAP = {
+    "domain_01": {
+        "name": "Domain 01: Code Repository & CI/CD Security",
+        "short_name": "Domain 01 (Code & CI/CD)",
+        "allowed_target_types": [TargetCategory.REPOSITORY, "repository"],
+        "category": TargetCategory.REPOSITORY,
+    },
+    "domain_02": {
+        "name": "Domain 02: Web & API Perimeter",
+        "short_name": "Domain 02 (Web & API)",
+        "allowed_target_types": [TargetCategory.WEBSITE, "website"],
+        "category": TargetCategory.WEBSITE,
+    },
+    "domain_03": {
+        "name": "Domain 03: Database & Cloud Infrastructure",
+        "short_name": "Domain 03 (Database & Cloud)",
+        "allowed_target_types": [TargetCategory.DATABASE, "database"],
+        "category": TargetCategory.DATABASE,
+    },
+}
+
+
+def enforce_developer_domain_access(user: Optional[UserResponse], target_type: Optional[Any]):
+    """
+    Enforces strict single-domain isolation for developer accounts.
+    If a developer attempts to work on, audit, or schedule an asset outside their
+    assigned preferred_domain, access is rejected with 403 Forbidden.
+    """
+    if not user or getattr(user, "role", None) != "developer":
+        return
+
+    user_domain = getattr(user, "preferred_domain", "domain_01") or "domain_01"
+    domain_info = DOMAIN_MAP.get(user_domain, DOMAIN_MAP["domain_01"])
+
+    raw_type = target_type.value if hasattr(target_type, "value") else str(target_type)
+    allowed_raw = [
+        t.value if hasattr(t, "value") else str(t)
+        for t in domain_info["allowed_target_types"]
+    ]
+
+    if raw_type not in allowed_raw:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"Domain Access Restricted: Your developer account is restricted exclusively to "
+                f"{domain_info['name']}. You cannot audit or perform operations on '{raw_type}' targets. "
+                f"To work in another domain, please sign up with another email."
+            )
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Start background continuous scheduler only if not in serverless runtime
@@ -223,6 +274,11 @@ async def trigger_scan(
 
     target = target.strip()
     target_type = request.target_type or orchestrator.detect_target_type(target)
+    request.target_type = target_type
+
+    # Strict single-domain isolation check for developers
+    enforce_developer_domain_access(user, target_type)
+
     if target_type == TargetCategory.WEBSITE:
         is_safe, msg = validate_safe_url(target)
         if not is_safe:
@@ -250,6 +306,7 @@ async def scan_website(
     """Dedicated endpoint to audit any live website or web API."""
     user = current_user if isinstance(current_user, UserResponse) else None
     enforce_guest_quota(http_req, user)
+    enforce_developer_domain_access(user, TargetCategory.WEBSITE)
     if not url or not url.strip():
         raise HTTPException(status_code=400, detail="URL must be provided.")
 
@@ -258,12 +315,15 @@ async def scan_website(
     if not is_safe:
         raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")
 
+    actual_fail_sev = fail_on_severity.default if hasattr(fail_on_severity, "default") else fail_on_severity
+    actual_max_pes = max_allowed_pes.default if hasattr(max_allowed_pes, "default") else max_allowed_pes
+
     try:
         req = ScanRequest(
             target=clean_url,
             target_type=TargetCategory.WEBSITE,
-            fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes,
+            fail_on_severity=actual_fail_sev,
+            max_allowed_pes=actual_max_pes,
             user_email=user.email if user else None
         )
         return orchestrator.run_scan(req)
@@ -283,15 +343,20 @@ async def scan_database(
     """Dedicated endpoint to audit any database posture and access security."""
     user = current_user if isinstance(current_user, UserResponse) else None
     enforce_guest_quota(http_req, user)
+    enforce_developer_domain_access(user, TargetCategory.DATABASE)
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Database target must be provided.")
+    actual_fail_sev = fail_on_severity.default if hasattr(fail_on_severity, "default") else fail_on_severity
+    actual_max_pes = max_allowed_pes.default if hasattr(max_allowed_pes, "default") else max_allowed_pes
+    actual_engine = engine.default if hasattr(engine, "default") else engine
+
     try:
         req = ScanRequest(
             target=target.strip(),
             target_type=TargetCategory.DATABASE,
-            db_type=engine,
-            fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes,
+            db_type=actual_engine,
+            fail_on_severity=actual_fail_sev,
+            max_allowed_pes=actual_max_pes,
             user_email=user.email if user else None
         )
         return orchestrator.run_scan(req)
@@ -312,6 +377,7 @@ async def upload_and_scan(
     """
     user = current_user if isinstance(current_user, UserResponse) else None
     enforce_guest_quota(http_req, user)
+    enforce_developer_domain_access(user, TargetCategory.REPOSITORY)
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise HTTPException(status_code=400, detail="Only .zip archive files are supported.")
 
@@ -333,12 +399,15 @@ async def upload_and_scan(
             temp_zip.write(chunk)
         temp_zip.close()
 
+        actual_fail_sev = fail_on_severity.default if hasattr(fail_on_severity, "default") else fail_on_severity
+        actual_max_pes = max_allowed_pes.default if hasattr(max_allowed_pes, "default") else max_allowed_pes
+
         req = ScanRequest(
             target_path=file.filename,
             target_type=TargetCategory.REPOSITORY,
             repo_name=os.path.splitext(file.filename)[0],
-            fail_on_severity=fail_on_severity,
-            max_allowed_pes=max_allowed_pes,
+            fail_on_severity=actual_fail_sev,
+            max_allowed_pes=actual_max_pes,
             user_email=user.email if user else None
         )
 
@@ -482,6 +551,7 @@ async def scan_with_triangulation(
     """
     user = current_user if isinstance(current_user, UserResponse) else None
     enforce_guest_quota(http_req, user)
+    enforce_developer_domain_access(user, TargetCategory.REPOSITORY)
     if user:
         request.user_email = user.email
 
@@ -513,6 +583,8 @@ async def create_schedule(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
 
+    enforce_developer_domain_access(user, req.target_type)
+
     if not req.target or not req.target.strip():
         raise HTTPException(status_code=400, detail="Target URL, path, or connection string is required.")
 
@@ -537,6 +609,12 @@ async def trigger_schedule_now(
     user = current_user if isinstance(current_user, UserResponse) else None
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required. Please sign in.")
+
+    if getattr(user, "role", None) == "developer":
+        schedules = storage.get_schedules(user_email=user.email)
+        matched = next((s for s in schedules if s.id == schedule_id), None)
+        if matched:
+            enforce_developer_domain_access(user, matched.target_type)
 
     scheduler.run_scheduled_job(schedule_id)
     return {"status": "triggered", "schedule_id": schedule_id}
@@ -716,12 +794,19 @@ async def update_profile(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Updates user profile display name, organization, and preferred domain."""
+    if current_user.role == "developer" and req.preferred_domain:
+        if req.preferred_domain != current_user.preferred_domain:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Domain cannot be changed for a developer account. To work in another domain, you must sign up with another email."
+            )
+
     user = storage.update_user_profile(
         user_id=current_user.id,
         full_name=req.full_name,
         organization=req.organization
     )
-    if req.preferred_domain:
+    if req.preferred_domain and current_user.role != "developer":
         user = storage.update_user_preferred_domain(current_user.id, req.preferred_domain)
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")

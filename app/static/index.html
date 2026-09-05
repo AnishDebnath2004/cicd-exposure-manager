@@ -231,10 +231,11 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <button onclick="switchNavTab('domain2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
+            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
+            <button onclick="switchNavTab('domain2')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web &amp; API
             </button>
-            <button onclick="switchNavTab('domain3')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
+            <button onclick="switchNavTab('domain3')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-database text-emerald-400"></i> Domain 03: DB &amp; Cloud
             </button>
           </div>
@@ -394,10 +395,11 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <button onclick="switchNavTab('domain1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
+            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
+            <button onclick="switchNavTab('domain1')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
             </button>
-            <button onclick="switchNavTab('domain3')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
+            <button onclick="switchNavTab('domain3')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-database text-emerald-400"></i> Domain 03: DB
             </button>
           </div>
@@ -478,10 +480,11 @@
           </div>
           
           <div class="flex items-center gap-2 flex-wrap self-start md:self-auto">
-            <button onclick="switchNavTab('domain1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
+            <span class="cross-domain-lock-badge hidden text-xs font-mono text-slate-400 bg-surface-950/90 px-3 py-1.5 rounded-xl border border-slate-800"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i>Other Domains Locked (Sign up with another email to access)</span>
+            <button onclick="switchNavTab('domain1')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-code-branch text-indigo-400"></i> Domain 01: Code
             </button>
-            <button onclick="switchNavTab('domain2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
+            <button onclick="switchNavTab('domain2')" class="cross-domain-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-900 hover:bg-surface-850 text-slate-400 hover:text-sky-300 border border-slate-800 hover:border-sky-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-globe text-sky-400"></i> Domain 02: Web
             </button>
           </div>
@@ -1595,6 +1598,14 @@
                   <label class="block text-xs font-semibold text-slate-400 mb-1">Assigned Role</label>
                   <span id="settingsUserRoleBadge" class="inline-block px-3 py-1 rounded-md text-xs font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">developer</span>
                 </div>
+                <div id="settingsUserDomainCard" class="hidden space-y-1">
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Assigned Security Domain</label>
+                  <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+                    <span id="settingsUserDomainText" class="font-mono text-indigo-300 font-semibold"><i class="fa-solid fa-lock text-rose-400 mr-1.5"></i> Domain 01: Code &amp; CI/CD</span>
+                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30 font-bold">Locked Domain</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>Developers are permanently restricted to their chosen domain. To work in another domain, you must register a separate account with another email address.</p>
+                </div>
                 <button onclick="updateProfileSettings()" id="updateProfileBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2">
                   <i class="fa-solid fa-check"></i> Update Profile
                 </button>
@@ -1962,6 +1973,24 @@
         tabName = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
       }
 
+      // Strict single-domain developer isolation
+      if (currentUser && currentUser.role === 'developer') {
+        const pref = currentUser.preferred_domain || 'domain_01';
+        const allowedTab = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
+        const domainNames = {
+          'domain1': 'Domain 01: Code & CI/CD Pipelines',
+          'domain2': 'Domain 02: Web & API Perimeter',
+          'domain3': 'Domain 03: Database & Cloud Infrastructure'
+        };
+
+        if (tabName === 'domain1' || tabName === 'domain2' || tabName === 'domain3') {
+          if (tabName !== allowedTab) {
+            showToast(`Access Restricted: Your developer account is dedicated to ${domainNames[allowedTab]}. To work in ${domainNames[tabName]}, please sign up with another email.`, "error");
+            tabName = allowedTab;
+          }
+        }
+      }
+
       const tabs = ['domain1', 'domain2', 'domain3', 'admin', 'user'];
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
@@ -2067,6 +2096,114 @@
       }
 
       updateAuthUI();
+      updateDomainLockUI();
+    }
+
+    function updateDomainLockUI() {
+      const isDev = currentUser && currentUser.role === 'developer';
+      const assignedDom = isDev ? (currentUser.preferred_domain || 'domain_01') : null;
+
+      const domains = [
+        { key: 'domain1', id: 'domain_01', short: 'Domain 01: Code', full: 'Domain 01: Code & CI/CD Pipelines' },
+        { key: 'domain2', id: 'domain_02', short: 'Domain 02: Web', full: 'Domain 02: Web & API Perimeter' },
+        { key: 'domain3', id: 'domain_03', short: 'Domain 03: Cloud', full: 'Domain 03: Database & Cloud Infrastructure' }
+      ];
+
+      domains.forEach(d => {
+        const navBtn = document.getElementById(`navTab-${d.key}`);
+        const subBtn = document.getElementById(`subQuickTab-${d.key}`);
+        const isAssigned = isDev && assignedDom === d.id;
+        const isLocked = isDev && !isAssigned;
+
+        if (navBtn) {
+          if (isLocked) {
+            navBtn.setAttribute('title', `Locked: Your developer account is restricted to ${assignedDom === 'domain_01' ? 'Domain 01' : (assignedDom === 'domain_02' ? 'Domain 02' : 'Domain 03')}. To work in ${d.short}, please sign up with another email.`);
+            navBtn.classList.add('opacity-50');
+            if (!navBtn.querySelector('.domain-lock-icon')) {
+              const lock = document.createElement('i');
+              lock.className = 'domain-lock-icon fa-solid fa-lock text-[10px] text-rose-400 mr-1';
+              navBtn.insertBefore(lock, navBtn.firstChild);
+            }
+          } else {
+            navBtn.classList.remove('opacity-50');
+            const lock = navBtn.querySelector('.domain-lock-icon');
+            if (lock) lock.remove();
+            if (isAssigned) {
+              navBtn.setAttribute('title', `Active Assigned Domain (${d.short})`);
+            } else {
+              navBtn.removeAttribute('title');
+            }
+          }
+        }
+
+        if (subBtn) {
+          if (isLocked) {
+            subBtn.setAttribute('title', `Locked: Restricted to your assigned domain. To work in ${d.short}, please sign up with another email.`);
+            subBtn.classList.add('opacity-40');
+            if (!subBtn.querySelector('.domain-sub-lock-icon')) {
+              const lock = document.createElement('i');
+              lock.className = 'domain-sub-lock-icon fa-solid fa-lock text-[10px] text-rose-400 mr-1';
+              subBtn.insertBefore(lock, subBtn.firstChild);
+            }
+          } else {
+            subBtn.classList.remove('opacity-40');
+            const lock = subBtn.querySelector('.domain-sub-lock-icon');
+            if (lock) lock.remove();
+            subBtn.removeAttribute('title');
+          }
+        }
+      });
+
+      // Cross domain jump buttons in domain headers
+      document.querySelectorAll('.cross-domain-btn').forEach(btn => {
+        if (isDev) btn.classList.add('hidden');
+        else btn.classList.remove('hidden');
+      });
+      document.querySelectorAll('.cross-domain-lock-badge').forEach(badge => {
+        if (isDev) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+      });
+
+      // Continuous schedules asset type selector restriction
+      const schedSelect = document.getElementById('schedAssetTypeInput');
+      if (schedSelect) {
+        if (isDev) {
+          const allowedType = assignedDom === 'domain_02' ? 'website' : (assignedDom === 'domain_03' ? 'database' : 'repository');
+          schedSelect.value = allowedType;
+          Array.from(schedSelect.options).forEach(opt => {
+            opt.disabled = (opt.value !== allowedType);
+          });
+        } else {
+          Array.from(schedSelect.options).forEach(opt => {
+            opt.disabled = false;
+          });
+        }
+      }
+
+      // User Portal target type restriction
+      if (isDev) {
+        const allowedUserType = assignedDom === 'domain_02' ? 'website' : (assignedDom === 'domain_03' ? 'database' : 'repository');
+        ['repository', 'website', 'database'].forEach(t => {
+          const btn = document.getElementById(`userTargetBtn-${t}`);
+          if (btn) {
+            if (t !== allowedUserType) {
+              btn.classList.add('opacity-50');
+              btn.title = `Locked: Developer account is restricted to ${assignedDom}. To scan ${t}, sign up with another email.`;
+            } else {
+              btn.classList.remove('opacity-50');
+              btn.title = `Your assigned domain target`;
+            }
+          }
+        });
+      } else {
+        ['repository', 'website', 'database'].forEach(t => {
+          const btn = document.getElementById(`userTargetBtn-${t}`);
+          if (btn) {
+            btn.classList.remove('opacity-50');
+            btn.removeAttribute('title');
+          }
+        });
+      }
     }
 
     function attachResultsToDomain(category) {
@@ -4146,6 +4283,19 @@
         if (orgInput) orgInput.value = currentUser.organization || '';
         if (roleBadge) roleBadge.textContent = currentUser.role || 'developer';
 
+        const domCard = document.getElementById('settingsUserDomainCard');
+        const domText = document.getElementById('settingsUserDomainText');
+        if (domCard && domText) {
+          if (currentUser.role === 'developer') {
+            domCard.classList.remove('hidden');
+            const pref = currentUser.preferred_domain || 'domain_01';
+            const domLabel = pref === 'domain_02' ? 'Domain 02: Web & API Perimeter' : (pref === 'domain_03' ? 'Domain 03: Database & Cloud Infrastructure' : 'Domain 01: Code Repository & CI/CD Security');
+            domText.innerHTML = `<i class="fa-solid fa-lock text-rose-400 mr-1.5"></i> ${domLabel}`;
+          } else {
+            domCard.classList.add('hidden');
+          }
+        }
+
         const token = getAuthToken();
         if (apiTokenInput) {
           apiTokenInput.value = token || "(No active bearer token)";
@@ -4676,6 +4826,16 @@
     }
 
     function setUserTargetType(type) {
+      if (currentUser && currentUser.role === 'developer') {
+        const pref = currentUser.preferred_domain || 'domain_01';
+        const allowedType = pref === 'domain_02' ? 'website' : (pref === 'domain_03' ? 'database' : 'repository');
+        if (type !== allowedType) {
+          const domainNames = { 'domain_01': 'Domain 01: Code & CI/CD', 'domain_02': 'Domain 02: Web & API', 'domain_03': 'Domain 03: Database & Cloud' };
+          showToast(`Access Restricted: Your developer account is restricted to ${domainNames[pref]}. To scan ${type} targets, please sign up with another email.`, "error");
+          type = allowedType;
+        }
+      }
+
       currentUserTargetType = type;
       const types = ['repository', 'website', 'database'];
       types.forEach(t => {
@@ -4984,6 +5144,10 @@
               <option value="domain_02">Domain 02: Web &amp; API Perimeter</option>
               <option value="domain_03">Domain 03: Database &amp; Cloud Infrastructure</option>
             </select>
+            <div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-snug flex items-start gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i>
+              <span><b>Strict Single-Domain Policy</b>: As a developer, your account will be permanently dedicated to this domain. To work in another domain, you must register with a separate email address.</span>
+            </div>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
