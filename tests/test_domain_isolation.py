@@ -15,11 +15,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import HTTPException
 from app.models.schemas import ScanRequest, TargetCategory, SeverityLevel, ScheduleCreateRequest
 from app.models.auth_schemas import (
-    UserSignupRequest, UserResponse, UserProfileUpdateRequest
+    UserSignupRequest, UserResponse, UserProfileUpdateRequest, UserRoleUpdateRequest
 )
 from app.main import (
     signup, trigger_scan, scan_website, scan_database, upload_and_scan,
-    create_schedule, update_profile, require_admin
+    create_schedule, update_profile, require_admin,
+    admin_update_user_role, admin_delete_user
 )
 from app.core.storage import storage
 
@@ -133,12 +134,61 @@ def test_admin_multi_domain_governance():
     print("[OK] Administrator retains full multi-domain governance and administrative privileges")
 
 
+def test_admin_user_deletion_and_role_delegation():
+    print("Testing Administrator User Deletion & Role Delegation...")
+    admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
+    assert admin_dict is not None
+    admin = UserResponse(**admin_dict)
+
+    # 1. Create a dummy developer
+    dev, _ = create_test_dev("domain_01")
+    assert dev.role == "developer"
+    assert dev.preferred_domain == "domain_01"
+
+    # 2. Admin delegates role and domain: update to domain_02 developer
+    delegated = asyncio.run(admin_update_user_role(
+        user_id=dev.id,
+        req=UserRoleUpdateRequest(role="developer", preferred_domain="domain_02"),
+        admin_user=admin
+    ))
+    assert delegated.role == "developer"
+    assert delegated.preferred_domain == "domain_02"
+    print("[OK] Admin successfully updated role & domain delegation to domain_02")
+
+    # 3. Admin promotes user to admin
+    delegated_admin = asyncio.run(admin_update_user_role(
+        user_id=dev.id,
+        req=UserRoleUpdateRequest(role="admin"),
+        admin_user=admin
+    ))
+    assert delegated_admin.role == "admin"
+    print("[OK] Admin successfully promoted user to admin")
+
+    # 4. Admin cannot delete their own account
+    try:
+        asyncio.run(admin_delete_user(user_id=admin.id, admin_user=admin))
+        assert False, "Admin should not be able to delete self"
+    except HTTPException as e:
+        assert e.status_code == 400
+        assert "cannot delete their own account" in e.detail
+        print("[OK] Self-deletion blocked with 400 Bad Request")
+
+    # 5. Admin permanently deletes the test user
+    del_res = asyncio.run(admin_delete_user(user_id=dev.id, admin_user=admin))
+    assert del_res["status"] == "success"
+    assert del_res["deleted_id"] == dev.id
+    assert storage.get_user_by_id(dev.id) is None
+    print("[OK] Admin permanently deleted user account")
+
+
 if __name__ == "__main__":
     cleanup_test_domain_users()
     try:
         test_multi_domain_developer_access()
         test_admin_governance_strictly_protected()
         test_admin_multi_domain_governance()
+        test_admin_user_deletion_and_role_delegation()
         print("ALL MULTI-DOMAIN AND ADMIN TESTS PASSED SUCCESSFULLY!")
     finally:
         cleanup_test_domain_users()
+

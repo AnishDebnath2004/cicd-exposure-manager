@@ -76,8 +76,9 @@ class PasswordChangeRequest(BaseModel):
 
 
 class UserRoleUpdateRequest(BaseModel):
-    """Payload for updating a user's role (Admin only)."""
+    """Payload for updating a user's role and domain delegation (Admin only)."""
     role: Literal["admin", "developer", "user"] = Field(..., description="Target role: 'admin', 'developer', or 'user'")
+    preferred_domain: Optional[str] = Field(None, description="Preferred domain delegation: 'domain_01', 'domain_02', or 'domain_03'")
 
 
 class AdminCreateUserRequest(BaseModel):

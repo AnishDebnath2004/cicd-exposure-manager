@@ -586,6 +586,19 @@ class SQLiteStorageAdapter:
                 return self.get_user_by_id(user_id)
             return None
 
+    def delete_user(self, user_id: str) -> bool:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT email FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            if not row:
+                return False
+            user_email = row[0]
+            cursor.execute("DELETE FROM schedules WHERE user_email = ?", (user_email,))
+            cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
     def get_system_settings(self, defaults: Dict[str, Any]) -> Dict[str, Any]:
         merged = dict(defaults)
         with self._get_connection() as conn:
@@ -1284,6 +1297,20 @@ class PostgresStorageAdapter:
                 return self.get_user_by_id(user_id)
             return None
 
+    def delete_user(self, user_id: str) -> bool:
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return False
+                user_email = row["email"] if isinstance(row, dict) else row[0]
+                cursor.execute("DELETE FROM schedules WHERE user_email = %s", (user_email,))
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                rc = cursor.rowcount
+            conn.commit()
+            return rc > 0
+
     def get_system_settings(self, defaults: Dict[str, Any]) -> Dict[str, Any]:
         merged = dict(defaults)
         with self._get_connection() as conn:
@@ -1491,6 +1518,9 @@ class StorageEngine:
 
     def update_user_preferred_domain(self, user_id: str, domain: str) -> Optional[UserResponse]:
         return self.adapter.update_user_preferred_domain(user_id=user_id, domain=domain)
+
+    def delete_user(self, user_id: str) -> bool:
+        return self.adapter.delete_user(user_id=user_id)
 
     def _sync_runtime_settings(self):
         """Synchronizes persisted settings into in-memory settings config."""

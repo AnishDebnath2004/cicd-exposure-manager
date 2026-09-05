@@ -4714,27 +4714,23 @@
           domainBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">🗄️ Domain 03: DB</span>`;
         }
 
+        function escapeJs(str) {
+          if (!str) return '';
+          return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
         let actionHtml = '';
         if (isSelf) {
           actionHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold"><i class="fa-solid fa-crown text-[10px]"></i> You (Active Admin)</span>`;
         } else {
           actionHtml = `
             <div class="flex items-center justify-end gap-1.5 flex-wrap">
-              ${role !== 'admin' ? `
-                <button onclick="changeUserRole('${u.id}', 'admin', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 shadow-sm border border-amber-400/40 transition flex items-center gap-1" title="Promote to Admin">
-                  <i class="fa-solid fa-crown text-[9px]"></i> Make Admin
-                </button>
-              ` : ''}
-              ${role !== 'developer' ? `
-                <button onclick="changeUserRole('${u.id}', 'developer', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition flex items-center gap-1" title="Assign Developer role">
-                  <i class="fa-solid fa-code text-[9px]"></i> Make Dev
-                </button>
-              ` : ''}
-              ${role !== 'user' ? `
-                <button onclick="changeUserRole('${u.id}', 'user', '${u.email}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1" title="Assign User role">
-                  <i class="fa-solid fa-user text-[9px]"></i> Make User
-                </button>
-              ` : ''}
+              <button onclick="openRoleDelegationModal('${u.id}', '${escapeJs(u.email)}', '${role}', '${prefDom}', '${escapeJs(u.full_name || '')}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm" title="Change Role & Domain Delegation">
+                <i class="fa-solid fa-user-gear text-[10px]"></i> <span>Change Role</span>
+              </button>
+              <button onclick="deleteAdminUser('${u.id}', '${escapeJs(u.email)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center gap-1.5 shadow-sm" title="Permanently Delete User">
+                <i class="fa-solid fa-trash-can text-[10px]"></i> <span>Delete</span>
+              </button>
             </div>
           `;
         }
@@ -4814,6 +4810,140 @@
         refreshDatabaseState();
       } catch (err) {
         console.error("Failed to update role:", err);
+        showToast(err.message, "error");
+      }
+    }
+
+    function openRoleDelegationModal(userId, userEmail, userRole, userDomain, userName) {
+      const modal = document.getElementById('adminRoleDelegationModal');
+      const alertBox = document.getElementById('adminDelegationAlert');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      document.getElementById('delegateUserId').value = userId;
+      document.getElementById('delegateUserName').textContent = userName || 'Anonymous User';
+      document.getElementById('delegateUserEmail').textContent = userEmail;
+      const initial = (userName ? userName[0] : (userEmail ? userEmail[0] : 'U')).toUpperCase();
+      const avatar = document.getElementById('delegateUserAvatar');
+      if (avatar) avatar.textContent = initial;
+
+      const roleSelect = document.getElementById('delegateRoleSelect');
+      if (roleSelect) roleSelect.value = userRole || 'developer';
+
+      const domainSelect = document.getElementById('delegateDomainSelect');
+      if (domainSelect) domainSelect.value = userDomain || 'domain_01';
+
+      onDelegationRoleChange();
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeRoleDelegationModal() {
+      const modal = document.getElementById('adminRoleDelegationModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function onDelegationRoleChange() {
+      const role = document.getElementById('delegateRoleSelect')?.value || 'developer';
+      const badge = document.getElementById('delegateRoleBadge');
+      const domainSec = document.getElementById('delegateDomainSection');
+
+      if (badge) {
+        if (role === 'admin') {
+          badge.textContent = "Platform Administrator";
+          badge.className = "text-[10px] text-amber-400 font-mono font-semibold";
+        } else if (role === 'developer') {
+          badge.textContent = "Domain Isolated Developer";
+          badge.className = "text-[10px] text-sky-400 font-mono font-semibold";
+        } else {
+          badge.textContent = "Standard User";
+          badge.className = "text-[10px] text-emerald-400 font-mono font-semibold";
+        }
+      }
+
+      if (domainSec) {
+        if (role === 'admin') {
+          domainSec.classList.add('opacity-50');
+          const hint = document.getElementById('delegateDomainHint');
+          if (hint) hint.innerHTML = '<i class="fa-solid fa-circle-info text-amber-400 mr-1"></i> Administrators possess global privileges across all domains.';
+        } else {
+          domainSec.classList.remove('opacity-50');
+          const hint = document.getElementById('delegateDomainHint');
+          if (hint) hint.innerHTML = '<i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Developers are restricted to audits in their designated domain.';
+        }
+      }
+    }
+
+    async function handleRoleDelegationSubmit(event) {
+      event.preventDefault();
+      const userId = document.getElementById('delegateUserId').value;
+      const role = document.getElementById('delegateRoleSelect').value;
+      const preferred_domain = document.getElementById('delegateDomainSelect').value;
+      const email = document.getElementById('delegateUserEmail').textContent;
+      const btn = document.getElementById('delegateSubmitBtn');
+      const alertBox = document.getElementById('adminDelegationAlert');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ role, preferred_domain })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Failed to update delegation.");
+        }
+
+        closeRoleDelegationModal();
+        showToast(`Role & Domain delegation updated for ${email}!`, "success");
+        await loadAdminUsers();
+        refreshDatabaseState();
+      } catch (err) {
+        if (alertBox) {
+          alertBox.className = "p-3 rounded-xl text-xs bg-rose-500/10 border border-rose-500/30 text-rose-300 font-medium flex items-start gap-2.5";
+          alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation mt-0.5"></i> <span>${err.message}</span>`;
+          alertBox.classList.remove('hidden');
+        } else {
+          showToast(err.message, "error");
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+
+    async function deleteAdminUser(userId, userEmail) {
+      if (!confirm(`Are you sure you want to permanently delete user "${userEmail}"?\n\nThis will permanently remove their credentials and associated schedules. This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.detail || `Failed to delete user (HTTP ${res.status})`);
+        }
+
+        showToast(`User "${userEmail}" has been permanently deleted.`, "success");
+        await loadAdminUsers();
+        refreshDatabaseState();
+      } catch (err) {
+        console.error("Failed to delete user:", err);
         showToast(err.message, "error");
       }
     }
@@ -5506,6 +5636,77 @@
           <button type="button" onclick="closeAdminCreateModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-700 transition-all">Cancel</button>
           <button type="submit" id="adminCreateSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 shadow-md shadow-amber-500/25 border border-amber-400/50 transition-all flex items-center gap-1.5">
             <i class="fa-solid fa-check"></i> Provision Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Role & Domain Delegation Modal -->
+  <div id="adminRoleDelegationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-md border border-indigo-500/40 shadow-2xl overflow-hidden flex flex-col relative">
+      <div class="absolute -right-12 -top-12 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/80 relative z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-indigo-600/30">
+            <i class="fa-solid fa-user-gear"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Role &amp; Domain Delegation</h3>
+            <p class="text-xs text-slate-400">Configure access level and workspace isolation</p>
+          </div>
+        </div>
+        <button onclick="closeRoleDelegationModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="adminRoleDelegationForm" onsubmit="handleRoleDelegationSubmit(event)" class="p-6 space-y-4 bg-surface-950/95 relative z-10">
+        <input type="hidden" id="delegateUserId" />
+        <div id="adminDelegationAlert" class="hidden p-3 rounded-xl text-xs flex items-start gap-2.5"></div>
+
+        <div class="p-3 rounded-xl bg-surface-900 border border-slate-800 flex items-center gap-3">
+          <div id="delegateUserAvatar" class="w-9 h-9 rounded-xl bg-indigo-600/30 text-indigo-300 font-bold flex items-center justify-center text-sm">U</div>
+          <div class="overflow-hidden">
+            <div id="delegateUserName" class="text-xs font-bold text-white truncate">User Name</div>
+            <div id="delegateUserEmail" class="text-[11px] text-slate-400 font-mono truncate">user@email.com</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>Assigned Access Role <span class="text-rose-400">*</span></span>
+            <span id="delegateRoleBadge" class="text-[10px] text-indigo-400 font-mono font-semibold"></span>
+          </label>
+          <select id="delegateRoleSelect" onchange="onDelegationRoleChange()" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
+            <option value="developer">Developer (Multi-Domain Workstations &amp; Domain Isolation)</option>
+            <option value="admin">Administrator (Platform Governance &amp; Console Control)</option>
+            <option value="user">User (Standard Access Across All Domains)</option>
+          </select>
+        </div>
+
+        <div id="delegateDomainSection">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>Delegated Workspace Domain <span class="text-rose-400">*</span></span>
+            <span class="text-[10px] text-slate-400 font-mono">Assigned Domain</span>
+          </label>
+          <select id="delegateDomainSelect" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
+            <option value="domain_01">💻 Domain 01: Code Repository &amp; CI/CD Pipelines</option>
+            <option value="domain_02">🌐 Domain 02: Web &amp; API Security Perimeter</option>
+            <option value="domain_03">🗄️ Domain 03: Database &amp; Cloud Infrastructure</option>
+          </select>
+          <p id="delegateDomainHint" class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Developers are restricted to audits in their designated domain.
+          </p>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeRoleDelegationModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-700 transition-all">Cancel</button>
+          <button type="submit" id="delegateSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 shadow-md shadow-indigo-600/25 border border-indigo-500/40 transition-all flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Save Delegation
           </button>
         </div>
       </form>

@@ -842,7 +842,7 @@ async def admin_update_user_role(
     req: UserRoleUpdateRequest,
     admin_user: UserResponse = Depends(require_admin)
 ):
-    """Promotes or demotes a user's role (Admin privilege required)."""
+    """Promotes or demotes a user's role and/or updates domain delegation (Admin privilege required)."""
     if user_id == admin_user.id and req.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -851,8 +851,41 @@ async def admin_update_user_role(
     updated = storage.update_user_role(user_id=user_id, new_role=req.role)
     if not updated:
         raise HTTPException(status_code=404, detail="User not found.")
+    if req.preferred_domain:
+        updated = storage.update_user_preferred_domain(user_id=user_id, domain=req.preferred_domain) or updated
     storage.refresh()
     return updated
+
+
+@app.delete("/api/admin/users/{user_id}")
+async def admin_delete_user(
+    user_id: str,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """Permanently deletes a user account (Admin privilege required)."""
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Administrators cannot delete their own account."
+        )
+    target = storage.get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    success = storage.delete_user(user_id=user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete user account."
+        )
+    storage.refresh()
+    return {
+        "status": "success",
+        "message": f"User '{target.email}' was permanently deleted.",
+        "deleted_id": user_id
+    }
 
 
 @app.post("/api/admin/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
