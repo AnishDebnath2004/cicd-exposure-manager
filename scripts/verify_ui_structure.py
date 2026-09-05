@@ -3,24 +3,37 @@ import re
 with open('app/static/index.html', 'r', encoding='utf-8') as f:
     content = f.read()
 
-nav_tabs = re.findall(r'id=["\'](navTab-[^"\']+)["\']', content)
+# 1. Check sections
 sections = re.findall(r'id=["\'](section-[^"\']+)["\']', content)
+print("Found Top Sections:", sections)
+assert 'section-user' in sections, "Missing section-user"
+assert 'section-admin' in sections, "Missing section-admin"
 
-print("Found Nav Tabs:", nav_tabs)
-print("Found Sections:", sections)
+# 2. Check user subpanels
+subpanels = re.findall(r'id=["\'](userSubPanel-[^"\']+)["\']', content)
+print("Found User Subpanels:", subpanels)
+expected_subpanels = ['userSubPanel-domain1', 'userSubPanel-domain2', 'userSubPanel-domain3', 'userSubPanel-portal']
+for p in expected_subpanels:
+    assert p in subpanels, f"Missing subpanel: {p}"
 
-# Check required sections
-expected_sections = ['section-domain1', 'section-domain2', 'section-domain3', 'section-admin', 'section-user']
-for s in expected_sections:
-    assert s in sections, f"Missing section: {s}"
+# 3. Check user subtabs
+subtabs = re.findall(r'id=["\'](userSubTab-[^"\']+)["\']', content)
+print("Found User Subtabs:", subtabs)
+expected_subtabs = ['userSubTab-domain1', 'userSubTab-domain2', 'userSubTab-domain3', 'userSubTab-portal']
+for t in expected_subtabs:
+    assert t in subtabs, f"Missing subtab: {t}"
 
-expected_tabs = ['navTab-domain1', 'navTab-domain2', 'navTab-domain3', 'navTab-admin', 'navTab-user']
-for t in expected_tabs:
-    assert t in nav_tabs, f"Missing navTab: {t}"
+# 4. Check nav tabs
+nav_tabs = re.findall(r'id=["\'](navTab-[^"\']+)["\']', content)
+print("Found Top Nav Tabs:", nav_tabs)
+assert 'navTab-user' in nav_tabs, "Missing navTab-user"
+assert 'navTab-admin' in nav_tabs, "Missing navTab-admin"
 
-print("\n--- Testing key interactive handlers ---")
+# 5. Check functions
 key_functions = [
     'switchNavTab',
+    'switchUserSubTab',
+    'updateDomainLockUI',
     'attachResultsToDomain',
     'executeDomainScan',
     'switchAdminSubTab',
@@ -40,8 +53,23 @@ key_functions = [
     'exportUserScan'
 ]
 
+print("\n--- Key interactive functions check ---")
 for fn in key_functions:
     assert f"function {fn}" in content or f"async function {fn}" in content, f"Missing function: {fn}"
     print(f"  [OK] {fn}")
 
-print("\nAll UI structural assertions passed successfully!")
+# 6. Check DOM IDs of scans and controls
+crucial_ids = [
+    'localRepoPath', 'gitRepoUrl', 'gitBranch', 'fileInput', 'dropZone',
+    'webTargetUrl', 'dbTargetUri',
+    'userTargetInput', 'userLoginForm', 'userSignupForm', 'userResultsArea',
+    'domainResults-repository', 'domainResults-website', 'domainResults-database',
+    'adminGateBox', 'adminMainContent', 'resultsSection'
+]
+
+print("\n--- Crucial DOM Elements check ---")
+for cid in crucial_ids:
+    assert f'id="{cid}"' in content, f"Missing DOM ID: {cid}"
+    print(f"  [OK] {cid}")
+
+print("\nAll UI structural assertions for Merged User Section passed with 100% success!")
