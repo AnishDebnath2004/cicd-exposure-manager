@@ -830,7 +830,9 @@ async def admin_list_users(
     admin_user: UserResponse = Depends(require_admin)
 ):
     """Lists all registered users across all domains (Admin privilege required)."""
-    users = storage.list_users(limit=limit, offset=offset)
+    safe_limit = limit if isinstance(limit, int) and not isinstance(limit, bool) else 100
+    safe_offset = offset if isinstance(offset, int) and not isinstance(offset, bool) else 0
+    users = storage.list_users(limit=safe_limit, offset=safe_offset)
     return UserListResponse(total=len(users), users=users)
 
 

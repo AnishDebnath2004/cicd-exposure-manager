@@ -634,7 +634,7 @@
 
           <!-- Inline User Sign Up Form -->
           <form id="userSignupForm" onsubmit="handleUserSignupSubmit(event)" class="hidden space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
                 <input id="userSignupName" type="text" placeholder="Jane Doe" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans" />
@@ -647,9 +647,16 @@
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Password <span class="text-rose-400">*</span> (min 8 chars)</label>
                 <input id="userSignupPassword" type="password" required minlength="8" placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
               </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Account Role <span class="text-rose-400">*</span></label>
+                <select id="userSignupRole" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
+                  <option value="developer" selected>Developer</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Full access across all 3 Domains and User Portal.</span>
+              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Multi-domain workstations and full governance available based on role.</span>
               <button id="userSignupBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-user-plus"></i> Create ShieldCI Account
               </button>
@@ -1117,14 +1124,10 @@
 
         <div class="p-4 bg-surface-900/90 border border-amber-500/30 rounded-2xl text-xs space-y-2 text-left max-w-md mx-auto">
           <div class="flex items-center gap-2 font-bold text-amber-300">
-            <i class="fa-solid fa-circle-info"></i> Designated Administrator Account:
+            <i class="fa-solid fa-shield-halved text-amber-400"></i> Administrator Console Access:
           </div>
-          <div class="font-mono text-slate-200 bg-surface-950 px-3 py-2 rounded-xl border border-slate-800 flex items-center justify-between">
-            <span>debnathanish19@gmail.com</span>
-            <span class="text-[10px] text-amber-400 font-sans font-bold">Admin</span>
-          </div>
-          <p class="text-[11px] text-amber-300 font-semibold flex items-center gap-1.5">
-            <i class="fa-solid fa-lock text-[10px]"></i> Administrator login is strictly restricted. Any other user or developer login is disabled on this console.
+          <p class="text-slate-300 leading-relaxed text-xs">
+            Administrator privileges are required to access this console. Sign in with your Administrator account or use the <b>Sign Up</b> tab below to provision an Administrator account.
           </p>
         </div>
 
@@ -1153,7 +1156,7 @@
               <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
                 <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-amber-400"></i> Administrator Email Address</span>
               </label>
-              <input id="adminInlineEmail" type="email" value="debnathanish19@gmail.com" required autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
+              <input id="adminInlineEmail" type="email" placeholder="admin@shieldci.io" required autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
             </div>
 
             <div>
@@ -3982,23 +3985,24 @@
         loginForm.classList.remove('hidden');
         signupForm.classList.add('hidden');
         if (title) title.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-crown"></i> Administrator Sign In</span>';
-        if (emailInput && (!emailInput.value || emailInput.value === 'developer@shieldci.io')) {
-          emailInput.value = 'debnathanish19@gmail.com';
+        if (emailInput && emailInput.value === 'developer@shieldci.io') {
+          emailInput.value = '';
         }
         if (emailInput) emailInput.placeholder = "admin@shieldci.io";
         if (submitBtn) {
           submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2";
           submitBtn.innerHTML = '<i class="fa-solid fa-crown text-slate-950"></i> <span>Sign In as Administrator</span>';
         }
-        setTimeout(() => document.getElementById('loginPassword')?.focus(), 50);
+        if (emailInput && !emailInput.value) {
+          setTimeout(() => document.getElementById('loginEmail')?.focus(), 50);
+        } else {
+          setTimeout(() => document.getElementById('loginPassword')?.focus(), 50);
+        }
       } else if (tab === 'login') {
         if (loginBtn) loginBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/25";
         loginForm.classList.remove('hidden');
         signupForm.classList.add('hidden');
         if (title) title.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-shield-halved"></i> Sign In to ShieldCI</span>';
-        if (emailInput && emailInput.value === 'debnathanish19@gmail.com') {
-          emailInput.value = '';
-        }
         if (emailInput) emailInput.placeholder = "you@company.com";
         if (submitBtn) {
           submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2";
@@ -4957,7 +4961,12 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Login failed. Please check credentials.");
         setAuthState(data.access_token, data.user);
-        switchNavTab('user');
+        if (data.user.role === 'admin') {
+          switchNavTab('admin');
+          showToast(`Welcome Administrator ${data.user.full_name || data.user.email}! Console unlocked.`, "success");
+        } else {
+          switchNavTab('user');
+        }
       } catch (err) {
         showUserAuthAlert(err.message);
       } finally {
@@ -4971,6 +4980,7 @@
       const full_name = document.getElementById('userSignupName').value.trim() || null;
       const email = document.getElementById('userSignupEmail').value.trim();
       const password = document.getElementById('userSignupPassword').value;
+      const role = document.getElementById('userSignupRole')?.value || 'developer';
       const btn = document.getElementById('userSignupBtn');
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...`;
@@ -4978,12 +4988,18 @@
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, full_name, role: 'developer', preferred_domain: 'domain_01' })
+          body: JSON.stringify({ email, password, full_name, role, preferred_domain: 'domain_01' })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Sign up failed");
         setAuthState(data.access_token, data.user);
-        switchNavTab('user');
+        if (data.user.role === 'admin') {
+          switchNavTab('admin');
+          showToast(`Administrator account created! Welcome, ${data.user.full_name || data.user.email}.`, "success");
+        } else {
+          switchNavTab('user');
+          showToast(`Welcome to ShieldCI, ${data.user.full_name || data.user.email}!`, "success");
+        }
       } catch (err) {
         showUserAuthAlert(err.message);
       } finally {

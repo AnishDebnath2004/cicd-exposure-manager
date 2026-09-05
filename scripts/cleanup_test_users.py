@@ -57,8 +57,7 @@ def is_test_user(email: str) -> bool:
         return True
     if any(clean.startswith(pfx) for pfx in TEST_PREFIXES):
         return True
-    # Any non-whitelisted account is treated as a test/migrated account
-    return True
+    return False
 
 
 def cleanup_postgres():

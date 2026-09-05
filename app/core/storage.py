@@ -525,6 +525,14 @@ class SQLiteStorageAdapter:
             return cursor.rowcount > 0
 
     def list_users(self, limit: int = 100, offset: int = 0) -> List[UserResponse]:
+        try:
+            limit = int(limit)
+        except Exception:
+            limit = 100
+        try:
+            offset = int(offset)
+        except Exception:
+            offset = 0
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -1214,6 +1222,14 @@ class PostgresStorageAdapter:
             return rc > 0
 
     def list_users(self, limit: int = 100, offset: int = 0) -> List[UserResponse]:
+        try:
+            limit = int(limit)
+        except Exception:
+            limit = 100
+        try:
+            offset = int(offset)
+        except Exception:
+            offset = 0
         with self._get_connection() as conn:
             with self._get_cursor(conn) as cursor:
                 cursor.execute("""
