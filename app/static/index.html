@@ -154,6 +154,10 @@
               <span id="userOrgRole" class="text-[10px] text-indigo-400 font-mono block truncate max-w-[120px] sm:max-w-[160px]">developer</span>
             </div>
           </div>
+          <button onclick="openUserPasswordModal()" title="Change Account Password" class="p-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-indigo-300 bg-surface-900/90 hover:bg-indigo-500/10 border border-slate-700/80 hover:border-indigo-500/30 transition-all flex items-center gap-1.5">
+            <i class="fa-solid fa-key text-indigo-400"></i>
+            <span class="hidden sm:inline">Password</span>
+          </button>
           <button onclick="handleLogout()" title="Sign Out of ShieldCI" class="p-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-400 bg-surface-900/90 hover:bg-rose-500/10 border border-slate-700/80 hover:border-rose-500/30 transition-all flex items-center gap-1.5">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
             <span class="hidden sm:inline">Sign Out</span>
@@ -656,6 +660,67 @@
               <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Multi-domain workstations and full governance available based on role.</span>
               <button id="userSignupBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-user-plus"></i> Create ShieldCI Account
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- User Section In-Page Password Change & Credentials Security Card -->
+        <div id="userSectionPasswordCard" class="hidden p-6 rounded-2xl bg-surface-950/80 border border-indigo-500/30 shadow-xl space-y-4 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+                <i class="fa-solid fa-key text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                  Account Security &bull; Change Password
+                </h3>
+                <p class="text-xs text-slate-400">Update your account password. Changes apply immediately with session rotation.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-semibold">
+                <i class="fa-solid fa-shield-check mr-1"></i> Secure Credential Update
+              </span>
+            </div>
+          </div>
+
+          <form id="userPortalPasswordForm" onsubmit="handleUserPortalPasswordSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Current Password <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="userPortalCurrentPw" required placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono pr-9">
+                  <button type="button" onclick="togglePasswordVisibility('userPortalCurrentPw', 'eyeIconUserPortalCurrent')" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-200 text-xs">
+                    <i id="eyeIconUserPortalCurrent" class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">New Password (min 8 chars) <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="userPortalNewPw" required minlength="8" placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono pr-9">
+                  <button type="button" onclick="togglePasswordVisibility('userPortalNewPw', 'eyeIconUserPortalNew')" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-200 text-xs">
+                    <i id="eyeIconUserPortalNew" class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Confirm New Password <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="userPortalConfirmPw" required minlength="8" placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono pr-9">
+                  <button type="button" onclick="togglePasswordVisibility('userPortalConfirmPw', 'eyeIconUserPortalConfirm')" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-200 text-xs">
+                    <i id="eyeIconUserPortalConfirm" class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 flex-wrap gap-2">
+              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Passwords must be at least 8 characters. Session token will rotate automatically.</span>
+              <button id="userPortalPwBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-key"></i> Update Password
               </button>
             </div>
           </form>
@@ -2209,6 +2274,10 @@
           headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-crown text-amber-400 mr-1"></i> Administrator Global View</span>`;
         } else {
           headerStatus.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"><i class="fa-solid fa-user-check text-emerald-400 mr-1"></i> User &bull; Full Access</span>`;
+        }
+
+        if (currentUser) {
+          headerStatus.innerHTML += `<button onclick="openUserPasswordModal()" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-900 hover:bg-surface-850 text-slate-300 hover:text-indigo-300 border border-slate-700/80 hover:border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm ml-1" title="Change Password"><i class="fa-solid fa-key text-indigo-400"></i> Change Password</button>`;
         }
       }
 
@@ -5179,19 +5248,24 @@
     function updateUserPortalUI() {
       const authCard = document.getElementById('userGuestAuthCard');
       const statusDiv = document.getElementById('userSectionAuthStatus');
+      const pwCard = document.getElementById('userSectionPasswordCard');
+
       if (currentUser) {
         if (authCard) authCard.classList.add('hidden');
+        if (pwCard) pwCard.classList.remove('hidden');
         if (statusDiv) {
           statusDiv.innerHTML = `
             <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-900 border border-slate-800 text-xs">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               <span class="text-slate-300">Logged in: <b class="text-emerald-400">${currentUser.full_name || currentUser.email}</b> (${currentUser.role})</span>
-              <button onclick="handleLogout()" class="ml-2 text-slate-400 hover:text-rose-400 text-xs" title="Sign Out"><i class="fa-solid fa-right-from-bracket"></i></button>
+              <button onclick="openUserPasswordModal()" class="ml-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition flex items-center gap-1.5" title="Change Account Password"><i class="fa-solid fa-key"></i> Password</button>
+              <button onclick="handleLogout()" class="ml-1 text-slate-400 hover:text-rose-400 text-xs" title="Sign Out"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
           `;
         }
       } else {
         if (authCard) authCard.classList.remove('hidden');
+        if (pwCard) pwCard.classList.add('hidden');
         if (statusDiv) {
           statusDiv.innerHTML = `
             <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400">
@@ -5199,6 +5273,189 @@
               <span>Guest User Mode (Sign in below for personal history)</span>
             </div>
           `;
+        }
+      }
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+
+    function openUserPasswordModal() {
+      if (!currentUser) {
+        showToast("Please sign in to change your password.", "warning");
+        openAuthModal('login');
+        return;
+      }
+      const cur = document.getElementById('userModalCurrentPw');
+      const nw = document.getElementById('userModalNewPw');
+      const cf = document.getElementById('userModalConfirmPw');
+      const alert = document.getElementById('userPasswordModalAlert');
+      if (cur) cur.value = '';
+      if (nw) nw.value = '';
+      if (cf) cf.value = '';
+      if (alert) alert.classList.add('hidden');
+      const modal = document.getElementById('userPasswordModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeUserPasswordModal() {
+      const modal = document.getElementById('userPasswordModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function handleUserPasswordChangeSubmit(event) {
+      if (event) event.preventDefault();
+      const curInput = document.getElementById('userModalCurrentPw');
+      const nwInput = document.getElementById('userModalNewPw');
+      const cfInput = document.getElementById('userModalConfirmPw');
+      const alertBox = document.getElementById('userPasswordModalAlert');
+      const alertMsg = document.getElementById('userPasswordModalAlertMsg');
+      const submitBtn = document.getElementById('userPasswordModalSubmitBtn');
+
+      const current_password = curInput ? curInput.value : '';
+      const new_password = nwInput ? nwInput.value : '';
+      const confirm_password = cfInput ? cfInput.value : '';
+
+      const showAlert = (msg) => {
+        if (alertBox && alertMsg) {
+          alertMsg.textContent = msg;
+          alertBox.classList.remove('hidden');
+        } else {
+          showToast(msg, "warning");
+        }
+      };
+
+      if (!current_password) {
+        showAlert("Please enter your current password.");
+        return;
+      }
+      if (!new_password || new_password.length < 8) {
+        showAlert("New password must be at least 8 characters long.");
+        return;
+      }
+      if (new_password !== confirm_password) {
+        showAlert("New passwords do not match. Please verify.");
+        return;
+      }
+
+      if (alertBox) alertBox.classList.add('hidden');
+
+      const origText = submitBtn ? submitBtn.innerHTML : "Update Password";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating...`;
+      }
+
+      try {
+        const res = await fetch('/api/auth/password', {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ current_password, new_password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 401) {
+            clearAuthState();
+            closeUserPasswordModal();
+            openAuthModal('login');
+            showToast("Session expired. Please sign in again.", "warning");
+            return;
+          }
+          throw new Error(data.detail || "Password change failed");
+        }
+
+        // Seamlessly update session with rotated token
+        if (data.access_token) {
+          setAuthState(data.access_token, data.user || currentUser);
+        }
+
+        closeUserPasswordModal();
+        showToast("Password updated successfully! Session refreshed.", "success");
+      } catch (err) {
+        showAlert(err.message || "Failed to update password");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origText;
+        }
+      }
+    }
+
+    async function handleUserPortalPasswordSubmit(event) {
+      if (event) event.preventDefault();
+      const curInput = document.getElementById('userPortalCurrentPw');
+      const nwInput = document.getElementById('userPortalNewPw');
+      const cfInput = document.getElementById('userPortalConfirmPw');
+      const submitBtn = document.getElementById('userPortalPwBtn');
+
+      const current_password = curInput ? curInput.value : '';
+      const new_password = nwInput ? nwInput.value : '';
+      const confirm_password = cfInput ? cfInput.value : '';
+
+      if (!current_password) {
+        showToast("Please enter your current password.", "warning");
+        return;
+      }
+      if (!new_password || new_password.length < 8) {
+        showToast("New password must be at least 8 characters long.", "warning");
+        return;
+      }
+      if (new_password !== confirm_password) {
+        showToast("New passwords do not match. Please verify.", "warning");
+        return;
+      }
+
+      const origText = submitBtn ? submitBtn.innerHTML : "Update Password";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating...`;
+      }
+
+      try {
+        const res = await fetch('/api/auth/password', {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ current_password, new_password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 401) {
+            clearAuthState();
+            openAuthModal('login');
+            showToast("Session expired. Please sign in again.", "warning");
+            return;
+          }
+          throw new Error(data.detail || "Password change failed");
+        }
+
+        // Seamlessly update session with rotated token
+        if (data.access_token) {
+          setAuthState(data.access_token, data.user || currentUser);
+        }
+
+        if (curInput) curInput.value = '';
+        if (nwInput) nwInput.value = '';
+        if (cfInput) cfInput.value = '';
+
+        showToast("Password updated successfully! Session refreshed.", "success");
+      } catch (err) {
+        showToast(`Password update failed: ${err.message}`, "error");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origText;
         }
       }
     }
@@ -5712,6 +5969,81 @@
           <button type="button" onclick="closeRoleDelegationModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-700 transition-all">Cancel</button>
           <button type="submit" id="delegateSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 shadow-md shadow-indigo-600/25 border border-indigo-500/40 transition-all flex items-center gap-1.5">
             <i class="fa-solid fa-check"></i> Save Delegation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: User Section Change Password Modal -->
+  <div id="userPasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-md border border-indigo-500/40 shadow-2xl overflow-hidden flex flex-col relative">
+      <div class="absolute -right-12 -top-12 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/80 relative z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-indigo-600/30">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Change Password</h3>
+            <p class="text-xs text-slate-400">Update your account credentials safely</p>
+          </div>
+        </div>
+        <button onclick="closeUserPasswordModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="userPasswordModalForm" onsubmit="handleUserPasswordChangeSubmit(event)" class="p-6 space-y-4 bg-surface-950/95 relative z-10">
+        <div id="userPasswordModalAlert" class="hidden p-3 rounded-xl text-xs flex items-start gap-2 bg-rose-500/10 text-rose-300 border border-rose-500/30">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-400"></i>
+          <span id="userPasswordModalAlertMsg" class="flex-1 font-medium"></span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>Current Password <span class="text-rose-400">*</span></span>
+          </label>
+          <div class="relative">
+            <input type="password" id="userModalCurrentPw" required placeholder="••••••••" autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+            <button type="button" onclick="togglePasswordVisibility('userModalCurrentPw', 'eyeIconUserModalCurrent')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs">
+              <i id="eyeIconUserModalCurrent" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>New Password <span class="text-rose-400">*</span></span>
+            <span class="text-[10px] text-slate-400 font-mono">Min 8 characters</span>
+          </label>
+          <div class="relative">
+            <input type="password" id="userModalNewPw" required minlength="8" placeholder="••••••••" autocomplete="new-password" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+            <button type="button" onclick="togglePasswordVisibility('userModalNewPw', 'eyeIconUserModalNew')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs">
+              <i id="eyeIconUserModalNew" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+            <span>Confirm New Password <span class="text-rose-400">*</span></span>
+          </label>
+          <div class="relative">
+            <input type="password" id="userModalConfirmPw" required minlength="8" placeholder="••••••••" autocomplete="new-password" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+            <button type="button" onclick="togglePasswordVisibility('userModalConfirmPw', 'eyeIconUserModalConfirm')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs">
+              <i id="eyeIconUserModalConfirm" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeUserPasswordModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-700 transition-all">Cancel</button>
+          <button type="submit" id="userPasswordModalSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 shadow-md shadow-indigo-600/25 border border-indigo-500/40 transition-all flex items-center gap-1.5">
+            <i class="fa-solid fa-key"></i> Update Password
           </button>
         </div>
       </form>

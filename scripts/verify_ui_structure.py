@@ -50,7 +50,12 @@ key_functions = [
     'updateUserPortalUI',
     'executeUserScan',
     'renderUserResults',
-    'exportUserScan'
+    'exportUserScan',
+    'openUserPasswordModal',
+    'closeUserPasswordModal',
+    'togglePasswordVisibility',
+    'handleUserPasswordChangeSubmit',
+    'handleUserPortalPasswordSubmit'
 ]
 
 print("\n--- Key interactive functions check ---")
@@ -64,7 +69,8 @@ crucial_ids = [
     'webTargetUrl', 'dbTargetUri',
     'userTargetInput', 'userLoginForm', 'userSignupForm', 'userResultsArea',
     'domainResults-repository', 'domainResults-website', 'domainResults-database',
-    'adminGateBox', 'adminMainContent', 'resultsSection'
+    'adminGateBox', 'adminMainContent', 'resultsSection',
+    'userPasswordModal', 'userSectionPasswordCard', 'userPortalPasswordForm', 'userPasswordModalForm'
 ]
 
 print("\n--- Crucial DOM Elements check ---")
