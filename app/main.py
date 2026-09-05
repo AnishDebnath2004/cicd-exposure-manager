@@ -137,31 +137,12 @@ DOMAIN_MAP = {
 
 def enforce_developer_domain_access(user: Optional[UserResponse], target_type: Optional[Any]):
     """
-    Enforces strict single-domain isolation for developer accounts.
-    If a developer attempts to work on, audit, or schedule an asset outside their
-    assigned preferred_domain, access is rejected with 403 Forbidden.
+    Developers and users have open access across Domain 01 (Code), Domain 02 (Web),
+    and Domain 03 (Database), as well as the User portal.
+    Administrator governance remains strictly restricted to administrators.
     """
-    if not user or getattr(user, "role", None) != "developer":
-        return
+    return
 
-    user_domain = getattr(user, "preferred_domain", "domain_01") or "domain_01"
-    domain_info = DOMAIN_MAP.get(user_domain, DOMAIN_MAP["domain_01"])
-
-    raw_type = target_type.value if hasattr(target_type, "value") else str(target_type)
-    allowed_raw = [
-        t.value if hasattr(t, "value") else str(t)
-        for t in domain_info["allowed_target_types"]
-    ]
-
-    if raw_type not in allowed_raw:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                f"Domain Access Restricted: Your developer account is restricted exclusively to "
-                f"{domain_info['name']}. You cannot audit or perform operations on '{raw_type}' targets. "
-                f"To work in another domain, please sign up with another email."
-            )
-        )
 
 
 @asynccontextmanager
@@ -796,24 +777,17 @@ async def update_profile(
     req: UserProfileUpdateRequest,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Updates user profile display name, organization, and preferred domain."""
-    if current_user.role == "developer" and req.preferred_domain:
-        if req.preferred_domain != current_user.preferred_domain:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Domain cannot be changed for a developer account. To work in another domain, you must sign up with another email."
-            )
-
     user = storage.update_user_profile(
         user_id=current_user.id,
         full_name=req.full_name,
         organization=req.organization
     )
-    if req.preferred_domain and current_user.role != "developer":
+    if req.preferred_domain:
         user = storage.update_user_preferred_domain(current_user.id, req.preferred_domain)
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     return user
+
 
 
 @app.put("/api/auth/password")

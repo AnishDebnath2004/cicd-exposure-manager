@@ -1,7 +1,8 @@
 """
 tests/test_domain_isolation.py
-Automated test suite verifying strict single-domain developer isolation.
-Ensures developers can only audit and operate within their registered domain.
+Automated test suite verifying full multi-domain access across Domain 01 (Code),
+Domain 02 (Web), and Domain 03 (Database) for developers and users,
+while ensuring Administrator governance remains strictly protected.
 """
 
 import os
@@ -57,213 +58,87 @@ def create_test_dev(domain: str) -> tuple[UserResponse, str]:
     return auth.user, auth.access_token
 
 
-def test_domain_01_developer_permissions_and_restrictions():
-    print("Testing Domain 01 Developer permissions and restrictions...")
-    dev1, token = create_test_dev("domain_01")
-    assert dev1.role == "developer"
-    assert dev1.preferred_domain == "domain_01"
+def test_multi_domain_developer_access():
+    print("Testing Multi-Domain Developer Access across Code, Web, and Database...")
+    dev, token = create_test_dev("domain_01")
+    assert dev.role == "developer"
 
-    # 1. Allowed: Repository Scan
+    # 1. Domain 01: Repository Scan
     repo_req = ScanRequest(
         target="./sample_vulnerable_repo",
         target_path="./sample_vulnerable_repo",
         target_type=TargetCategory.REPOSITORY,
-        user_email=dev1.email
+        user_email=dev.email
     )
-    try:
-        res = asyncio.run(trigger_scan(request=repo_req, current_user=dev1))
-        assert res is not None
-        assert res.target_type == TargetCategory.REPOSITORY
-        print("[OK] Domain 01 Developer successfully scanned a repository")
-    except HTTPException as e:
-        assert e.status_code != 403, f"Unexpected 403 for allowed domain: {e.detail}"
+    res_repo = asyncio.run(trigger_scan(request=repo_req, current_user=dev))
+    assert res_repo is not None
+    assert res_repo.target_type == TargetCategory.REPOSITORY
+    print("[OK] Developer can audit Domain 01: Repository")
 
-    # 2. Blocked: Website Scan (via trigger_scan)
-    web_req = ScanRequest(
+    # 2. Domain 02: Website Scan
+    web_res = asyncio.run(scan_website(url="https://example.com", current_user=dev))
+    assert web_res is not None
+    assert web_res.target_type == TargetCategory.WEBSITE
+    print("[OK] Developer can audit Domain 02: Website & API")
+
+    # 3. Domain 03: Database Scan
+    db_res = asyncio.run(scan_database(target="redis://127.0.0.1:6379", current_user=dev))
+    assert db_res is not None
+    assert db_res.target_type == TargetCategory.DATABASE
+    print("[OK] Developer can audit Domain 03: Database & Cloud")
+
+    # 4. Schedule scans across any domain
+    sched_req = ScheduleCreateRequest(
         target="https://example.com",
         target_type=TargetCategory.WEBSITE,
-        user_email=dev1.email
+        interval_minutes=60,
+        fail_on_severity=SeverityLevel.HIGH,
+        max_allowed_pes=50.0
     )
-    try:
-        asyncio.run(trigger_scan(request=web_req, current_user=dev1))
-        assert False, "Expected 403 Forbidden for website scan"
-    except HTTPException as e:
-        assert e.status_code == 403
-        assert "Domain Access Restricted" in e.detail
-        assert "Domain 01: Code Repository & CI/CD Security" in e.detail
-        print("[OK] Domain 01 Developer blocked from website scan (403 Forbidden)")
+    created_sched = asyncio.run(create_schedule(sched_req, current_user=dev))
+    assert created_sched.id is not None
+    assert created_sched.target_type == TargetCategory.WEBSITE
+    print("[OK] Developer can create schedules across domains")
 
-    # 3. Blocked: Website Scan (via dedicated scan_website endpoint)
-    try:
-        asyncio.run(scan_website(url="https://example.com", current_user=dev1))
-        assert False, "Expected 403 Forbidden for scan_website"
-    except HTTPException as e:
-        assert e.status_code == 403
-        assert "Domain Access Restricted" in e.detail
-        print("[OK] Domain 01 Developer blocked from scan_website endpoint (403 Forbidden)")
-
-    # 4. Blocked: Database Scan (via dedicated scan_database endpoint)
-    try:
-        asyncio.run(scan_database(target="redis://127.0.0.1:6379", current_user=dev1))
-        assert False, "Expected 403 Forbidden for scan_database"
-    except HTTPException as e:
-        assert e.status_code == 403
-        assert "Domain Access Restricted" in e.detail
-        print("[OK] Domain 01 Developer blocked from database scan (403 Forbidden)")
-
-    # 5. Schedule Creation: Blocked for website, Allowed for repository
-    try:
-        asyncio.run(create_schedule(
-            req=ScheduleCreateRequest(target="https://example.com", target_type=TargetCategory.WEBSITE),
-            current_user=dev1
-        ))
-        assert False, "Expected 403 Forbidden for website schedule"
-    except HTTPException as e:
-        assert e.status_code == 403
-        print("[OK] Domain 01 Developer blocked from scheduling website scan (403 Forbidden)")
-
-    sched = asyncio.run(create_schedule(
-        req=ScheduleCreateRequest(target="./sample_vulnerable_repo", target_type=TargetCategory.REPOSITORY),
-        current_user=dev1
+    # 5. Profile Domain update is permitted
+    updated = asyncio.run(update_profile(
+        UserProfileUpdateRequest(preferred_domain="domain_02"),
+        current_user=dev
     ))
-    assert sched is not None
-    assert sched.target_type == TargetCategory.REPOSITORY
-    print("[OK] Domain 01 Developer successfully scheduled a repository scan")
+    assert updated.preferred_domain == "domain_02"
+    print("[OK] Developer can update preferred landing domain")
 
-    # 6. Immutable Domain: Attempting to switch to domain_02 MUST fail with 403
+
+def test_admin_governance_strictly_protected():
+    print("Testing Admin Governance protection against non-admin developers...")
+    dev, _ = create_test_dev("domain_02")
     try:
-        asyncio.run(update_profile(
-            req=UserProfileUpdateRequest(preferred_domain="domain_02"),
-            current_user=dev1
-        ))
-        assert False, "Expected 403 Forbidden for domain change"
+        asyncio.run(require_admin(dev))
+        assert False, "Developer should have been blocked with 403 Forbidden"
     except HTTPException as e:
         assert e.status_code == 403
-        assert "Domain cannot be changed for a developer account" in e.detail
-        print("[OK] Domain 01 Developer domain mutation blocked (403 Forbidden)")
+        assert "Administrator privileges are required" in e.detail
+        print("[OK] Admin Console remains strictly protected against non-admin developers (403 Forbidden)")
 
 
-def test_domain_02_developer_permissions_and_restrictions():
-    print("Testing Domain 02 Developer permissions and restrictions...")
-    dev2, token = create_test_dev("domain_02")
-    assert dev2.role == "developer"
-    assert dev2.preferred_domain == "domain_02"
-
-    # 1. Blocked: Repository Scan
-    repo_req = ScanRequest(
-        target="./sample_vulnerable_repo",
-        target_path="./sample_vulnerable_repo",
-        target_type=TargetCategory.REPOSITORY,
-        user_email=dev2.email
-    )
-    try:
-        asyncio.run(trigger_scan(request=repo_req, current_user=dev2))
-        assert False, "Expected 403 Forbidden for repository scan"
-    except HTTPException as e:
-        assert e.status_code == 403
-        assert "Domain Access Restricted" in e.detail
-        assert "Domain 02: Web & API Perimeter" in e.detail
-        print("[OK] Domain 02 Developer blocked from repository scan (403 Forbidden)")
-
-    # 2. Blocked: Database Scan
-    db_req = ScanRequest(
-        target="redis://127.0.0.1:6379",
-        target_type=TargetCategory.DATABASE,
-        user_email=dev2.email
-    )
-    try:
-        asyncio.run(trigger_scan(request=db_req, current_user=dev2))
-        assert False, "Expected 403 Forbidden for database scan"
-    except HTTPException as e:
-        assert e.status_code == 403
-        print("[OK] Domain 02 Developer blocked from database scan (403 Forbidden)")
-
-    # 3. Allowed: Website Scan
-    web_req = ScanRequest(
-        target="https://example.com",
-        target_type=TargetCategory.WEBSITE,
-        user_email=dev2.email
-    )
-    try:
-        res = asyncio.run(trigger_scan(request=web_req, current_user=dev2))
-        assert res is not None
-        assert res.target_type == TargetCategory.WEBSITE
-        print("[OK] Domain 02 Developer successfully scanned a website")
-    except HTTPException as e:
-        assert e.status_code != 403, f"Unexpected 403 for allowed domain: {e.detail}"
-
-
-def test_domain_03_developer_permissions_and_restrictions():
-    print("Testing Domain 03 Developer permissions and restrictions...")
-    dev3, token = create_test_dev("domain_03")
-    assert dev3.role == "developer"
-    assert dev3.preferred_domain == "domain_03"
-
-    # 1. Blocked: Repository Scan
-    repo_req = ScanRequest(
-        target="./sample_vulnerable_repo",
-        target_type=TargetCategory.REPOSITORY,
-        user_email=dev3.email
-    )
-    try:
-        asyncio.run(trigger_scan(request=repo_req, current_user=dev3))
-        assert False, "Expected 403 Forbidden for repository scan"
-    except HTTPException as e:
-        assert e.status_code == 403
-        assert "Domain 03: Database & Cloud Infrastructure" in e.detail
-        print("[OK] Domain 03 Developer blocked from repository scan (403 Forbidden)")
-
-    # 2. Blocked: Website Scan
-    try:
-        asyncio.run(scan_website(url="https://example.com", current_user=dev3))
-        assert False, "Expected 403 Forbidden for website scan"
-    except HTTPException as e:
-        assert e.status_code == 403
-        print("[OK] Domain 03 Developer blocked from website scan (403 Forbidden)")
-
-    # 3. Allowed: Database Scan
-    try:
-        res = asyncio.run(scan_database(target="redis://127.0.0.1:6379", current_user=dev3))
-        assert res is not None
-        assert res.target_type == TargetCategory.DATABASE
-        print("[OK] Domain 03 Developer successfully scanned a database")
-    except HTTPException as e:
-        assert e.status_code != 403, f"Unexpected 403 for allowed domain: {e.detail}"
-
-
-def test_admin_multi_domain_access():
-    print("Testing Administrator Multi-Domain Access (Unrestricted)...")
+def test_admin_multi_domain_governance():
+    print("Testing Administrator Multi-Domain Governance...")
     admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
     assert admin_dict is not None
     admin = UserResponse(**admin_dict)
     assert admin.role == "admin"
 
-    # Admin is not restricted by domain checks
-    repo_req = ScanRequest(
-        target="./sample_vulnerable_repo",
-        target_type=TargetCategory.REPOSITORY,
-        user_email=admin.email
-    )
-    res_repo = asyncio.run(trigger_scan(request=repo_req, current_user=admin))
-    assert res_repo is not None
-
-    res_web = asyncio.run(scan_website(url="https://example.com", current_user=admin))
-    assert res_web is not None
-
-    res_db = asyncio.run(scan_database(target="redis://127.0.0.1:6379", current_user=admin))
-    assert res_db is not None
-
-    print("[OK] Administrator retains complete multi-domain access across Repositories, Websites, and Databases")
+    res_admin = asyncio.run(require_admin(admin))
+    assert res_admin.id == admin.id
+    print("[OK] Administrator retains full multi-domain governance and administrative privileges")
 
 
 if __name__ == "__main__":
     cleanup_test_domain_users()
     try:
-        test_domain_01_developer_permissions_and_restrictions()
-        test_domain_02_developer_permissions_and_restrictions()
-        test_domain_03_developer_permissions_and_restrictions()
-        test_admin_multi_domain_access()
-        print("ALL DOMAIN ISOLATION TESTS PASSED!")
+        test_multi_domain_developer_access()
+        test_admin_governance_strictly_protected()
+        test_admin_multi_domain_governance()
+        print("ALL MULTI-DOMAIN AND ADMIN TESTS PASSED SUCCESSFULLY!")
     finally:
         cleanup_test_domain_users()
-

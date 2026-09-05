@@ -1968,29 +1968,6 @@
 
     // Navigation Tab Switching (5 Core Sections)
     function switchNavTab(tabName) {
-      if (tabName === 'audit') {
-        const pref = currentUser && currentUser.preferred_domain;
-        tabName = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
-      }
-
-      // Strict single-domain developer isolation
-      if (currentUser && currentUser.role === 'developer') {
-        const pref = currentUser.preferred_domain || 'domain_01';
-        const allowedTab = pref === 'domain_02' ? 'domain2' : (pref === 'domain_03' ? 'domain3' : 'domain1');
-        const domainNames = {
-          'domain1': 'Domain 01: Code & CI/CD Pipelines',
-          'domain2': 'Domain 02: Web & API Perimeter',
-          'domain3': 'Domain 03: Database & Cloud Infrastructure'
-        };
-
-        if (tabName === 'domain1' || tabName === 'domain2' || tabName === 'domain3') {
-          if (tabName !== allowedTab) {
-            showToast(`Access Restricted: Your developer account is dedicated to ${domainNames[allowedTab]}. To work in ${domainNames[tabName]}, please sign up with another email.`, "error");
-            tabName = allowedTab;
-          }
-        }
-      }
-
       const tabs = ['domain1', 'domain2', 'domain3', 'admin', 'user'];
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
@@ -2060,19 +2037,6 @@
         }
       }
 
-      // Update developer preferred domain badges
-      const d1Badge = document.getElementById('domain1PrefBadge');
-      const d2Badge = document.getElementById('domain2PrefBadge');
-      const d3Badge = document.getElementById('domain3PrefBadge');
-      if (d1Badge) d1Badge.classList.add('hidden');
-      if (d2Badge) d2Badge.classList.add('hidden');
-      if (d3Badge) d3Badge.classList.add('hidden');
-      if (currentUser && currentUser.role === 'developer') {
-        if (currentUser.preferred_domain === 'domain_01' && d1Badge) d1Badge.classList.remove('hidden');
-        if (currentUser.preferred_domain === 'domain_02' && d2Badge) d2Badge.classList.remove('hidden');
-        if (currentUser.preferred_domain === 'domain_03' && d3Badge) d3Badge.classList.remove('hidden');
-      }
-
       // Domain Category synchronization
       if (tabName === 'domain1') {
         currentAssetCategory = 'repository';
@@ -2104,106 +2068,58 @@
       const assignedDom = isDev ? (currentUser.preferred_domain || 'domain_01') : null;
 
       const domains = [
-        { key: 'domain1', id: 'domain_01', short: 'Domain 01: Code', full: 'Domain 01: Code & CI/CD Pipelines' },
-        { key: 'domain2', id: 'domain_02', short: 'Domain 02: Web', full: 'Domain 02: Web & API Perimeter' },
-        { key: 'domain3', id: 'domain_03', short: 'Domain 03: Cloud', full: 'Domain 03: Database & Cloud Infrastructure' }
+        { key: 'domain1', id: 'domain_01', short: 'Domain 01: Code' },
+        { key: 'domain2', id: 'domain_02', short: 'Domain 02: Web' },
+        { key: 'domain3', id: 'domain_03', short: 'Domain 03: Cloud' }
       ];
 
       domains.forEach(d => {
         const navBtn = document.getElementById(`navTab-${d.key}`);
         const subBtn = document.getElementById(`subQuickTab-${d.key}`);
-        const isAssigned = isDev && assignedDom === d.id;
-        const isLocked = isDev && !isAssigned;
 
         if (navBtn) {
-          if (isLocked) {
-            navBtn.setAttribute('title', `Locked: Your developer account is restricted to ${assignedDom === 'domain_01' ? 'Domain 01' : (assignedDom === 'domain_02' ? 'Domain 02' : 'Domain 03')}. To work in ${d.short}, please sign up with another email.`);
-            navBtn.classList.add('opacity-50');
-            if (!navBtn.querySelector('.domain-lock-icon')) {
-              const lock = document.createElement('i');
-              lock.className = 'domain-lock-icon fa-solid fa-lock text-[10px] text-rose-400 mr-1';
-              navBtn.insertBefore(lock, navBtn.firstChild);
-            }
+          navBtn.classList.remove('opacity-50');
+          const lock = navBtn.querySelector('.domain-lock-icon');
+          if (lock) lock.remove();
+          if (isDev && assignedDom === d.id) {
+            navBtn.setAttribute('title', `Default Workspace (${d.short})`);
           } else {
-            navBtn.classList.remove('opacity-50');
-            const lock = navBtn.querySelector('.domain-lock-icon');
-            if (lock) lock.remove();
-            if (isAssigned) {
-              navBtn.setAttribute('title', `Active Assigned Domain (${d.short})`);
-            } else {
-              navBtn.removeAttribute('title');
-            }
+            navBtn.removeAttribute('title');
           }
         }
 
         if (subBtn) {
-          if (isLocked) {
-            subBtn.setAttribute('title', `Locked: Restricted to your assigned domain. To work in ${d.short}, please sign up with another email.`);
-            subBtn.classList.add('opacity-40');
-            if (!subBtn.querySelector('.domain-sub-lock-icon')) {
-              const lock = document.createElement('i');
-              lock.className = 'domain-sub-lock-icon fa-solid fa-lock text-[10px] text-rose-400 mr-1';
-              subBtn.insertBefore(lock, subBtn.firstChild);
-            }
-          } else {
-            subBtn.classList.remove('opacity-40');
-            const lock = subBtn.querySelector('.domain-sub-lock-icon');
-            if (lock) lock.remove();
-            subBtn.removeAttribute('title');
-          }
+          subBtn.classList.remove('opacity-40');
+          const lock = subBtn.querySelector('.domain-sub-lock-icon');
+          if (lock) lock.remove();
+          subBtn.removeAttribute('title');
         }
       });
 
-      // Cross domain jump buttons in domain headers
+      // Cross domain jump buttons in domain headers are always active
       document.querySelectorAll('.cross-domain-btn').forEach(btn => {
-        if (isDev) btn.classList.add('hidden');
-        else btn.classList.remove('hidden');
+        btn.classList.remove('hidden');
       });
       document.querySelectorAll('.cross-domain-lock-badge').forEach(badge => {
-        if (isDev) badge.classList.remove('hidden');
-        else badge.classList.add('hidden');
+        badge.classList.add('hidden');
       });
 
-      // Continuous schedules asset type selector restriction
+      // Continuous schedules asset type selector has all options available
       const schedSelect = document.getElementById('schedAssetTypeInput');
       if (schedSelect) {
-        if (isDev) {
-          const allowedType = assignedDom === 'domain_02' ? 'website' : (assignedDom === 'domain_03' ? 'database' : 'repository');
-          schedSelect.value = allowedType;
-          Array.from(schedSelect.options).forEach(opt => {
-            opt.disabled = (opt.value !== allowedType);
-          });
-        } else {
-          Array.from(schedSelect.options).forEach(opt => {
-            opt.disabled = false;
-          });
-        }
+        Array.from(schedSelect.options).forEach(opt => {
+          opt.disabled = false;
+        });
       }
 
-      // User Portal target type restriction
-      if (isDev) {
-        const allowedUserType = assignedDom === 'domain_02' ? 'website' : (assignedDom === 'domain_03' ? 'database' : 'repository');
-        ['repository', 'website', 'database'].forEach(t => {
-          const btn = document.getElementById(`userTargetBtn-${t}`);
-          if (btn) {
-            if (t !== allowedUserType) {
-              btn.classList.add('opacity-50');
-              btn.title = `Locked: Developer account is restricted to ${assignedDom}. To scan ${t}, sign up with another email.`;
-            } else {
-              btn.classList.remove('opacity-50');
-              btn.title = `Your assigned domain target`;
-            }
-          }
-        });
-      } else {
-        ['repository', 'website', 'database'].forEach(t => {
-          const btn = document.getElementById(`userTargetBtn-${t}`);
-          if (btn) {
-            btn.classList.remove('opacity-50');
-            btn.removeAttribute('title');
-          }
-        });
-      }
+      // User Portal target type options are all available
+      ['repository', 'website', 'database'].forEach(t => {
+        const btn = document.getElementById(`userTargetBtn-${t}`);
+        if (btn) {
+          btn.classList.remove('opacity-50');
+          btn.removeAttribute('title');
+        }
+      });
     }
 
     function attachResultsToDomain(category) {
@@ -4290,11 +4206,12 @@
             domCard.classList.remove('hidden');
             const pref = currentUser.preferred_domain || 'domain_01';
             const domLabel = pref === 'domain_02' ? 'Domain 02: Web & API Perimeter' : (pref === 'domain_03' ? 'Domain 03: Database & Cloud Infrastructure' : 'Domain 01: Code Repository & CI/CD Security');
-            domText.innerHTML = `<i class="fa-solid fa-lock text-rose-400 mr-1.5"></i> ${domLabel}`;
+            domText.innerHTML = `<i class="fa-solid fa-star text-amber-400 mr-1.5"></i> ${domLabel}`;
           } else {
             domCard.classList.add('hidden');
           }
         }
+
 
         const token = getAuthToken();
         if (apiTokenInput) {
@@ -4826,17 +4743,8 @@
     }
 
     function setUserTargetType(type) {
-      if (currentUser && currentUser.role === 'developer') {
-        const pref = currentUser.preferred_domain || 'domain_01';
-        const allowedType = pref === 'domain_02' ? 'website' : (pref === 'domain_03' ? 'database' : 'repository');
-        if (type !== allowedType) {
-          const domainNames = { 'domain_01': 'Domain 01: Code & CI/CD', 'domain_02': 'Domain 02: Web & API', 'domain_03': 'Domain 03: Database & Cloud' };
-          showToast(`Access Restricted: Your developer account is restricted to ${domainNames[pref]}. To scan ${type} targets, please sign up with another email.`, "error");
-          type = allowedType;
-        }
-      }
-
       currentUserTargetType = type;
+
       const types = ['repository', 'website', 'database'];
       types.forEach(t => {
         const btn = document.getElementById(`userTargetBtn-${t}`);
@@ -5144,11 +5052,11 @@
               <option value="domain_02">Domain 02: Web &amp; API Perimeter</option>
               <option value="domain_03">Domain 03: Database &amp; Cloud Infrastructure</option>
             </select>
-            <div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-snug flex items-start gap-2">
-              <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i>
-              <span><b>Strict Single-Domain Policy</b>: As a developer, your account will be permanently dedicated to this domain. To work in another domain, you must register with a separate email address.</span>
-            </div>
+            <p class="mt-2 text-[11px] text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i> Sets your primary landing workspace. You can audit across all 3 domains and the User portal at any time.
+            </p>
           </div>
+
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
               <i class="fa-solid fa-user text-indigo-400"></i> Full Name <span class="text-[10px] text-slate-500 font-normal">(Optional)</span>
