@@ -212,6 +212,16 @@ class AppConfig(BaseModel):
     NOTIFY_ON_GATE_FAILURE_ONLY: bool = True
     AUTO_FAIL_ON_TOXIC_COMBOS: bool = True
 
+    # Whitelist of emails authorized to register with the Administrator role
+    ALLOWED_ADMIN_EMAILS: Set[str] = {
+        e.strip().lower()
+        for e in os.getenv(
+            "ALLOWED_ADMIN_EMAILS",
+            "debnathanish19@gmail.com,anish2004bmg@gmail.com"
+        ).split(",")
+        if e.strip()
+    }
+
     def apply_settings_dict(self, data: dict):
         """Dynamically applies persisted settings updates to runtime configuration."""
         if not data:

@@ -23,6 +23,16 @@ def test_admin_rbac():
     # 1. Fetch real admin user and developer user from storage
     admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
     developer_dict = storage.get_user_by_email("arkapravamaity2000@gmail.com")
+    if not developer_dict:
+        storage.create_user(
+            email="arkapravamaity2000@gmail.com",
+            password_hash="mockhash",
+            salt="mocksalt",
+            full_name="Arka",
+            role="developer",
+            preferred_domain="domain_01"
+        )
+        developer_dict = storage.get_user_by_email("arkapravamaity2000@gmail.com")
 
     assert admin_dict is not None, "Admin user debnathanish19@gmail.com should exist in database"
     admin = UserResponse(**admin_dict)
@@ -118,5 +128,51 @@ def test_admin_rbac():
     print("==================================================")
 
 
+def test_admin_signup_restriction():
+    print("Testing Administrator Signup Restriction Policy...")
+    from app.models.auth_schemas import UserSignupRequest
+    from app.main import signup
+
+    # 1. Unauthorized email attempting to sign up as admin -> MUST fail with 403
+    unauthorized_email = f"stranger_{os.urandom(4).hex()}@example.com"
+    req_unauthorized = UserSignupRequest(
+        email=unauthorized_email,
+        password="TestPassword2026!",
+        full_name="Stranger Hacker",
+        role="admin"
+    )
+    try:
+        asyncio.run(signup(req_unauthorized))
+        assert False, "Unauthorized user should have been blocked from signing up as Administrator"
+    except HTTPException as e:
+        assert e.status_code == 403
+        assert "not authorized to register as an Administrator" in e.detail
+        print(f"[OK] Unauthorized admin signup blocked with 403 Forbidden: {e.detail}")
+
+    # 2. Same unauthorized email attempting to sign up as developer -> MUST succeed
+    req_developer = UserSignupRequest(
+        email=unauthorized_email,
+        password="TestPassword2026!",
+        full_name="Legit Developer",
+        role="developer"
+    )
+    dev_auth = asyncio.run(signup(req_developer))
+    assert dev_auth.user.role == "developer"
+    print(f"[OK] Same account allowed to register as developer: {dev_auth.user.email}")
+
+    # Clean up created developer test user
+    with storage.adapter._get_connection() as conn:
+        if storage.engine_type == "postgresql":
+            with storage.adapter._get_cursor(conn) as cursor:
+                cursor.execute("DELETE FROM users WHERE id = %s", (dev_auth.user.id,))
+        else:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE id = ?", (dev_auth.user.id,))
+        conn.commit()
+    storage.refresh()
+    print("[OK] Test developer cleaned up successfully.")
+
+
 if __name__ == "__main__":
     test_admin_rbac()
+    test_admin_signup_restriction()

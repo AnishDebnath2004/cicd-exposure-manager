@@ -648,7 +648,7 @@
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Account Role <span class="text-rose-400">*</span></label>
                 <select id="userSignupRole" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
                   <option value="developer" selected>Developer</option>
-                  <option value="admin">Administrator</option>
+                  <option value="admin">Administrator (Restricted to Owner)</option>
                 </select>
               </div>
             </div>
@@ -1176,6 +1176,13 @@
 
           <!-- Direct Admin Sign-Up Form inside Section 4 -->
           <form id="adminInlineSignupForm" onsubmit="handleAdminInlineSignup(event)" class="hidden space-y-4">
+            <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2">
+              <i class="fa-solid fa-shield-halved text-amber-400 mt-0.5"></i>
+              <div class="leading-relaxed">
+                <span class="font-bold">Restricted Registration:</span> Only authorized platform administrators (<code class="text-amber-200 font-mono text-[11px]">debnathanish19@gmail.com</code>, <code class="text-amber-200 font-mono text-[11px]">anish2004bmg@gmail.com</code>) can create an Administrator account.
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <i class="fa-solid fa-user text-amber-400"></i> Full Name <span class="text-[10px] text-slate-500 font-normal">(Optional)</span>
@@ -3691,6 +3698,13 @@
       }
     }
 
+    const ALLOWED_ADMIN_EMAILS = ['debnathanish19@gmail.com', 'anish2004bmg@gmail.com'];
+
+    function isAllowedAdminEmail(email) {
+      if (!email) return false;
+      return ALLOWED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
+    }
+
     async function handleAdminInlineSignup(event) {
       event.preventDefault();
       const email = document.getElementById('adminInlineSignupEmail').value.trim();
@@ -3712,6 +3726,13 @@
       if (password.length < 8) {
         if (alertBox) {
           alertBox.textContent = "Password must be at least 8 characters long.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+      if (!isAllowedAdminEmail(email)) {
+        if (alertBox) {
+          alertBox.textContent = `Registration restricted: '${email}' is not authorized to register as an Administrator. Administrator privileges are reserved for the platform owner (${ALLOWED_ADMIN_EMAILS.join(', ')}).`;
           alertBox.classList.remove('hidden');
         }
         return;
@@ -4000,8 +4021,8 @@
       const title = document.getElementById('authModalTitle');
 
       if (role === 'admin') {
-        if (badge) badge.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-crown text-[10px]"></i> Administrator</span>`;
-        if (hint) hint.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-400"></i> Full platform access, user management, and Administrator Console unlocked.`;
+        if (badge) badge.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-crown text-[10px]"></i> Administrator (Owner Only)</span>`;
+        if (hint) hint.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-400"></i> Platform governance is restricted to authorized platform owners (${ALLOWED_ADMIN_EMAILS.join(', ')}).`;
         if (icon) icon.className = "fa-solid fa-crown text-amber-400";
         if (submitBtn) {
           submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2";
@@ -4134,6 +4155,12 @@
       try {
         const preferred_domain = document.getElementById('signupPreferredDomain')?.value || 'domain_01';
         const role = document.getElementById('signupRole')?.value || 'developer';
+
+        if (role === 'admin' && !isAllowedAdminEmail(email)) {
+          showAuthAlert(`Registration restricted: '${email}' is not authorized to register as an Administrator. Administrator privileges are reserved for the platform owner (${ALLOWED_ADMIN_EMAILS.join(', ')}). Please select Developer.`, "error");
+          return;
+        }
+
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -5084,6 +5111,11 @@
       const email = document.getElementById('userSignupEmail').value.trim();
       const password = document.getElementById('userSignupPassword').value;
       const role = document.getElementById('userSignupRole')?.value || 'developer';
+      if (role === 'admin' && !isAllowedAdminEmail(email)) {
+        showUserAuthAlert(`Registration restricted: '${email}' is not authorized to register as an Administrator. Administrator privileges are reserved for the platform owner (${ALLOWED_ADMIN_EMAILS.join(', ')}). Please select Developer.`);
+        return;
+      }
+
       const btn = document.getElementById('userSignupBtn');
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...`;
@@ -5419,7 +5451,7 @@
             </label>
             <select id="signupRole" onchange="handleSignupRoleChange()" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
               <option value="developer" selected>Developer (Multi-Domain Workstations &amp; User Portal)</option>
-              <option value="admin">Administrator (Platform Governance &amp; Admin Console)</option>
+              <option value="admin">Administrator (Platform Governance - Restricted to Owner)</option>
             </select>
             <p id="signupRoleHint" class="mt-2 text-[11px] text-slate-400 flex items-center gap-1.5">
               <i class="fa-solid fa-circle-check text-emerald-400"></i> Standard developer account with access across Domain 01, Domain 02, and Domain 03.

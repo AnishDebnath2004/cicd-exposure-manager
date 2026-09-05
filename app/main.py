@@ -667,6 +667,15 @@ async def signup(req: UserSignupRequest):
             detail="An account with this email address already exists. Please sign in."
         )
 
+    # Restriction: Only authorized owner accounts can register as Administrator
+    if req.role == "admin":
+        clean_email = req.email.strip().lower()
+        if clean_email not in settings.ALLOWED_ADMIN_EMAILS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Registration restricted: Account '{req.email}' is not authorized to register as an Administrator. Administrator privileges are strictly reserved for the platform owner ({', '.join(sorted(settings.ALLOWED_ADMIN_EMAILS))}). Please register as a Developer or User."
+            )
+
     pw_hash, salt = hash_password(req.password)
     user = storage.create_user(
         email=req.email,
