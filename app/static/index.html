@@ -857,42 +857,98 @@
           </p>
         </div>
 
-        <!-- Direct Admin Sign-In Form inside Section 4 -->
-        <form id="adminInlineLoginForm" onsubmit="handleAdminInlineLogin(event)" class="glass-card p-6 rounded-2xl border border-amber-500/30 bg-surface-950/80 space-y-4 max-w-md mx-auto text-left shadow-inner">
+        <!-- Direct Admin Sign-In & Sign-Up Card inside Section 4 -->
+        <div class="glass-card p-6 rounded-2xl border border-amber-500/30 bg-surface-950/80 space-y-4 max-w-md mx-auto text-left shadow-inner">
           <div class="flex items-center justify-between pb-2 border-b border-slate-800">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span class="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">Administrator Sign In</span>
+              <span id="adminInlineCardTitle" class="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">Administrator Sign In</span>
             </div>
-            <span class="text-[10px] text-slate-500 font-mono">Section 4 Exclusive</span>
-          </div>
-
-          <div id="adminInlineAlert" class="hidden p-3 rounded-xl text-xs bg-rose-500/10 border border-rose-500/20 text-rose-300 font-medium"></div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-amber-400"></i> Administrator Email Address</span>
-            </label>
-            <input id="adminInlineEmail" type="email" value="debnathanish19@gmail.com" required autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber-400"></i> Administrator Password</span>
-            </label>
-            <div class="relative">
-              <input id="adminInlinePassword" type="password" required placeholder="Enter administrator password" autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
-              <button type="button" onclick="toggleAuthPassword('adminInlinePassword', 'adminInlineEye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 text-xs">
-                <i id="adminInlineEye" class="fa-solid fa-eye"></i>
+            <div class="flex p-1 bg-surface-900 rounded-xl border border-slate-800">
+              <button type="button" onclick="switchAdminInlineMode('login')" id="adminInlineTab-login" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-sm">
+                Sign In
+              </button>
+              <button type="button" onclick="switchAdminInlineMode('signup')" id="adminInlineTab-signup" class="px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+                Sign Up
               </button>
             </div>
           </div>
 
-          <button id="adminInlineSubmitBtn" type="submit" class="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 border border-amber-400/50 transition-all flex items-center justify-center gap-2">
-            <i class="fa-solid fa-crown text-slate-950"></i>
-            <span>Sign In to Administrator Console</span>
-          </button>
-        </form>
+          <div id="adminInlineAlert" class="hidden p-3 rounded-xl text-xs bg-rose-500/10 border border-rose-500/20 text-rose-300 font-medium"></div>
+
+          <!-- Direct Admin Sign-In Form inside Section 4 -->
+          <form id="adminInlineLoginForm" onsubmit="handleAdminInlineLogin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-amber-400"></i> Administrator Email Address</span>
+              </label>
+              <input id="adminInlineEmail" type="email" value="debnathanish19@gmail.com" required autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber-400"></i> Administrator Password</span>
+              </label>
+              <div class="relative">
+                <input id="adminInlinePassword" type="password" required placeholder="Enter administrator password" autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
+                <button type="button" onclick="toggleAuthPassword('adminInlinePassword', 'adminInlineEye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 text-xs">
+                  <i id="adminInlineEye" class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <button id="adminInlineSubmitBtn" type="submit" class="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 border border-amber-400/50 transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-crown text-slate-950"></i>
+              <span>Sign In to Administrator Console</span>
+            </button>
+          </form>
+
+          <!-- Direct Admin Sign-Up Form inside Section 4 -->
+          <form id="adminInlineSignupForm" onsubmit="handleAdminInlineSignup(event)" class="hidden space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-user text-amber-400"></i> Full Name <span class="text-[10px] text-slate-500 font-normal">(Optional)</span>
+              </label>
+              <input id="adminInlineSignupName" type="text" placeholder="Lead Security Admin" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-sans" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-envelope text-amber-400"></i> Administrator Email Address <span class="text-rose-400">*</span>
+              </label>
+              <input id="adminInlineSignupEmail" type="email" required placeholder="admin@shieldci.io" autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-building text-amber-400"></i> Organization <span class="text-[10px] text-slate-500 font-normal">(Optional)</span>
+              </label>
+              <input id="adminInlineSignupOrg" type="text" placeholder="Security Operations Center" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-sans" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber-400"></i> Administrator Password <span class="text-rose-400">*</span></span>
+                <span class="text-[10px] text-slate-500">Min 8 characters</span>
+              </label>
+              <div class="relative">
+                <input id="adminInlineSignupPassword" type="password" minlength="8" required placeholder="Create secure administrator password" autocomplete="new-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
+                <button type="button" onclick="toggleAuthPassword('adminInlineSignupPassword', 'adminInlineSignupEye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 text-xs">
+                  <i id="adminInlineSignupEye" class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-amber-300/80 flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-amber-400"></i> Creates an administrator account with platform-wide governance and user management permissions.
+            </p>
+
+            <button id="adminInlineSignupSubmitBtn" type="submit" class="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 border border-amber-400/50 transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-crown text-slate-950"></i>
+              <span>Create Administrator Account</span>
+            </button>
+          </form>
+        </div>
 
         <div class="flex items-center justify-center gap-3 pt-1">
           <button type="button" onclick="openAdminLoginModal()" class="text-xs text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 flex items-center gap-1.5">
@@ -3576,6 +3632,95 @@
       }
     }
 
+    function switchAdminInlineMode(mode) {
+      const loginBtn = document.getElementById('adminInlineTab-login');
+      const signupBtn = document.getElementById('adminInlineTab-signup');
+      const loginForm = document.getElementById('adminInlineLoginForm');
+      const signupForm = document.getElementById('adminInlineSignupForm');
+      const title = document.getElementById('adminInlineCardTitle');
+      const alertBox = document.getElementById('adminInlineAlert');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (mode === 'signup') {
+        if (signupBtn) signupBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-sm";
+        if (loginBtn) loginBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        if (signupForm) signupForm.classList.remove('hidden');
+        if (loginForm) loginForm.classList.add('hidden');
+        if (title) title.textContent = "Administrator Sign Up";
+      } else {
+        if (loginBtn) loginBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-sm";
+        if (signupBtn) signupBtn.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        if (loginForm) loginForm.classList.remove('hidden');
+        if (signupForm) signupForm.classList.add('hidden');
+        if (title) title.textContent = "Administrator Sign In";
+      }
+    }
+
+    async function handleAdminInlineSignup(event) {
+      event.preventDefault();
+      const email = document.getElementById('adminInlineSignupEmail').value.trim();
+      const password = document.getElementById('adminInlineSignupPassword').value;
+      const full_name = document.getElementById('adminInlineSignupName')?.value.trim() || null;
+      const organization = document.getElementById('adminInlineSignupOrg')?.value.trim() || null;
+      const btn = document.getElementById('adminInlineSignupSubmitBtn');
+      const alertBox = document.getElementById('adminInlineAlert');
+
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (!email || !password) {
+        if (alertBox) {
+          alertBox.textContent = "Email address and password are required.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+      if (password.length < 8) {
+        if (alertBox) {
+          alertBox.textContent = "Password must be at least 8 characters long.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Provisioning Administrator...`;
+
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            full_name,
+            organization,
+            role: 'admin',
+            preferred_domain: 'domain_01'
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Administrator account creation failed.");
+        }
+
+        setAuthState(data.access_token, data.user);
+        switchNavTab('admin');
+        showToast(`Administrator account created! Welcome, ${data.user.full_name || data.user.email}.`, "success");
+      } catch (err) {
+        if (alertBox) {
+          alertBox.textContent = err.message;
+          alertBox.classList.remove('hidden');
+        } else {
+          showToast(err.message, "error");
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+
     function setAuthState(token, user) {
       if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
       if (user) {
@@ -3742,14 +3887,36 @@
       const title = document.getElementById('authModalTitle');
       const submitBtn = document.getElementById('loginSubmitBtn');
       const emailInput = document.getElementById('loginEmail');
+      const adminPrompt = document.getElementById('adminSignupPrompt');
 
       hideAuthAlert();
+
+      // Toggle admin signup prompt inside login form
+      if (adminPrompt) {
+        if (tab === 'admin') {
+          adminPrompt.classList.remove('hidden');
+        } else {
+          adminPrompt.classList.add('hidden');
+        }
+      }
 
       // Reset all tab button styles
       if (loginBtn) loginBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
       if (userBtn) userBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
       if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-amber-400 hover:text-amber-300";
       if (signupBtn) signupBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+
+      if (tab === 'admin_signup') {
+        if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25";
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        const roleSelect = document.getElementById('signupRole');
+        if (roleSelect) roleSelect.value = 'admin';
+        handleSignupRoleChange();
+        if (title) title.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-crown"></i> Administrator Sign Up</span>';
+        setTimeout(() => document.getElementById('signupEmail')?.focus(), 50);
+        return;
+      }
 
       if (tab === 'admin') {
         if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25";
@@ -3783,8 +3950,41 @@
         if (signupBtn) signupBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/25";
         signupForm.classList.remove('hidden');
         loginForm.classList.add('hidden');
-        if (title) title.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-user-plus"></i> Create ShieldCI Account</span>';
+        handleSignupRoleChange();
         setTimeout(() => document.getElementById('signupEmail')?.focus(), 50);
+      }
+    }
+
+    function handleSignupRoleChange() {
+      const role = document.getElementById('signupRole')?.value || 'developer';
+      const badge = document.getElementById('signupRoleBadge');
+      const hint = document.getElementById('signupRoleHint');
+      const icon = document.getElementById('signupRoleIcon');
+      const submitBtn = document.getElementById('signupSubmitBtn');
+      const title = document.getElementById('authModalTitle');
+
+      if (role === 'admin') {
+        if (badge) badge.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-crown text-[10px]"></i> Administrator</span>`;
+        if (hint) hint.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-400"></i> Full platform access, user management, and Section 4 Administrator Console unlocked.`;
+        if (icon) icon.className = "fa-solid fa-crown text-amber-400";
+        if (submitBtn) {
+          submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2";
+          submitBtn.innerHTML = `<i class="fa-solid fa-crown text-slate-950"></i> <span>Sign Up as Administrator</span>`;
+        }
+        if (title && (currentAuthTabMode === 'signup' || currentAuthTabMode === 'admin_signup')) {
+          title.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-crown"></i> Administrator Sign Up</span>';
+        }
+      } else {
+        if (badge) badge.innerHTML = `<span class="text-indigo-400 font-semibold">Developer Account</span>`;
+        if (hint) hint.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> Standard developer account with access across Domain 01, Domain 02, and Domain 03.`;
+        if (icon) icon.className = "fa-solid fa-id-badge text-indigo-400";
+        if (submitBtn) {
+          submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2";
+          submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> <span>Create ShieldCI Account</span>`;
+        }
+        if (title && (currentAuthTabMode === 'signup' || currentAuthTabMode === 'admin_signup')) {
+          title.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-user-plus"></i> Create ShieldCI Account</span>';
+        }
       }
     }
 
@@ -3897,10 +4097,11 @@
 
       try {
         const preferred_domain = document.getElementById('signupPreferredDomain')?.value || 'domain_01';
+        const role = document.getElementById('signupRole')?.value || 'developer';
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, full_name, organization, role: 'developer', preferred_domain })
+          body: JSON.stringify({ email, password, full_name, organization, role, preferred_domain })
         });
 
         const data = await res.json();
@@ -3911,7 +4112,12 @@
 
         setAuthState(data.access_token, data.user);
         closeAuthModal();
-        showToast(`Welcome to ShieldCI, ${data.user.full_name || data.user.email}! Account created.`, "success");
+        if (data.user.role === 'admin') {
+          switchNavTab('admin');
+          showToast(`Welcome, Administrator ${data.user.full_name || data.user.email}! Console unlocked.`, "success");
+        } else {
+          showToast(`Welcome to ShieldCI, ${data.user.full_name || data.user.email}! Account created.`, "success");
+        }
       } catch (err) {
         showAuthAlert(`Network error: ${err.message}`, "error");
       } finally {
@@ -5022,14 +5228,32 @@
             Don't have an account? 
             <button type="button" onclick="switchAuthTab('signup')" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 ml-1">Create Account</button>
           </p>
+          <div id="adminSignupPrompt" class="hidden text-xs text-center text-slate-400 pt-1">
+            Need a new administrator account?
+            <button type="button" onclick="switchAuthTab('admin_signup')" class="text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 ml-1">Sign Up as Administrator</button>
+          </div>
         </form>
 
         <!-- SIGN UP FORM -->
         <form id="signupForm" onsubmit="handleSignupSubmit(event)" class="hidden space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-indigo-400"></i> Preferred Development Domain <span class="text-rose-400">*</span></span>
-              <span class="text-[10px] text-indigo-400 font-mono">Workspace on login</span>
+              <span class="flex items-center gap-1.5"><i id="signupRoleIcon" class="fa-solid fa-id-badge text-indigo-400"></i> Account Role &amp; Access Level <span class="text-rose-400">*</span></span>
+              <span id="signupRoleBadge" class="text-[10px] text-indigo-400 font-mono font-semibold">Developer Account</span>
+            </label>
+            <select id="signupRole" onchange="handleSignupRoleChange()" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
+              <option value="developer" selected>Developer (Multi-Domain Workstations &amp; User Portal)</option>
+              <option value="admin">Administrator (Platform Governance &amp; Section 4 Admin Console)</option>
+            </select>
+            <p id="signupRoleHint" class="mt-2 text-[11px] text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i> Standard developer account with access across Domain 01, Domain 02, and Domain 03.
+            </p>
+          </div>
+
+          <div id="signupDomainWrapper">
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-indigo-400"></i> Preferred Starting Domain <span class="text-rose-400">*</span></span>
+              <span class="text-[10px] text-indigo-400 font-mono">Landing workspace</span>
             </label>
             <select id="signupPreferredDomain" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans">
               <option value="domain_01" selected>Domain 01: Code Repository &amp; CI/CD Security</option>
@@ -5050,7 +5274,7 @@
 
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <i class="fa-solid fa-envelope text-indigo-400"></i> Work / Dev Email <span class="text-rose-400">*</span>
+              <i class="fa-solid fa-envelope text-indigo-400"></i> Email Address <span class="text-rose-400">*</span>
             </label>
             <input id="signupEmail" type="email" required placeholder="alex@company.com" autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
           </div>

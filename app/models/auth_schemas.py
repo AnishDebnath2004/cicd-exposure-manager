@@ -12,7 +12,7 @@ class UserSignupRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Password (at least 8 characters)")
     full_name: Optional[str] = Field(None, description="User full name or display name")
     organization: Optional[str] = Field(None, description="Organization or team name")
-    role: Literal["developer", "user"] = Field("developer", description="User role: 'developer' or 'user'")
+    role: Literal["developer", "user", "admin"] = Field("developer", description="User role: 'developer', 'user', or 'admin'")
     preferred_domain: Optional[str] = Field("domain_01", description="Preferred development domain (e.g. domain_01, domain_02, domain_03)")
 
     @field_validator("email")

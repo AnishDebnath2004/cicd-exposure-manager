@@ -674,7 +674,7 @@ async def signup(req: UserSignupRequest):
         salt=salt,
         full_name=req.full_name,
         organization=req.organization,
-        role=req.role if req.role in ("developer", "user") else "developer",
+        role=req.role if req.role in ("developer", "user", "admin") else "developer",
         preferred_domain=req.preferred_domain or "domain_01"
     )
     token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
