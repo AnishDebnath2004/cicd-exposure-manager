@@ -713,15 +713,10 @@ async def login(req: UserLoginRequest):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied: Account '{req.email}' does not possess Administrator privileges. Administrator login is strictly disabled for other users and developers."
             )
-        elif req.required_role == "user" and user_role not in ("user", "admin"):
+        elif req.required_role in ("user", "developer") and user_role not in ("user", "developer", "admin"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: Account '{req.email}' is registered as a Developer. Please sign in via Developer Sign In."
-            )
-        elif req.required_role == "developer" and user_role not in ("developer", "admin"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: Account '{req.email}' is registered as a User. Please sign in via User Sign In."
+                detail=f"Access denied: Account '{req.email}' is not authorized."
             )
 
     storage.update_last_login(user_record["id"])
