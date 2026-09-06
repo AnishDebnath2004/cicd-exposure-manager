@@ -24,7 +24,7 @@ from app.core.security import (
 )
 from app.core.storage import storage
 from app.main import (
-    app, scan_website, test_webhook, get_current_user_optional,
+    app, scan_website, test_webhook as api_test_webhook, get_current_user_optional,
     change_password, add_security_headers
 )
 from app.models.schemas import WebhookTestRequest
@@ -74,7 +74,7 @@ def test_endpoint_ssrf_enforcement():
         # 1. /api/settings/test-webhook with metadata IP
         req = WebhookTestRequest(webhook_url="http://169.254.169.254/latest/meta-data")
         try:
-            loop.run_until_complete(test_webhook(req))
+            loop.run_until_complete(api_test_webhook(req))
             assert False, "Should raise HTTPException 400 for cloud metadata webhook"
         except HTTPException as e:
             assert e.status_code == 400

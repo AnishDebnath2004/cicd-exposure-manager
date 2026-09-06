@@ -150,7 +150,19 @@ def test_database_scanner():
     assert "postgres:****@" in result.target_path
     assert any("Default Database Password" in f.title or "Database Credentials Exposed" in f.title for f in result.findings)
     print(f"[OK] Database scan passed: {len(result.findings)} exposures identified in test DB target")
-    return result
+
+
+import pytest
+
+@pytest.fixture
+def scan_result():
+    orchestrator = ExposureOrchestrator()
+    req = ScanRequest(target="./sample_vulnerable_repo", target_type=TargetCategory.REPOSITORY)
+    return orchestrator.run_scan(req)
+
+@pytest.fixture
+def repo_res(scan_result):
+    return scan_result
 
 
 def test_exports_sarif_json_csv(scan_result):

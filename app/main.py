@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import tempfile
+import tempfile     
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, List, Optional, Union
@@ -215,6 +215,8 @@ try:
     os.makedirs(STATIC_DIR, exist_ok=True)
 except OSError:
     pass
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)

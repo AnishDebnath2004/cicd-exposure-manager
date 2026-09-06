@@ -26,7 +26,7 @@ from app.models.auth_schemas import (
 )
 from app.core.storage import storage
 from app.main import (
-    get_settings, update_settings, reset_settings, test_webhook,
+    get_settings, update_settings, reset_settings, test_webhook as api_test_webhook,
     update_profile, change_password, signup
 )
 
@@ -95,7 +95,7 @@ def test_webhook_endpoint_validation():
         # Test invalid URL triggers HTTP 400
         invalid_req = WebhookTestRequest(webhook_url="ftp://invalid-scheme")
         try:
-            loop.run_until_complete(test_webhook(invalid_req))
+            loop.run_until_complete(api_test_webhook(invalid_req))
             assert False, "Should have raised HTTPException for non-http url"
         except HTTPException as e:
             assert e.status_code == 400
