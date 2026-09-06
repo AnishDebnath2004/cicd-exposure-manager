@@ -10,6 +10,7 @@ import asyncio
 # Ensure root dir is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# pyrefly: ignore [missing-import]
 from fastapi import HTTPException
 from app.config import settings
 from app.models.auth_schemas import UserSignupRequest, UserLoginRequest

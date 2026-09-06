@@ -12,6 +12,7 @@ import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# pyrefly: ignore [missing-import]
 from fastapi import HTTPException
 from app.models.schemas import ScanRequest, TargetCategory, SeverityLevel, ScheduleCreateRequest
 from app.models.auth_schemas import (

@@ -16,6 +16,7 @@ import ipaddress
 from urllib.parse import urlparse
 from typing import Optional, Tuple, Dict, Any
 
+# pyrefly: ignore [missing-import]
 from fastapi import Header, HTTPException, status
 from app.models.auth_schemas import UserResponse
 

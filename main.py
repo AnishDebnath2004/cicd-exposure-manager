@@ -7,6 +7,7 @@ Allows seamless zero-config deployment on Vercel, Render, Railway, and local uvi
 from app.main import app
 
 if __name__ == "__main__":
+    # pyrefly: ignore [missing-import]
     import uvicorn
     from app.config import settings
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG)

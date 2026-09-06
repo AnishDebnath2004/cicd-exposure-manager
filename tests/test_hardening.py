@@ -16,6 +16,7 @@ from datetime import datetime
 # Ensure project root is in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# pyrefly: ignore [missing-import]
 from fastapi import HTTPException, Request, Response
 from app.core.security import (
     validate_safe_url, hash_password, verify_password,

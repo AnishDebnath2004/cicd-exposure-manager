@@ -30,10 +30,13 @@ _HAS_PSYCOPG_POOL = False
 _HAS_PSYCOPG2 = False
 
 try:
+    # pyrefly: ignore [missing-import]
     import psycopg
+    # pyrefly: ignore [missing-import]
     from psycopg.rows import dict_row
     _HAS_PSYCOPG = True
     try:
+        # pyrefly: ignore [missing-import]
         from psycopg_pool import ConnectionPool
         _HAS_PSYCOPG_POOL = True
     except ImportError:
