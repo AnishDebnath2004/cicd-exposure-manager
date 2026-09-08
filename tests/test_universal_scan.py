@@ -152,6 +152,7 @@ def test_database_scanner():
     print(f"[OK] Database scan passed: {len(result.findings)} exposures identified in test DB target")
 
 
+# pyrefly: ignore [missing-import]
 import pytest
 
 @pytest.fixture

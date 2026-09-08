@@ -62,12 +62,12 @@ def migrate_data(sqlite_path: str, pg_url: str, dry_run: bool = False, include_t
         sqlite_cur.execute("SELECT * FROM users")
         user_rows = sqlite_cur.fetchall()
         total_found = len(user_rows)
-        if not include_test_users:
-            user_rows = [u for u in user_rows if not is_test_email(u["email"])]
-            skipped = total_found - len(user_rows)
-            if skipped > 0:
-                logger.info(f"Skipping {skipped} automated test accounts (@shieldci.io, @shieldci.test, dev_*). Migrating {len(user_rows)} real users.")
-        logger.info(f"Found {len(user_rows)} users in SQLite to migrate.")
+        # Always filter out automated test, mock, or synthetic accounts
+        user_rows = [u for u in user_rows if not is_test_email(u["email"])]
+        skipped = total_found - len(user_rows)
+        if skipped > 0:
+            logger.info(f"Filtered out {skipped} automated test accounts (@shieldci.io, @shieldci.test, dev_*). Migrating {len(user_rows)} verified users.")
+        logger.info(f"Found {len(user_rows)} verified users in SQLite to migrate.")
         if not dry_run and user_rows:
             with pg_adapter._get_connection() as conn:
                 with pg_adapter._get_cursor(conn) as cur:
