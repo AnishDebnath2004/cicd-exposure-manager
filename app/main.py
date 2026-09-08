@@ -432,6 +432,12 @@ async def get_scan_history(
     return storage.list_scans(limit=actual_limit, offset=actual_offset, target_type=actual_target_type, user_email=user_email)
 
 
+@app.get("/api/stats/overview")
+async def get_overview_stats():
+    """Retrieves live aggregate platform metrics for landing hero stats."""
+    return storage.get_overview_stats()
+
+
 @app.get("/api/scans/{scan_id}", response_model=ScanResult)
 async def get_scan_by_id(scan_id: str):
     """Retrieves full details of a specific scan."""

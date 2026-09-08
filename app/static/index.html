@@ -441,19 +441,19 @@
         <!-- 4 Key Numbers -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
-            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-300 font-mono">1.4M+</span>
+            <span id="heroStatAssets" class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-300 font-mono">1.4M+</span>
             <p class="text-xs text-slate-400 font-medium">Commits &amp; Assets Audited</p>
           </div>
           <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
-            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono">99.8%</span>
+            <span id="heroStatEntropy" class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono">99.8%</span>
             <p class="text-xs text-slate-400 font-medium">Shannon Entropy Precision</p>
           </div>
           <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
-            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-300 font-mono">100%</span>
+            <span id="heroStatAgentless" class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-300 font-mono">100%</span>
             <p class="text-xs text-slate-400 font-medium">Agentless &amp; Ephemeral</p>
           </div>
           <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
-            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-300 font-mono">&lt; 3.2s</span>
+            <span id="heroStatLatency" class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-300 font-mono">&lt; 3.2s</span>
             <p class="text-xs text-slate-400 font-medium">Average Scan Latency</p>
           </div>
         </div>
@@ -3813,6 +3813,7 @@ shieldci_audit:
         renderResults(data);
         showToast("Exposure audit completed successfully!", "success");
         fetchQuota();
+        fetchOverviewStats();
       } catch (err) {
         showToast(err.message, "error");
       } finally {
@@ -4149,6 +4150,7 @@ shieldci_audit:
         if (res.ok) {
           showToast("Scan record deleted", "success");
           loadScanHistory();
+          fetchOverviewStats();
         }
       } catch (err) {
         showToast(err.message, "error");
@@ -4756,6 +4758,33 @@ shieldci_audit:
     }
 
     let currentQuota = null;
+
+    async function fetchOverviewStats() {
+      try {
+        const res = await fetch('/api/stats/overview');
+        if (!res.ok) return;
+        const stats = await res.json();
+        const assetsElem = document.getElementById('heroStatAssets');
+        const entropyElem = document.getElementById('heroStatEntropy');
+        const agentlessElem = document.getElementById('heroStatAgentless');
+        const latencyElem = document.getElementById('heroStatLatency');
+
+        if (assetsElem && stats.commits_and_assets !== undefined) {
+          assetsElem.textContent = stats.commits_and_assets;
+        }
+        if (entropyElem && stats.entropy_precision !== undefined) {
+          entropyElem.textContent = stats.entropy_precision;
+        }
+        if (agentlessElem && stats.agentless_ephemeral !== undefined) {
+          agentlessElem.textContent = stats.agentless_ephemeral;
+        }
+        if (latencyElem && stats.avg_latency !== undefined) {
+          latencyElem.textContent = stats.avg_latency;
+        }
+      } catch (err) {
+        console.warn("Could not fetch overview stats:", err);
+      }
+    }
 
     async function fetchQuota() {
       try {
@@ -6692,6 +6721,7 @@ shieldci_audit:
         currentUserScanData = data;
         renderUserResults(data);
         showToast("Audit completed! Full security findings loaded.", "success");
+        fetchOverviewStats();
       } catch (err) {
         showToast(err.message, "error");
       } finally {
@@ -7141,6 +7171,7 @@ shieldci_audit:
       initShowcaseState();
       initAuth();
       fetchQuota();
+      fetchOverviewStats();
       renderPresets('repository');
 
       const hash = (window.location.hash || '').toLowerCase();
