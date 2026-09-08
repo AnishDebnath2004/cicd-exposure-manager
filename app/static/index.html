@@ -197,7 +197,7 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
 
     <!-- ============================================================== -->
-    <!-- PRODUCT-LED HOMEPAGE (PLG HERO, SANDBOX, TOXIC GRAPH & PRICING) -->
+    <!-- PRODUCT-LED HOMEPAGE (PLG HERO, SANDBOX, TOXIC GRAPH) -->
     <!-- ============================================================== -->
     <section id="section-home" class="space-y-16 py-2">
 
@@ -593,106 +593,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       </div>
 
       <!-- ========================================== -->
-      <!-- 6. PRODUCT-LED TRANSPARENT PRICING TIERS -->
-      <!-- ========================================== -->
-      <div id="homePricingSection" class="max-w-6xl mx-auto space-y-8 pt-8 scroll-mt-20">
-        <div class="text-center space-y-2 max-w-2xl mx-auto">
-          <span class="text-xs font-mono uppercase font-bold text-sky-400 tracking-wider bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
-            Transparent PLG Pricing
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Start Free. Scale With Security Confidence.
-          </h2>
-          <p class="text-sm text-slate-400">
-            No credit card required. Free forever tier for developers and open source contributors.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <!-- Plan 1: Developer / Free -->
-          <div class="glass-card p-6 rounded-2xl border border-slate-800/90 bg-surface-900/70 flex flex-col justify-between space-y-6 hover:border-slate-700 transition">
-            <div class="space-y-4">
-              <div class="space-y-1">
-                <span class="text-xs font-mono font-bold text-slate-400 uppercase">Community</span>
-                <h3 class="text-xl font-extrabold text-white">Developer</h3>
-                <div class="pt-2 flex items-baseline gap-1">
-                  <span class="text-4xl font-black text-white font-mono">$0</span>
-                  <span class="text-xs text-slate-400">/ forever free</span>
-                </div>
-              </div>
-              <p class="text-xs text-slate-300">Perfect for individual developers and open-source project security auditing.</p>
-              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 5 scans/day guest quota</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Unlimited scans with free account</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Tri-Vector Scans (Code, Web, DB)</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 1-Click Self-Healing Patches</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Full CLI terminal access</li>
-              </ul>
-            </div>
-            <button type="button" onclick="switchNavTab('user')" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-surface-850 hover:bg-surface-800 border border-slate-700 transition cursor-pointer">
-              Start Free (No CC Required)
-            </button>
-          </div>
-
-          <!-- Plan 2: DevSecOps Pro (Highlighted) -->
-          <div class="glass-card p-6 rounded-2xl border border-indigo-500/50 bg-surface-900/90 flex flex-col justify-between space-y-6 relative shadow-xl shadow-indigo-500/10 ring-1 ring-indigo-500/20">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-sky-500 text-white text-[10px] font-mono font-bold uppercase px-3 py-0.5 rounded-full shadow-md">
-              Most Popular
-            </div>
-            <div class="space-y-4">
-              <div class="space-y-1">
-                <span class="text-xs font-mono font-bold text-indigo-400 uppercase">Automated Defense</span>
-                <h3 class="text-xl font-extrabold text-white">DevSecOps Pro</h3>
-                <div class="pt-2 flex items-baseline gap-1">
-                  <span class="text-4xl font-black text-white font-mono">$49</span>
-                  <span class="text-xs text-slate-400">/ seat / month</span>
-                </div>
-              </div>
-              <p class="text-xs text-slate-300">Continuous posture enforcement, background cron scheduling, and webhooks.</p>
-              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Everything in Developer</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Continuous 24/7 background scheduler</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Discord, Slack &amp; Webhook alerts</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Toxic combination correlation engine</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Exportable PDF Executive Reports</li>
-              </ul>
-            </div>
-            <button type="button" onclick="openAuthModal('signup')" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-lg shadow-indigo-600/30 transition cursor-pointer">
-              Start 14-Day Free Pro Trial
-            </button>
-          </div>
-
-          <!-- Plan 3: Enterprise Shield -->
-          <div class="glass-card p-6 rounded-2xl border border-slate-800/90 bg-surface-900/70 flex flex-col justify-between space-y-6 hover:border-amber-500/40 transition">
-            <div class="space-y-4">
-              <div class="space-y-1">
-                <span class="text-xs font-mono font-bold text-amber-400 uppercase">Governance</span>
-                <h3 class="text-xl font-extrabold text-white">Enterprise Shield</h3>
-                <div class="pt-2 flex items-baseline gap-1">
-                  <span class="text-4xl font-black text-white font-mono">Custom</span>
-                  <span class="text-xs text-slate-400">/ dedicated deployment</span>
-                </div>
-              </div>
-              <p class="text-xs text-slate-300">Dedicated private scanning clusters, SSO/SAML, and custom compliance rules.</p>
-              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Everything in Pro</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Dedicated on-prem or VPC nodes</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Custom AST rules &amp; regex policies</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Enterprise RBAC &amp; SSO/SAML</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 99.99% SLA &amp; 24/7 dedicated support</li>
-              </ul>
-            </div>
-            <button type="button" onclick="openAdminLoginModal()" class="w-full py-3 rounded-xl text-xs font-bold text-amber-300 hover:text-slate-950 bg-amber-500/10 hover:bg-amber-400 border border-amber-500/30 transition cursor-pointer">
-              Open Admin Console
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- 7. INTERACTIVE FAQ ACCORDION -->
+      <!-- 6. INTERACTIVE FAQ ACCORDION -->
       <!-- ========================================== -->
       <div class="max-w-4xl mx-auto space-y-6 pt-8">
         <div class="text-center space-y-2">
@@ -830,7 +731,6 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
               <li><a href="#toxicCorrelationSection" class="hover:text-white transition">Shannon Entropy Vault</a></li>
               <li><a href="#toxicCorrelationSection" class="hover:text-white transition">Toxic Combination Engine</a></li>
               <li><a href="#toxicCorrelationSection" class="hover:text-white transition">1-Click Self-Healing PRs</a></li>
-              <li><a href="#homePricingSection" class="hover:text-white transition">Transparent Pricing</a></li>
             </ul>
           </div>
 
