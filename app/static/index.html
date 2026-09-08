@@ -199,7 +199,7 @@
     <!-- ============================================================== -->
     <!-- PRODUCT-LED HOMEPAGE (PLG HERO, SANDBOX, TOXIC GRAPH & PRICING) -->
     <!-- ============================================================== -->
-    <section id="section-home" class="space-y-20 py-2">
+    <section id="section-home" class="space-y-16 py-2">
 
       <!-- ========================================== -->
       <!-- 1. HERO SECTION & INTERACTIVE LIVE SCAN BAR -->
@@ -213,7 +213,7 @@
         <div class="relative z-10 max-w-5xl mx-auto text-center space-y-6">
           
           <!-- Announcement Pill -->
-          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-surface-900/90 border border-slate-800/90 shadow-md backdrop-blur-md hover:border-slate-700 transition-all cursor-pointer group" onclick="document.getElementById('productSandbox').scrollIntoView({behavior:'smooth'})">
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-surface-900/90 border border-slate-800/90 shadow-md backdrop-blur-md hover:border-slate-700 transition-all cursor-pointer group" onclick="document.getElementById('toxicCorrelationSection').scrollIntoView({behavior:'smooth'})">
             <span class="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
             <span class="text-xs font-mono font-medium text-slate-300">ShieldCI v2.0 &bull; Tri-Vector Posture Defense &amp; 1-Click Self-Healing</span>
             <i class="fa-solid fa-arrow-right text-[10px] text-slate-400 group-hover:translate-x-1 transition-transform"></i>
@@ -295,8 +295,8 @@
                   </button>
                 </div>
 
-                <button type="button" onclick="document.getElementById('productSandbox').scrollIntoView({behavior:'smooth'})" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition">
-                  <span>Interactive Sandbox</span>
+                <button type="button" onclick="document.getElementById('toxicCorrelationSection').scrollIntoView({behavior:'smooth'})" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition cursor-pointer">
+                  <span>Attack Correlation</span>
                   <i class="fa-solid fa-arrow-down text-[10px]"></i>
                 </button>
               </div>
@@ -543,238 +543,9 @@
       </div>
 
       <!-- ========================================== -->
-      <!-- 4. INTERACTIVE 4-VECTOR PRODUCT SANDBOX -->
+      <!-- 4. TOXIC COMBINATION ATTACK PATH ENGINE -->
       <!-- ========================================== -->
-      <div id="productSandbox" class="max-w-6xl mx-auto space-y-6 pt-8 scroll-mt-20">
-        <div class="text-center space-y-2 max-w-2xl mx-auto">
-          <span class="text-xs font-mono uppercase font-bold text-indigo-400 tracking-wider bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-            Interactive Product Sandbox
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Experience All 4 Vectors Live
-          </h2>
-          <p class="text-sm text-slate-400">
-            Explore how ShieldCI inspects code, probes web perimeters, audits databases, and auto-heals vulnerabilities.
-          </p>
-        </div>
-
-        <!-- Sandbox Container -->
-        <div class="glass-card rounded-2xl border border-slate-800/90 bg-surface-900/90 shadow-xl overflow-hidden">
-          
-          <!-- Sandbox Tabs -->
-          <div class="p-2.5 bg-surface-950/80 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto">
-            <button type="button" onclick="switchSandboxTab('repo')" id="sandboxTab-repo" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30 cursor-pointer whitespace-nowrap">
-              <i class="fa-solid fa-code-branch text-indigo-200"></i>
-              <span>Vector 1: Code &amp; CI/CD</span>
-            </button>
-            <button type="button" onclick="switchSandboxTab('web')" id="sandboxTab-web" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
-              <i class="fa-solid fa-globe text-sky-400"></i>
-              <span>Vector 2: Web Perimeter</span>
-            </button>
-            <button type="button" onclick="switchSandboxTab('db')" id="sandboxTab-db" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
-              <i class="fa-solid fa-database text-emerald-400"></i>
-              <span>Vector 3: Database &amp; Cloud</span>
-            </button>
-            <button type="button" onclick="switchSandboxTab('patch')" id="sandboxTab-patch" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
-              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
-              <span>Vector 4: 1-Click Self-Healing</span>
-            </button>
-          </div>
-
-          <!-- Sandbox Content: Vector 1 (Code & CI/CD) -->
-          <div id="sandboxContent-repo" class="p-6 space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div class="lg:col-span-5 space-y-4">
-                <div class="space-y-2">
-                  <span class="text-xs font-mono font-bold text-indigo-400 uppercase">Domain 01 Engine</span>
-                  <h3 class="text-lg font-bold text-white">AST CI/CD Linter &amp; Shannon Entropy Vault</h3>
-                  <p class="text-xs text-slate-300 leading-relaxed">
-                    ShieldCI parses YAML workflow graphs into abstract syntax trees to flag unpinned actions, untrusted triggers (<code class="text-amber-300">pull_request_target</code>), and script injection vectors. Concurrently, our Shannon Entropy engine calculates randomness thresholds (4.4+) to intercept unclassified API secrets before commit.
-                  </p>
-                </div>
-                <div class="space-y-2 text-xs text-slate-300">
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Shannon Entropy 4.4+ catches non-templated API tokens</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>AST Workflow Linting catches poisoned pipeline executions</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Git commit history deep crawler (head to root)</span></div>
-                </div>
-                <div class="pt-2">
-                  <button type="button" onclick="switchNavTab('domain1')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition flex items-center gap-2 shadow-md">
-                    <span>Launch Domain 01 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Visual Code Box -->
-              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
-                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
-                  <span>.github/workflows/deploy.yml</span>
-                  <span class="text-rose-400 font-bold">2 Vulnerabilities Detected</span>
-                </div>
-                <div class="p-4 space-y-1 leading-relaxed text-slate-300 text-[11px] overflow-x-auto">
-                  <div><span class="text-slate-600">01:</span> name: Continuous Deployment</div>
-                  <div><span class="text-slate-600">02:</span> on:</div>
-                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded"><span class="text-slate-600">03:</span>   pull_request_target: # ⚠️ CRITICAL: Untrusted PR Execution</div>
-                  <div><span class="text-slate-600">04:</span> jobs:</div>
-                  <div><span class="text-slate-600">05:</span>   build-and-deploy:</div>
-                  <div><span class="text-slate-600">06:</span>     runs-on: ubuntu-latest</div>
-                  <div><span class="text-slate-600">07:</span>     steps:</div>
-                  <div class="bg-amber-950/40 text-amber-300 px-1 rounded"><span class="text-slate-600">08:</span>     - uses: actions/checkout@main # ⚠️ HIGH: Unpinned Mutable Action Tag</div>
-                  <div><span class="text-slate-600">09:</span>     - name: Setup Node.js</div>
-                  <div><span class="text-slate-600">10:</span>       uses: actions/setup-node@v4</div>
-                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded"><span class="text-slate-600">11:</span>       env: AWS_KEY=AKIAIOSFODNN7EXAMPLE # ⚠️ CRITICAL: Hardcoded IAM Secret</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sandbox Content: Vector 2 (Web Perimeter) -->
-          <div id="sandboxContent-web" class="hidden p-6 space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div class="lg:col-span-5 space-y-4">
-                <div class="space-y-2">
-                  <span class="text-xs font-mono font-bold text-sky-400 uppercase">Domain 02 Engine</span>
-                  <h3 class="text-lg font-bold text-white">DAST Attack Surface &amp; SSL/TLS Inspector</h3>
-                  <p class="text-xs text-slate-300 leading-relaxed">
-                    ShieldCI actively audits live public URLs for exposed development files (<code class="text-sky-300">.env</code>, <code class="text-sky-300">.git</code>), analyzes HTTP response security posture (HSTS, CSP, X-Frame-Options, CORS wildcards), and verifies SSL/TLS certificate validity and cipher suites.
-                  </p>
-                </div>
-                <div class="space-y-2 text-xs text-slate-300">
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Automated HTTP security header audit against OWASP Top 10</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Live SSL/TLS handshake &amp; cipher grade validation</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Passive &amp; active endpoint exposure probing</span></div>
-                </div>
-                <div class="pt-2">
-                  <button type="button" onclick="switchNavTab('domain2')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition flex items-center gap-2 shadow-md">
-                    <span>Launch Domain 02 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Visual Web Scorecard -->
-              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
-                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
-                  <span>https://api.internal-corp.io &bull; HTTP Audit</span>
-                  <span class="text-amber-400 font-bold">Grade: D- (Exposures Found)</span>
-                </div>
-                <div class="p-4 space-y-2 text-[11px]">
-                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
-                    <span class="text-rose-300"><i class="fa-solid fa-xmark mr-1.5"></i> Strict-Transport-Security (HSTS)</span>
-                    <span class="text-rose-400 font-bold">MISSING</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
-                    <span class="text-rose-300"><i class="fa-solid fa-xmark mr-1.5"></i> Content-Security-Policy (CSP)</span>
-                    <span class="text-rose-400 font-bold">MISSING</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded bg-amber-950/20 border border-amber-500/30">
-                    <span class="text-amber-300"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Access-Control-Allow-Origin</span>
-                    <span class="text-amber-400 font-bold">WILDCARD (*)</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded bg-emerald-950/20 border border-emerald-500/30">
-                    <span class="text-emerald-300"><i class="fa-solid fa-check mr-1.5"></i> SSL/TLS Certificate Expiry</span>
-                    <span class="text-emerald-400 font-bold">VALID (184 days)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sandbox Content: Vector 3 (Database & Cloud) -->
-          <div id="sandboxContent-db" class="hidden p-6 space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div class="lg:col-span-5 space-y-4">
-                <div class="space-y-2">
-                  <span class="text-xs font-mono font-bold text-emerald-400 uppercase">Domain 03 Engine</span>
-                  <h3 class="text-lg font-bold text-white">Database Exposure &amp; Cloud Perimeter Audit</h3>
-                  <p class="text-xs text-slate-300 leading-relaxed">
-                    ShieldCI audits public and VPC databases across PostgreSQL, MySQL, Redis, and MongoDB. It identifies open database listener ports, unencrypted plaintext connections, default credentials, and publicly accessible cloud storage buckets.
-                  </p>
-                </div>
-                <div class="space-y-2 text-xs text-slate-300">
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>TCP socket discovery across PostgreSQL, MySQL, Redis, Mongo</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>TLS in-transit encryption handshake verification</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Default administrative password &amp; guest auth checks</span></div>
-                </div>
-                <div class="pt-2">
-                  <button type="button" onclick="switchNavTab('domain3')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition flex items-center gap-2 shadow-md">
-                    <span>Launch Domain 03 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Visual DB Inspection -->
-              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
-                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
-                  <span>postgresql://cluster-prod.internal:5432</span>
-                  <span class="text-rose-400 font-bold">CRITICAL EXPOSURE</span>
-                </div>
-                <div class="p-4 space-y-2 text-[11px]">
-                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
-                    <span class="text-rose-300"><i class="fa-solid fa-network-wired mr-1.5"></i> External Port Binding</span>
-                    <span class="text-rose-400 font-bold">0.0.0.0:5432 (PUBLIC)</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded bg-amber-950/20 border border-amber-500/30">
-                    <span class="text-amber-300"><i class="fa-solid fa-lock-open mr-1.5"></i> In-Transit Encryption (SSL)</span>
-                    <span class="text-amber-400 font-bold">DISABLED (PLAINTEXT)</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
-                    <span class="text-rose-300"><i class="fa-solid fa-key mr-1.5"></i> Default Role Authentication</span>
-                    <span class="text-rose-400 font-bold">GUEST ACCESS DETECTED</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sandbox Content: Vector 4 (1-Click Self-Healing) -->
-          <div id="sandboxContent-patch" class="hidden p-6 space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div class="lg:col-span-5 space-y-4">
-                <div class="space-y-2">
-                  <span class="text-xs font-mono font-bold text-amber-400 uppercase">Self-Healing Engine</span>
-                  <h3 class="text-lg font-bold text-white">Instant 1-Click Unified Git PR Patches</h3>
-                  <p class="text-xs text-slate-300 leading-relaxed">
-                    Most security tools only point fingers. ShieldCI writes the code to fix the vulnerabilities. We automatically generate a hardened unified <code class="text-amber-300">.patch</code> with immutable commit SHA pins, rotated secret stubs, and strict HTTP defense headers.
-                  </p>
-                </div>
-                <div class="space-y-2 text-xs text-slate-300">
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Automated commit-hash pinning for GitHub Actions</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Auto-replaces hardcoded secrets with environment variables</span></div>
-                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Downloadable standard unified diff (.patch)</span></div>
-                </div>
-                <div class="pt-2 flex items-center gap-2">
-                  <button type="button" onclick="simulateHomeAutoPatch()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1.5 shadow-md cursor-pointer">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Run Diff Simulation</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Side-by-Side Diff View -->
-              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
-                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
-                  <span>shieldci-remediation.patch</span>
-                  <span id="diffSimulationBadge" class="text-emerald-400 font-bold">Unified Git Diff</span>
-                </div>
-                <div class="p-4 space-y-1 leading-relaxed text-[11px] overflow-x-auto">
-                  <div class="text-slate-500">--- a/.github/workflows/deploy.yml</div>
-                  <div class="text-slate-500">+++ b/.github/workflows/deploy.yml</div>
-                  <div class="text-slate-500">@@ -8,4 +8,4 @@</div>
-                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded">-    - uses: actions/checkout@main</div>
-                  <div class="bg-emerald-950/40 text-emerald-300 px-1 rounded">+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1</div>
-                  <div class="text-slate-400">       env:</div>
-                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded">-        AWS_KEY: AKIAIOSFODNN7EXAMPLE</div>
-                  <div class="bg-emerald-950/40 text-emerald-300 px-1 rounded">+        AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }} # Auto-rotated</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- 5. TOXIC COMBINATION ATTACK PATH ENGINE -->
-      <!-- ========================================== -->
-      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+      <div id="toxicCorrelationSection" class="max-w-6xl mx-auto space-y-8 pt-8 scroll-mt-20">
         <div class="text-center space-y-2 max-w-3xl mx-auto">
           <span class="text-xs font-mono uppercase font-bold text-rose-400 tracking-wider bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
             Multi-Vector Risk Correlation
@@ -838,67 +609,7 @@
       </div>
 
       <!-- ========================================== -->
-      <!-- 6. ZERO-AGENT ARCHITECTURE (HOW IT WORKS) -->
-      <!-- ========================================== -->
-      <div class="max-w-6xl mx-auto space-y-8 pt-8">
-        <div class="text-center space-y-2 max-w-2xl mx-auto">
-          <span class="text-xs font-mono uppercase font-bold text-sky-400 tracking-wider bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
-            Architecture
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            How ShieldCI Works in 4 Steps
-          </h2>
-          <p class="text-sm text-slate-400">
-            Zero agents, zero daemons, zero invasive installations. Connect and audit in seconds.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <!-- Step 1 -->
-          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-indigo-500/30 transition">
-            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-link"></i>
-            </div>
-            <h4 class="text-sm font-bold text-white">1. Agentless Input</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Provide a Git URL, live web domain, or database connection string. Zero daemons or SDKs required.
-            </p>
-          </div>
-          <!-- Step 2 -->
-          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-sky-500/30 transition">
-            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-microchip"></i>
-            </div>
-            <h4 class="text-sm font-bold text-white">2. Tri-Vector Deep Scan</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Multi-threaded AST parsing, Shannon Entropy mathematical calculation, socket handshakes, and DAST header probing.
-            </p>
-          </div>
-          <!-- Step 3 -->
-          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-rose-500/30 transition">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-chart-pie"></i>
-            </div>
-            <h4 class="text-sm font-bold text-white">3. Toxic Correlation</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Synthesizes findings into the Pipeline Exposure Score (PES) and enforces automatic CI/CD deployment gates.
-            </p>
-          </div>
-          <!-- Step 4 -->
-          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-amber-500/30 transition">
-            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-bold">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-            </div>
-            <h4 class="text-sm font-bold text-white">4. 1-Click Auto-Fix</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Automatically generates unified git .patch files and dispatches real-time webhooks to Slack and Discord.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- 7. DEVELOPER CLI & CI/CD PIPELINE GATE -->
+      <!-- 5. DEVELOPER CLI & CI/CD PIPELINE GATE -->
       <!-- ========================================== -->
       <div class="max-w-6xl mx-auto space-y-8 pt-8">
         <div class="text-center space-y-2 max-w-2xl mx-auto">
@@ -948,147 +659,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       </div>
 
       <!-- ========================================== -->
-      <!-- 8. INTERACTIVE SECURITY ROI & PES CALCULATOR -->
-      <!-- ========================================== -->
-      <div class="max-w-6xl mx-auto space-y-8 pt-8">
-        <div class="text-center space-y-2 max-w-2xl mx-auto">
-          <span class="text-xs font-mono uppercase font-bold text-amber-400 tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-            ROI &amp; Efficiency
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Calculate Your Security Hours Saved
-          </h2>
-          <p class="text-sm text-slate-400">
-            See how much engineering time and audit overhead ShieldCI eliminates across your team.
-          </p>
-        </div>
-
-        <div class="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800/90 bg-surface-900/80 shadow-xl">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
-            <!-- Sliders Column -->
-            <div class="lg:col-span-7 space-y-6">
-              <!-- Slider 1 -->
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs font-mono">
-                  <span class="text-slate-300 font-bold">Repositories &amp; CI/CD Pipelines:</span>
-                  <span id="roiValRepos" class="text-indigo-400 font-bold">25 Repos</span>
-                </div>
-                <input type="range" id="roiSliderRepos" min="5" max="150" value="25" oninput="updateRoiCalculations()" class="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
-              </div>
-
-              <!-- Slider 2 -->
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs font-mono">
-                  <span class="text-slate-300 font-bold">Live Web Endpoints / APIs:</span>
-                  <span id="roiValWeb" class="text-sky-400 font-bold">10 Domains</span>
-                </div>
-                <input type="range" id="roiSliderWeb" min="2" max="60" value="10" oninput="updateRoiCalculations()" class="w-full accent-sky-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
-              </div>
-
-              <!-- Slider 3 -->
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs font-mono">
-                  <span class="text-slate-300 font-bold">Cloud Databases &amp; Clusters:</span>
-                  <span id="roiValDb" class="text-emerald-400 font-bold">5 Databases</span>
-                </div>
-                <input type="range" id="roiSliderDb" min="1" max="30" value="5" oninput="updateRoiCalculations()" class="w-full accent-emerald-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
-              </div>
-            </div>
-
-            <!-- Dynamic Output Column -->
-            <div class="lg:col-span-5 p-6 rounded-2xl bg-surface-950/80 border border-slate-800 space-y-4 text-center">
-              <span class="text-xs font-mono uppercase text-slate-400 font-semibold block">Estimated Monthly Savings</span>
-              <div>
-                <span id="roiHoursSaved" class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-300 font-mono">140 hrs</span>
-                <p class="text-xs text-slate-400 mt-1">Manual security review &amp; triage eliminated</p>
-              </div>
-              <div class="pt-3 border-t border-slate-800 text-xs space-y-1.5 font-mono">
-                <div class="flex justify-between text-slate-300">
-                  <span>Remediation Speedup:</span>
-                  <strong class="text-emerald-400">18 days &rarr; 4 mins</strong>
-                </div>
-                <div class="flex justify-between text-slate-300">
-                  <span>Breach Risk Reduction:</span>
-                  <strong class="text-indigo-400">88.4%</strong>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- 9. PRODUCT COMPARISON MATRIX -->
-      <!-- ========================================== -->
-      <div class="max-w-6xl mx-auto space-y-8 pt-8">
-        <div class="text-center space-y-2 max-w-2xl mx-auto">
-          <span class="text-xs font-mono uppercase font-bold text-indigo-400 tracking-wider bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-            Feature Comparison
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            How ShieldCI Outperforms Legacy Tools
-          </h2>
-          <p class="text-sm text-slate-400">
-            A single platform that bridges SAST, DAST, secret scanning, and infrastructure auditing.
-          </p>
-        </div>
-
-        <div class="glass-card rounded-2xl border border-slate-800/90 bg-surface-900/80 overflow-x-auto shadow-xl">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-surface-950 border-b border-slate-800 text-slate-400 font-mono">
-              <tr>
-                <th class="p-4 pl-6">Capabilities</th>
-                <th class="p-4 text-indigo-400 font-bold">ShieldCI Tri-Vector</th>
-                <th class="p-4">Legacy SAST</th>
-                <th class="p-4">Siloed Secret Scanners</th>
-                <th class="p-4 pr-6">Heavyweight CSPM</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/80">
-              <tr>
-                <td class="p-4 pl-6 font-semibold text-white">Tri-Vector Coverage (Code, Web, DB)</td>
-                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Unified Single Pane</td>
-                <td class="p-4 text-slate-500">Code Only</td>
-                <td class="p-4 text-slate-500">Secrets Only</td>
-                <td class="p-4 text-slate-500">Cloud Configs Only</td>
-              </tr>
-              <tr>
-                <td class="p-4 pl-6 font-semibold text-white">1-Click Automated Self-Healing Patch</td>
-                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Yes (.patch / Git PR)</td>
-                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> PDF Reports Only</td>
-                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> Manual Revocation</td>
-                <td class="p-4 text-slate-500">Complex Playbooks</td>
-              </tr>
-              <tr>
-                <td class="p-4 pl-6 font-semibold text-white">Toxic Combination Exploit Graph</td>
-                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Automated PES Scoring</td>
-                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> No Cross-Context</td>
-                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> No Perimeter Context</td>
-                <td class="p-4 text-slate-500">Requires Heavy Agents</td>
-              </tr>
-              <tr>
-                <td class="p-4 pl-6 font-semibold text-white">Zero-Agent Ephemeral Execution</td>
-                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> 100% Agentless</td>
-                <td class="p-4 text-slate-400">Slow Server Builds</td>
-                <td class="p-4 text-emerald-400">Agentless</td>
-                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> Host Agents Mandated</td>
-              </tr>
-              <tr>
-                <td class="p-4 pl-6 font-semibold text-white">Setup Velocity</td>
-                <td class="p-4 text-emerald-400 font-bold">&lt; 60 seconds</td>
-                <td class="p-4 text-slate-400">Weeks / Enterprise Sales</td>
-                <td class="p-4 text-slate-400">Minutes</td>
-                <td class="p-4 text-slate-400">Weeks to Deploy</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- 10. PRODUCT-LED TRANSPARENT PRICING TIERS -->
+      <!-- 6. PRODUCT-LED TRANSPARENT PRICING TIERS -->
       <!-- ========================================== -->
       <div id="homePricingSection" class="max-w-6xl mx-auto space-y-8 pt-8 scroll-mt-20">
         <div class="text-center space-y-2 max-w-2xl mx-auto">
@@ -1187,7 +758,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       </div>
 
       <!-- ========================================== -->
-      <!-- 11. INTERACTIVE FAQ ACCORDION -->
+      <!-- 7. INTERACTIVE FAQ ACCORDION -->
       <!-- ========================================== -->
       <div class="max-w-4xl mx-auto space-y-6 pt-8">
         <div class="text-center space-y-2">
@@ -1258,7 +829,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       </div>
 
       <!-- ========================================== -->
-      <!-- 12. BOTTOM HIGH-CONVERTING CTA & FOOTER -->
+      <!-- 8. BOTTOM HIGH-CONVERTING CTA & FOOTER -->
       <!-- ========================================== -->
       <div class="max-w-6xl mx-auto pt-8">
         <div class="glass-card p-8 sm:p-12 rounded-2xl border border-slate-800/90 bg-gradient-to-r from-surface-900 via-indigo-950/30 to-surface-900 shadow-xl relative overflow-hidden text-center space-y-6">
@@ -1321,10 +892,10 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
           <div class="space-y-2">
             <h5 class="font-bold text-slate-200 uppercase font-mono tracking-wider text-[11px]">Product Capabilities</h5>
             <ul class="space-y-1.5">
-              <li><a href="#productSandbox" class="hover:text-white transition">AST Workflow Linter</a></li>
-              <li><a href="#productSandbox" class="hover:text-white transition">Shannon Entropy Vault</a></li>
-              <li><a href="#productSandbox" class="hover:text-white transition">Toxic Combination Engine</a></li>
-              <li><a href="#productSandbox" class="hover:text-white transition">1-Click Self-Healing PRs</a></li>
+              <li><a href="#toxicCorrelationSection" class="hover:text-white transition">AST Workflow Linter</a></li>
+              <li><a href="#toxicCorrelationSection" class="hover:text-white transition">Shannon Entropy Vault</a></li>
+              <li><a href="#toxicCorrelationSection" class="hover:text-white transition">Toxic Combination Engine</a></li>
+              <li><a href="#toxicCorrelationSection" class="hover:text-white transition">1-Click Self-Healing PRs</a></li>
               <li><a href="#homePricingSection" class="hover:text-white transition">Transparent Pricing</a></li>
             </ul>
           </div>
@@ -3851,26 +3422,6 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       }, 700);
     }
 
-    function switchSandboxTab(tabKey) {
-      const tabs = ['repo', 'web', 'db', 'patch'];
-      tabs.forEach(t => {
-        const btn = document.getElementById(`sandboxTab-${t}`);
-        const content = document.getElementById(`sandboxContent-${t}`);
-        if (btn) {
-          btn.className = "px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap";
-        }
-        if (content) content.classList.add('hidden');
-      });
-
-      const activeBtn = document.getElementById(`sandboxTab-${tabKey}`);
-      const activeContent = document.getElementById(`sandboxContent-${tabKey}`);
-      if (activeBtn) {
-        activeBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30 cursor-pointer whitespace-nowrap";
-      }
-      if (activeContent) {
-        activeContent.classList.remove('hidden');
-      }
-    }
 
     function switchCliTab(tabKey) {
       const tabs = ['terminal', 'github', 'gitlab'];
@@ -3954,20 +3505,6 @@ shieldci_audit:
       });
     }
 
-    function updateRoiCalculations() {
-      const r = parseInt(document.getElementById('roiSliderRepos')?.value || 25);
-      const w = parseInt(document.getElementById('roiSliderWeb')?.value || 10);
-      const d = parseInt(document.getElementById('roiSliderDb')?.value || 5);
-
-      if (document.getElementById('roiValRepos')) document.getElementById('roiValRepos').innerText = `${r} Repos`;
-      if (document.getElementById('roiValWeb')) document.getElementById('roiValWeb').innerText = `${w} Domains`;
-      if (document.getElementById('roiValDb')) document.getElementById('roiValDb').innerText = `${d} Databases`;
-
-      const hoursSaved = Math.round(r * 3.8 + w * 2.5 + d * 4.0);
-      if (document.getElementById('roiHoursSaved')) {
-        document.getElementById('roiHoursSaved').innerText = `${hoursSaved} hrs`;
-      }
-    }
 
     function toggleFaq(faqId) {
       const ans = document.getElementById(`faqAns-${faqId}`);
