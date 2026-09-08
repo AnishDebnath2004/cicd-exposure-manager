@@ -88,7 +88,7 @@
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-surface-950/80 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3.5 cursor-pointer" onclick="switchNavTab('domain1')">
+      <div class="flex items-center space-x-3.5 cursor-pointer" onclick="switchNavTab('home')">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center text-xl font-black shadow-lg shadow-indigo-600/30 text-white">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
@@ -103,15 +103,24 @@
         </div>
       </div>
 
-            <!-- Navigation Tabs (2 Sections: User & Admin) -->
+      <!-- Navigation Tabs (3 Sections: Home, Workspace & Admin) -->
       <nav class="flex items-center bg-surface-900/90 border border-slate-800 p-1 rounded-xl overflow-x-auto max-w-full gap-1 shadow-inner">
-        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/25 flex items-center gap-2 whitespace-nowrap" title="User Workstations &amp; Audit Portal">
-          <i class="fa-solid fa-user-shield text-emerald-300"></i> <span>User</span>
+        <button onclick="switchNavTab('home')" id="navTab-home" class="nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-400/40 flex items-center gap-2 whitespace-nowrap" title="Product-Led Homepage &amp; Live Sandbox">
+          <i class="fa-solid fa-house text-sky-300"></i> <span>Home</span>
+        </button>
+        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-2 whitespace-nowrap" title="User Workstations &amp; Audit Portal">
+          <i class="fa-solid fa-shield-halved text-emerald-300"></i> <span>Workspace</span>
         </button>
         <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-2 whitespace-nowrap" title="Section 2: Administrator Governance">
           <i class="fa-solid fa-crown text-amber-400"></i> <span>Admin</span>
         </button>
       </nav>
+
+      <!-- Launch Workspace Fast-Action Button -->
+      <button onclick="switchNavTab('user')" class="hidden xl:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-md shadow-indigo-600/30 border border-indigo-400/30 transition-all cursor-pointer whitespace-nowrap" title="Open Full Security Workstations">
+        <i class="fa-solid fa-rocket text-amber-300"></i>
+        <span>Launch Workspace</span>
+      </button>
 
       <!-- Auth Controls & Status -->
       <div class="flex items-center gap-2.5">
@@ -176,10 +185,1162 @@
   <!-- Main Content Area -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
 
+    <!-- ============================================================== -->
+    <!-- PRODUCT-LED HOMEPAGE (PLG HERO, SANDBOX, TOXIC GRAPH & PRICING) -->
+    <!-- ============================================================== -->
+    <section id="section-home" class="space-y-20 py-2">
+
+      <!-- ========================================== -->
+      <!-- 1. HERO SECTION & INTERACTIVE LIVE SCAN BAR -->
+      <!-- ========================================== -->
+      <div class="relative pt-6 pb-12 overflow-hidden">
+        <!-- Radiant ambient glows -->
+        <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-indigo-600/25 via-sky-500/20 to-purple-600/20 blur-[120px] pointer-events-none rounded-full"></div>
+        <div class="absolute top-1/2 -left-32 w-80 h-80 bg-sky-500/15 blur-[100px] pointer-events-none rounded-full"></div>
+        <div class="absolute top-1/3 -right-32 w-96 h-96 bg-indigo-500/15 blur-[100px] pointer-events-none rounded-full"></div>
+
+        <div class="relative z-10 max-w-5xl mx-auto text-center space-y-7">
+          
+          <!-- Announcement Pill -->
+          <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-900/90 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 backdrop-blur-md hover:border-indigo-400/60 transition-all cursor-pointer group" onclick="document.getElementById('productSandbox').scrollIntoView({behavior:'smooth'})">
+            <span class="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <span class="text-xs font-mono font-semibold text-indigo-200">ShieldCI v2.0 &bull; Tri-Vector Posture Defense &amp; 1-Click Self-Healing</span>
+            <i class="fa-solid fa-arrow-right text-[11px] text-indigo-400 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+
+          <!-- Hero Main Title -->
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.08]">
+            Stop Pipeline Exposures<br />
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-300 to-indigo-300">Before They Hit Production.</span>
+          </h1>
+
+          <!-- Hero Subtitle -->
+          <p class="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
+            Proactively audit <strong class="text-indigo-300 font-semibold">Code Repositories</strong>, 
+            <strong class="text-sky-300 font-semibold">Live Web Perimeters</strong>, and 
+            <strong class="text-emerald-300 font-semibold">Cloud Databases</strong> in seconds. 
+            Zero agents to install, zero pipeline friction, and instant 
+            <strong class="text-amber-300 font-semibold">1-Click Git Self-Healing PR Patches</strong>.
+          </p>
+
+          <!-- ========================================== -->
+          <!-- INTERACTIVE MULTI-VECTOR QUICK-SCAN BAR -->
+          <!-- ========================================== -->
+          <div class="pt-4 max-w-3xl mx-auto">
+            <div class="glass-card p-3 sm:p-4 rounded-3xl border border-indigo-500/40 bg-surface-900/90 shadow-2xl shadow-indigo-500/20 backdrop-blur-2xl space-y-3.5">
+              
+              <!-- Vector Tab Selector -->
+              <div class="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                <div class="flex items-center gap-1.5 p-1 bg-surface-950/80 rounded-2xl border border-slate-800/90 overflow-x-auto max-w-full">
+                  <button type="button" onclick="setHomeVector('repository')" id="homeVectorTab-repo" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/40 cursor-pointer">
+                    <i class="fa-solid fa-code-branch text-indigo-200"></i>
+                    <span>Domain 01: Code &amp; CI/CD</span>
+                  </button>
+                  <button type="button" onclick="setHomeVector('website')" id="homeVectorTab-web" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-globe text-sky-400"></i>
+                    <span>Domain 02: Web &amp; API</span>
+                  </button>
+                  <button type="button" onclick="setHomeVector('database')" id="homeVectorTab-db" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-database text-emerald-400"></i>
+                    <span>Domain 03: DB &amp; Cloud</span>
+                  </button>
+                </div>
+                <span class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> 0s Agentless
+                </span>
+              </div>
+
+              <!-- Input Row -->
+              <div class="flex flex-col sm:flex-row items-stretch gap-2.5">
+                <div class="relative flex-1">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i id="homeScanInputIcon" class="fa-brands fa-git-alt text-lg text-indigo-400"></i>
+                  </div>
+                  <input type="text" id="homeScanInput" 
+                         value="https://github.com/octocat/Hello-World" 
+                         placeholder="https://github.com/owner/repository.git" 
+                         class="w-full bg-surface-950 border border-slate-700/80 hover:border-indigo-500/50 focus:border-indigo-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner" />
+                </div>
+                <button type="button" id="homeRunScanBtn" onclick="launchQuickScanFromHome()" class="px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-xl shadow-indigo-600/35 border border-indigo-400/40 transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap active:scale-[0.98]">
+                  <i class="fa-solid fa-bolt text-amber-300"></i>
+                  <span>Run Instant Exposure Audit</span>
+                </button>
+              </div>
+
+              <!-- 1-Click Target Presets & Quick Chips -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-slate-400 font-mono text-[11px] font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-sparkles text-amber-400 text-[10px]"></i> Try live presets:
+                  </span>
+                  <button type="button" onclick="setHomePreset('sample_fintech')" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-white transition font-mono text-[11px] cursor-pointer">
+                    📦 Fintech CI/CD Repo
+                  </button>
+                  <button type="button" onclick="setHomePreset('sample_web')" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-800 hover:border-sky-500/50 text-slate-300 hover:text-white transition font-mono text-[11px] cursor-pointer">
+                    🌐 Staging API Gateway
+                  </button>
+                  <button type="button" onclick="setHomePreset('sample_db')" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-white transition font-mono text-[11px] cursor-pointer">
+                    🗄️ Cloud PostgreSQL
+                  </button>
+                </div>
+
+                <button type="button" onclick="document.getElementById('productSandbox').scrollIntoView({behavior:'smooth'})" class="text-[11px] text-indigo-300 hover:text-indigo-200 font-semibold flex items-center gap-1 transition">
+                  <span>Explore Interactive Sandbox</span>
+                  <i class="fa-solid fa-arrow-down text-[10px]"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Micro-Trust Bar Under Hero -->
+            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-xs font-mono text-slate-400">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400"></i> Free Tier (5 scans/day)</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield text-indigo-400"></i> 100% Agentless &amp; Ephemeral</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-calculator text-sky-400"></i> Shannon Entropy 4.4+</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> &lt; 3.2s Average Scan</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 2. HERO COCKPIT & LIVE TELEMETRY DECK -->
+        <!-- ========================================== -->
+        <div class="mt-14 max-w-6xl mx-auto">
+          <div class="glass-card rounded-3xl border border-indigo-500/30 bg-surface-950/80 shadow-2xl overflow-hidden relative group">
+            
+            <!-- Window Titlebar -->
+            <div class="px-5 py-3.5 bg-surface-900/90 border-b border-slate-800/80 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                </div>
+                <span class="text-slate-400 font-mono font-semibold ml-2 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <strong class="text-slate-200">ShieldCI Telemetry Cockpit</strong>
+                  <span class="text-slate-500 hidden sm:inline">&bull; target: acme-cloud-platform (Tri-Vector)</span>
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/30 font-bold">
+                  PES: 84/100 (BLOCKED)
+                </span>
+                <span class="text-[10px] font-mono text-slate-400 hidden sm:inline">Engine: v2.0 Active</span>
+              </div>
+            </div>
+
+            <!-- Cockpit Body: 4-Quadrant Visual Telemetry -->
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gradient-to-b from-surface-950/50 to-surface-900/50">
+              
+              <!-- Quadrant 1: PES Score Gauge & Policy Gate (Col 4) -->
+              <div class="lg:col-span-4 glass-card rounded-2xl p-5 border border-slate-800/90 bg-surface-900/70 flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Pipeline Exposure Score</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">CRITICAL</span>
+                </div>
+
+                <!-- Circular Gauge -->
+                <div class="flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-36 h-36 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
+                      <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-rose-500 transition-all duration-1000" stroke-dasharray="264" stroke-dashoffset="42" stroke-linecap="round" fill="transparent" />
+                    </svg>
+                    <div class="absolute flex flex-col items-center justify-center text-center">
+                      <span id="cockpitPesVal" class="text-3xl font-black text-white font-mono leading-none tracking-tight">84</span>
+                      <span class="text-[10px] font-mono text-slate-400 mt-0.5">/ 100 PES</span>
+                    </div>
+                  </div>
+                  <p id="cockpitGateStatus" class="text-xs text-rose-300 font-semibold mt-2 text-center flex items-center gap-1.5">
+                    <i class="fa-solid fa-ban"></i> Gate Action: Deployment Blocked
+                  </p>
+                </div>
+
+                <!-- Weights breakdown mini bar -->
+                <div class="pt-3 border-t border-slate-800/80 space-y-1.5 text-[11px] font-mono text-slate-400">
+                  <div class="flex justify-between"><span>Critical (25.0&times;):</span> <strong class="text-rose-400">2 found (50 pts)</strong></div>
+                  <div class="flex justify-between"><span>High (12.0&times;):</span> <strong class="text-amber-400">2 found (24 pts)</strong></div>
+                  <div class="flex justify-between"><span>Medium (4.0&times;):</span> <strong class="text-sky-400">2 found (8 pts)</strong></div>
+                  <div class="flex justify-between"><span>Low (1.0&times;):</span> <strong class="text-slate-300">2 found (2 pts)</strong></div>
+                </div>
+              </div>
+
+              <!-- Quadrant 2: Live Findings Stream & Toxic Chain (Col 8) -->
+              <div class="lg:col-span-8 space-y-4 flex flex-col justify-between">
+                
+                <!-- Live Finding Pills -->
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+                    <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                      <i class="fa-solid fa-radar text-indigo-400"></i> Correlated Tri-Vector Findings
+                    </span>
+                    <span>3 Domains Audited &bull; 8 Total Findings</span>
+                  </div>
+
+                  <!-- Finding Item 1 (Domain 01 - Critical Secret) -->
+                  <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-500/30 flex items-start justify-between gap-3 text-xs">
+                    <div class="space-y-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] font-bold">Domain 01: Code</span>
+                        <span class="text-rose-200 font-bold">AWS IAM Access Key Exposed</span>
+                        <span class="text-[10px] font-mono text-rose-400 bg-rose-900/40 px-1.5 rounded">Entropy: 4.85</span>
+                      </div>
+                      <p class="text-slate-400 font-mono text-[11px] truncate">File: <code class="text-slate-300">app/config.py:14</code> &bull; <code class="text-rose-400">AKIAIOSFODNN7EXAMPLE...</code></p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] font-bold whitespace-nowrap">+25 PES</span>
+                  </div>
+
+                  <!-- Finding Item 2 (Domain 01 - AST Unpinned Action) -->
+                  <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start justify-between gap-3 text-xs">
+                    <div class="space-y-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-bold">Domain 01: CI/CD</span>
+                        <span class="text-amber-200 font-bold">Unpinned Action &amp; Untrusted Trigger</span>
+                        <span class="text-[10px] font-mono text-amber-400 bg-amber-900/40 px-1.5 rounded">AST Rule</span>
+                      </div>
+                      <p class="text-slate-400 font-mono text-[11px] truncate">Workflow: <code class="text-slate-300">.github/workflows/deploy.yml</code> &bull; Action: <code class="text-amber-300">actions/checkout@main</code></p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold whitespace-nowrap">+12 PES</span>
+                  </div>
+
+                  <!-- Finding Item 3 (Domain 02 - Web Perimeter) -->
+                  <div class="p-3 rounded-xl bg-sky-950/20 border border-sky-500/30 flex items-start justify-between gap-3 text-xs">
+                    <div class="space-y-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono text-[10px] font-bold">Domain 02: Web</span>
+                        <span class="text-sky-200 font-bold">Missing HSTS &amp; Permissive CORS Header</span>
+                        <span class="text-[10px] font-mono text-sky-400 bg-sky-900/40 px-1.5 rounded">Perimeter DAST</span>
+                      </div>
+                      <p class="text-slate-400 font-mono text-[11px] truncate">Endpoint: <code class="text-slate-300">https://api.internal-corp.io</code> &bull; <code class="text-sky-300">Access-Control-Allow-Origin: *</code></p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono text-[10px] font-bold whitespace-nowrap">+4 PES</span>
+                  </div>
+
+                  <!-- Finding Item 4 (Domain 03 - DB Open Port) -->
+                  <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-start justify-between gap-3 text-xs">
+                    <div class="space-y-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">Domain 03: DB</span>
+                        <span class="text-emerald-200 font-bold">PostgreSQL Port 5432 Exposed to 0.0.0.0/0</span>
+                        <span class="text-[10px] font-mono text-emerald-400 bg-emerald-900/40 px-1.5 rounded">TCP Handshake</span>
+                      </div>
+                      <p class="text-slate-400 font-mono text-[11px] truncate">Host: <code class="text-slate-300">db-prod.cluster.internal:5432</code> &bull; <code class="text-emerald-300">Default Auth Enabled</code></p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] font-bold whitespace-nowrap">+25 PES</span>
+                  </div>
+                </div>
+
+                <!-- Correlated Toxic Attack Path Banner -->
+                <div class="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/40 via-purple-950/30 to-indigo-950/40 border border-rose-500/40 text-xs space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-rose-300 flex items-center gap-1.5">
+                      <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+                      Correlated Toxic Combination Detected
+                    </span>
+                    <span class="text-[10px] font-mono text-rose-400 font-bold uppercase bg-rose-500/20 px-2 py-0.5 rounded-full">Exploit Path</span>
+                  </div>
+                  <div class="flex items-center gap-2 font-mono text-[11px] text-slate-300 flex-wrap">
+                    <span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-700 text-rose-300">AWS Secret in Git</span>
+                    <i class="fa-solid fa-arrow-right text-rose-400 text-[10px]"></i>
+                    <span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-700 text-amber-300">Public CI Runner</span>
+                    <i class="fa-solid fa-arrow-right text-rose-400 text-[10px]"></i>
+                    <span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-700 text-emerald-300">Open DB Port 5432</span>
+                    <i class="fa-solid fa-arrow-right text-rose-400 text-[10px]"></i>
+                    <span class="bg-rose-500/30 px-2 py-0.5 rounded border border-rose-400/50 text-white font-bold">Cloud Takeover</span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- Cockpit Footer: 1-Click Self-Healing Diff Action -->
+            <div class="px-6 py-4 bg-surface-900/90 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white flex items-center gap-2">
+                    <span>1-Click Self-Healing Auto-Patch Ready</span>
+                    <span id="homeAutoPatchBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">Zero Manual Edits</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-400">Generate Git unified .patch and fix all 4 vulnerabilities simultaneously.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="button" id="homeSimulatePatchBtn" onclick="simulateHomeAutoPatch()" class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 shadow-md shadow-amber-400/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                  <i class="fa-solid fa-circle-check text-slate-950"></i>
+                  <span>Simulate 1-Click Auto-Patch</span>
+                </button>
+                <button type="button" onclick="switchNavTab('user')" class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white bg-surface-950 hover:bg-indigo-600/30 border border-indigo-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>Open Full Workstation</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 3. SOCIAL PROOF & ECOSYSTEM METRICS STRIP -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-6">
+        <!-- 4 Key Numbers -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
+            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-300 font-mono">1.4M+</span>
+            <p class="text-xs text-slate-400 font-medium">Commits &amp; Assets Audited</p>
+          </div>
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
+            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono">99.8%</span>
+            <p class="text-xs text-slate-400 font-medium">Shannon Entropy Precision</p>
+          </div>
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
+            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-300 font-mono">100%</span>
+            <p class="text-xs text-slate-400 font-medium">Agentless &amp; Ephemeral</p>
+          </div>
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 text-center space-y-1 hover:border-indigo-500/30 transition">
+            <span class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-300 font-mono">&lt; 3.2s</span>
+            <p class="text-xs text-slate-400 font-medium">Average Scan Latency</p>
+          </div>
+        </div>
+
+        <!-- Ecosystem Logos Ticker -->
+        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 bg-surface-950/60 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 font-mono">
+          <span class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <i class="fa-solid fa-plug-circle-bolt text-indigo-400"></i> Seamless Ecosystem Integrations:
+          </span>
+          <div class="flex items-center gap-6 flex-wrap font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-github text-base text-slate-100"></i> GitHub Actions</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-gitlab text-base text-orange-400"></i> GitLab CI</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-aws text-base text-amber-400"></i> AWS</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-docker text-base text-sky-400"></i> Docker</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-solid fa-dharmachakra text-base text-indigo-400"></i> Kubernetes</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-solid fa-database text-base text-emerald-400"></i> PostgreSQL</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-slack text-base text-rose-400"></i> Slack</span>
+            <span class="flex items-center gap-1.5 hover:text-white transition"><i class="fa-brands fa-discord text-base text-indigo-400"></i> Discord</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 4. INTERACTIVE 4-VECTOR PRODUCT SANDBOX -->
+      <!-- ========================================== -->
+      <div id="productSandbox" class="max-w-6xl mx-auto space-y-6 pt-8 scroll-mt-20">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-indigo-400 tracking-wider bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+            Interactive Product Sandbox
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Experience All 4 Vectors Live
+          </h2>
+          <p class="text-sm text-slate-400">
+            Explore how ShieldCI inspects code, probes web perimeters, audits databases, and auto-heals vulnerabilities.
+          </p>
+        </div>
+
+        <!-- Sandbox Container -->
+        <div class="glass-card rounded-3xl border border-indigo-500/30 bg-surface-900/90 shadow-2xl overflow-hidden">
+          
+          <!-- Sandbox Tabs -->
+          <div class="p-2.5 bg-surface-950/80 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto">
+            <button type="button" onclick="switchSandboxTab('repo')" id="sandboxTab-repo" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30 cursor-pointer whitespace-nowrap">
+              <i class="fa-solid fa-code-branch text-indigo-200"></i>
+              <span>Vector 1: Code &amp; CI/CD</span>
+            </button>
+            <button type="button" onclick="switchSandboxTab('web')" id="sandboxTab-web" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
+              <i class="fa-solid fa-globe text-sky-400"></i>
+              <span>Vector 2: Web Perimeter</span>
+            </button>
+            <button type="button" onclick="switchSandboxTab('db')" id="sandboxTab-db" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
+              <i class="fa-solid fa-database text-emerald-400"></i>
+              <span>Vector 3: Database &amp; Cloud</span>
+            </button>
+            <button type="button" onclick="switchSandboxTab('patch')" id="sandboxTab-patch" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+              <span>Vector 4: 1-Click Self-Healing</span>
+            </button>
+          </div>
+
+          <!-- Sandbox Content: Vector 1 (Code & CI/CD) -->
+          <div id="sandboxContent-repo" class="p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-5 space-y-4">
+                <div class="space-y-2">
+                  <span class="text-xs font-mono font-bold text-indigo-400 uppercase">Domain 01 Engine</span>
+                  <h3 class="text-lg font-bold text-white">AST CI/CD Linter &amp; Shannon Entropy Vault</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    ShieldCI parses YAML workflow graphs into abstract syntax trees to flag unpinned actions, untrusted triggers (<code class="text-amber-300">pull_request_target</code>), and script injection vectors. Concurrently, our Shannon Entropy engine calculates randomness thresholds (4.4+) to intercept unclassified API secrets before commit.
+                  </p>
+                </div>
+                <div class="space-y-2 text-xs text-slate-300">
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Shannon Entropy 4.4+ catches non-templated API tokens</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>AST Workflow Linting catches poisoned pipeline executions</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Git commit history deep crawler (head to root)</span></div>
+                </div>
+                <div class="pt-2">
+                  <button type="button" onclick="switchNavTab('domain1')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition flex items-center gap-2 shadow-md">
+                    <span>Launch Domain 01 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Visual Code Box -->
+              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
+                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
+                  <span>.github/workflows/deploy.yml</span>
+                  <span class="text-rose-400 font-bold">2 Vulnerabilities Detected</span>
+                </div>
+                <div class="p-4 space-y-1 leading-relaxed text-slate-300 text-[11px] overflow-x-auto">
+                  <div><span class="text-slate-600">01:</span> name: Continuous Deployment</div>
+                  <div><span class="text-slate-600">02:</span> on:</div>
+                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded"><span class="text-slate-600">03:</span>   pull_request_target: # ⚠️ CRITICAL: Untrusted PR Execution</div>
+                  <div><span class="text-slate-600">04:</span> jobs:</div>
+                  <div><span class="text-slate-600">05:</span>   build-and-deploy:</div>
+                  <div><span class="text-slate-600">06:</span>     runs-on: ubuntu-latest</div>
+                  <div><span class="text-slate-600">07:</span>     steps:</div>
+                  <div class="bg-amber-950/40 text-amber-300 px-1 rounded"><span class="text-slate-600">08:</span>     - uses: actions/checkout@main # ⚠️ HIGH: Unpinned Mutable Action Tag</div>
+                  <div><span class="text-slate-600">09:</span>     - name: Setup Node.js</div>
+                  <div><span class="text-slate-600">10:</span>       uses: actions/setup-node@v4</div>
+                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded"><span class="text-slate-600">11:</span>       env: AWS_KEY=AKIAIOSFODNN7EXAMPLE # ⚠️ CRITICAL: Hardcoded IAM Secret</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sandbox Content: Vector 2 (Web Perimeter) -->
+          <div id="sandboxContent-web" class="hidden p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-5 space-y-4">
+                <div class="space-y-2">
+                  <span class="text-xs font-mono font-bold text-sky-400 uppercase">Domain 02 Engine</span>
+                  <h3 class="text-lg font-bold text-white">DAST Attack Surface &amp; SSL/TLS Inspector</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    ShieldCI actively audits live public URLs for exposed development files (<code class="text-sky-300">.env</code>, <code class="text-sky-300">.git</code>), analyzes HTTP response security posture (HSTS, CSP, X-Frame-Options, CORS wildcards), and verifies SSL/TLS certificate validity and cipher suites.
+                  </p>
+                </div>
+                <div class="space-y-2 text-xs text-slate-300">
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Automated HTTP security header audit against OWASP Top 10</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Live SSL/TLS handshake &amp; cipher grade validation</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-sky-400"></i> <span>Passive &amp; active endpoint exposure probing</span></div>
+                </div>
+                <div class="pt-2">
+                  <button type="button" onclick="switchNavTab('domain2')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition flex items-center gap-2 shadow-md">
+                    <span>Launch Domain 02 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Visual Web Scorecard -->
+              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
+                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
+                  <span>https://api.internal-corp.io &bull; HTTP Audit</span>
+                  <span class="text-amber-400 font-bold">Grade: D- (Exposures Found)</span>
+                </div>
+                <div class="p-4 space-y-2 text-[11px]">
+                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
+                    <span class="text-rose-300"><i class="fa-solid fa-xmark mr-1.5"></i> Strict-Transport-Security (HSTS)</span>
+                    <span class="text-rose-400 font-bold">MISSING</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
+                    <span class="text-rose-300"><i class="fa-solid fa-xmark mr-1.5"></i> Content-Security-Policy (CSP)</span>
+                    <span class="text-rose-400 font-bold">MISSING</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 rounded bg-amber-950/20 border border-amber-500/30">
+                    <span class="text-amber-300"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Access-Control-Allow-Origin</span>
+                    <span class="text-amber-400 font-bold">WILDCARD (*)</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 rounded bg-emerald-950/20 border border-emerald-500/30">
+                    <span class="text-emerald-300"><i class="fa-solid fa-check mr-1.5"></i> SSL/TLS Certificate Expiry</span>
+                    <span class="text-emerald-400 font-bold">VALID (184 days)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sandbox Content: Vector 3 (Database & Cloud) -->
+          <div id="sandboxContent-db" class="hidden p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-5 space-y-4">
+                <div class="space-y-2">
+                  <span class="text-xs font-mono font-bold text-emerald-400 uppercase">Domain 03 Engine</span>
+                  <h3 class="text-lg font-bold text-white">Database Exposure &amp; Cloud Perimeter Audit</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    ShieldCI audits public and VPC databases across PostgreSQL, MySQL, Redis, and MongoDB. It identifies open database listener ports, unencrypted plaintext connections, default credentials, and publicly accessible cloud storage buckets.
+                  </p>
+                </div>
+                <div class="space-y-2 text-xs text-slate-300">
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>TCP socket discovery across PostgreSQL, MySQL, Redis, Mongo</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>TLS in-transit encryption handshake verification</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>Default administrative password &amp; guest auth checks</span></div>
+                </div>
+                <div class="pt-2">
+                  <button type="button" onclick="switchNavTab('domain3')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition flex items-center gap-2 shadow-md">
+                    <span>Launch Domain 03 Scanner</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Visual DB Inspection -->
+              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
+                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
+                  <span>postgresql://cluster-prod.internal:5432</span>
+                  <span class="text-rose-400 font-bold">CRITICAL EXPOSURE</span>
+                </div>
+                <div class="p-4 space-y-2 text-[11px]">
+                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
+                    <span class="text-rose-300"><i class="fa-solid fa-network-wired mr-1.5"></i> External Port Binding</span>
+                    <span class="text-rose-400 font-bold">0.0.0.0:5432 (PUBLIC)</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 rounded bg-amber-950/20 border border-amber-500/30">
+                    <span class="text-amber-300"><i class="fa-solid fa-lock-open mr-1.5"></i> In-Transit Encryption (SSL)</span>
+                    <span class="text-amber-400 font-bold">DISABLED (PLAINTEXT)</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 rounded bg-rose-950/20 border border-rose-500/30">
+                    <span class="text-rose-300"><i class="fa-solid fa-key mr-1.5"></i> Default Role Authentication</span>
+                    <span class="text-rose-400 font-bold">GUEST ACCESS DETECTED</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sandbox Content: Vector 4 (1-Click Self-Healing) -->
+          <div id="sandboxContent-patch" class="hidden p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-5 space-y-4">
+                <div class="space-y-2">
+                  <span class="text-xs font-mono font-bold text-amber-400 uppercase">Self-Healing Engine</span>
+                  <h3 class="text-lg font-bold text-white">Instant 1-Click Unified Git PR Patches</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Most security tools only point fingers. ShieldCI writes the code to fix the vulnerabilities. We automatically generate a hardened unified <code class="text-amber-300">.patch</code> with immutable commit SHA pins, rotated secret stubs, and strict HTTP defense headers.
+                  </p>
+                </div>
+                <div class="space-y-2 text-xs text-slate-300">
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Automated commit-hash pinning for GitHub Actions</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Auto-replaces hardcoded secrets with environment variables</span></div>
+                  <div class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-400"></i> <span>Downloadable standard unified diff (.patch)</span></div>
+                </div>
+                <div class="pt-2 flex items-center gap-2">
+                  <button type="button" onclick="simulateHomeAutoPatch()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1.5 shadow-md cursor-pointer">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Run Diff Simulation</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Side-by-Side Diff View -->
+              <div class="lg:col-span-7 rounded-2xl overflow-hidden border border-slate-800 bg-[#060813] font-mono text-xs shadow-inner">
+                <div class="px-4 py-2.5 bg-surface-900 border-b border-slate-800 flex items-center justify-between text-slate-400">
+                  <span>shieldci-remediation.patch</span>
+                  <span id="diffSimulationBadge" class="text-emerald-400 font-bold">Unified Git Diff</span>
+                </div>
+                <div class="p-4 space-y-1 leading-relaxed text-[11px] overflow-x-auto">
+                  <div class="text-slate-500">--- a/.github/workflows/deploy.yml</div>
+                  <div class="text-slate-500">+++ b/.github/workflows/deploy.yml</div>
+                  <div class="text-slate-500">@@ -8,4 +8,4 @@</div>
+                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded">-    - uses: actions/checkout@main</div>
+                  <div class="bg-emerald-950/40 text-emerald-300 px-1 rounded">+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1</div>
+                  <div class="text-slate-400">       env:</div>
+                  <div class="bg-rose-950/40 text-rose-300 px-1 rounded">-        AWS_KEY: AKIAIOSFODNN7EXAMPLE</div>
+                  <div class="bg-emerald-950/40 text-emerald-300 px-1 rounded">+        AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }} # Auto-rotated</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 5. TOXIC COMBINATION ATTACK PATH ENGINE -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+        <div class="text-center space-y-2 max-w-3xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-rose-400 tracking-wider bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+            Multi-Vector Risk Correlation
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Why Point Scanners Miss Critical Breaches
+          </h2>
+          <p class="text-sm text-slate-400">
+            Isolated SAST, DAST, or CSPM tools examine one vector in a silo. Attackers exploit the combination.
+            ShieldCI correlates findings across Code, Web, and Database into an actionable attack graph.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 sm:p-8 rounded-3xl border border-rose-500/30 bg-surface-900/80 shadow-2xl relative overflow-hidden">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            
+            <!-- Step 1 -->
+            <div class="p-5 rounded-2xl bg-surface-950/80 border border-slate-800 space-y-3 relative group hover:border-rose-500/40 transition">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-base">
+                1
+              </div>
+              <h4 class="text-sm font-bold text-white">Isolated Finding in Code</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                A hardcoded database password in a repository. SAST flags it as "Medium" because it looks like a test password with no known public route.
+              </p>
+              <div class="text-[10px] font-mono text-rose-300 bg-rose-950/30 p-2 rounded border border-rose-500/20">
+                Vector: Domain 01 (Repo)
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="p-5 rounded-2xl bg-surface-950/80 border border-slate-800 space-y-3 relative group hover:border-amber-500/40 transition">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-base">
+                2
+              </div>
+              <h4 class="text-sm font-bold text-white">Isolated Web Flaw</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                A staging web server leaks internal server hostnames in response headers. DAST flags it as "Low Info" since no injection was executed.
+              </p>
+              <div class="text-[10px] font-mono text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-500/20">
+                Vector: Domain 02 (Web)
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="p-5 rounded-2xl bg-surface-950/80 border border-slate-800 space-y-3 relative group hover:border-emerald-500/40 transition">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base">
+                3
+              </div>
+              <h4 class="text-sm font-bold text-white">Correlated Toxic Result</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Attacker combines hostname from Web + password from Git + exposed PostgreSQL port to execute full cloud takeover. ShieldCI blocks the build.
+              </p>
+              <div class="text-[10px] font-mono text-rose-300 bg-rose-950/40 p-2 rounded border border-rose-500/40 font-bold">
+                Correlated PES: 92 (BLOCKED)
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 6. ZERO-AGENT ARCHITECTURE (HOW IT WORKS) -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-sky-400 tracking-wider bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
+            Architecture
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            How ShieldCI Works in 4 Steps
+          </h2>
+          <p class="text-sm text-slate-400">
+            Zero agents, zero daemons, zero invasive installations. Connect and audit in seconds.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Step 1 -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-indigo-500/30 transition">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-link"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">1. Agentless Input</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Provide a Git URL, live web domain, or database connection string. Zero daemons or SDKs required.
+            </p>
+          </div>
+          <!-- Step 2 -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-sky-500/30 transition">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">2. Tri-Vector Deep Scan</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Multi-threaded AST parsing, Shannon Entropy mathematical calculation, socket handshakes, and DAST header probing.
+            </p>
+          </div>
+          <!-- Step 3 -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-rose-500/30 transition">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">3. Toxic Correlation</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Synthesizes findings into the Pipeline Exposure Score (PES) and enforces automatic CI/CD deployment gates.
+            </p>
+          </div>
+          <!-- Step 4 -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 bg-surface-900/60 space-y-3 hover:border-amber-500/30 transition">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">4. 1-Click Auto-Fix</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Automatically generates unified git .patch files and dispatches real-time webhooks to Slack and Discord.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 7. DEVELOPER CLI & CI/CD PIPELINE GATE -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-emerald-400 tracking-wider bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            Developer Experience
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Terminal CLI &amp; CI/CD Native
+          </h2>
+          <p class="text-sm text-slate-400">
+            Integrate ShieldCI into local terminal workflows and automated GitHub Actions pipelines in under 60 seconds.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-3xl border border-slate-800 bg-surface-950 overflow-hidden shadow-2xl">
+          <!-- Terminal Tabs -->
+          <div class="px-5 py-3 bg-surface-900/90 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="switchCliTab('terminal')" id="cliTabBtn-terminal" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-indigo-600 text-white transition cursor-pointer">
+                Terminal CLI
+              </button>
+              <button type="button" onclick="switchCliTab('github')" id="cliTabBtn-github" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition cursor-pointer">
+                GitHub Actions YAML
+              </button>
+              <button type="button" onclick="switchCliTab('gitlab')" id="cliTabBtn-gitlab" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition cursor-pointer">
+                GitLab CI YAML
+              </button>
+            </div>
+            <button type="button" onclick="copyCliSnippet()" id="cliCopyBtn" class="px-3 py-1.5 rounded-lg bg-surface-850 hover:bg-surface-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition cursor-pointer">
+              <i class="fa-regular fa-copy"></i> <span>Copy Code</span>
+            </button>
+          </div>
+
+          <!-- Terminal Content Box -->
+          <div class="p-5 font-mono text-xs text-slate-300 leading-relaxed overflow-x-auto">
+            <pre id="cliSnippetContent"><code class="text-emerald-400"># Audit local codebase with maximum PES threshold of 60</code>
+python -m app.cli scan ./my-project --max-pes 60 --fail-on-critical
+
+<code class="text-emerald-400"># Audit remote Git repo and output unified Git patch</code>
+python -m app.cli scan https://github.com/my-org/api.git --output patch
+
+<code class="text-emerald-400"># Audit live Web perimeter and database infrastructure</code>
+python -m app.cli web https://api.staging.company.com
+python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 8. INTERACTIVE SECURITY ROI & PES CALCULATOR -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-amber-400 tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+            ROI &amp; Efficiency
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Calculate Your Security Hours Saved
+          </h2>
+          <p class="text-sm text-slate-400">
+            See how much engineering time and audit overhead ShieldCI eliminates across your team.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 sm:p-8 rounded-3xl border border-indigo-500/30 bg-surface-900/80 shadow-2xl">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <!-- Sliders Column -->
+            <div class="lg:col-span-7 space-y-6">
+              <!-- Slider 1 -->
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-300 font-bold">Repositories &amp; CI/CD Pipelines:</span>
+                  <span id="roiValRepos" class="text-indigo-400 font-bold">25 Repos</span>
+                </div>
+                <input type="range" id="roiSliderRepos" min="5" max="150" value="25" oninput="updateRoiCalculations()" class="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+              </div>
+
+              <!-- Slider 2 -->
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-300 font-bold">Live Web Endpoints / APIs:</span>
+                  <span id="roiValWeb" class="text-sky-400 font-bold">10 Domains</span>
+                </div>
+                <input type="range" id="roiSliderWeb" min="2" max="60" value="10" oninput="updateRoiCalculations()" class="w-full accent-sky-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+              </div>
+
+              <!-- Slider 3 -->
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-300 font-bold">Cloud Databases &amp; Clusters:</span>
+                  <span id="roiValDb" class="text-emerald-400 font-bold">5 Databases</span>
+                </div>
+                <input type="range" id="roiSliderDb" min="1" max="30" value="5" oninput="updateRoiCalculations()" class="w-full accent-emerald-500 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+              </div>
+            </div>
+
+            <!-- Dynamic Output Column -->
+            <div class="lg:col-span-5 p-6 rounded-2xl bg-surface-950/80 border border-slate-800 space-y-4 text-center">
+              <span class="text-xs font-mono uppercase text-slate-400 font-semibold block">Estimated Monthly Savings</span>
+              <div>
+                <span id="roiHoursSaved" class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-300 font-mono">140 hrs</span>
+                <p class="text-xs text-slate-400 mt-1">Manual security review &amp; triage eliminated</p>
+              </div>
+              <div class="pt-3 border-t border-slate-800 text-xs space-y-1.5 font-mono">
+                <div class="flex justify-between text-slate-300">
+                  <span>Remediation Speedup:</span>
+                  <strong class="text-emerald-400">18 days &rarr; 4 mins</strong>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                  <span>Breach Risk Reduction:</span>
+                  <strong class="text-indigo-400">88.4%</strong>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 9. PRODUCT COMPARISON MATRIX -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto space-y-8 pt-8">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-indigo-400 tracking-wider bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+            Feature Comparison
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            How ShieldCI Outperforms Legacy Tools
+          </h2>
+          <p class="text-sm text-slate-400">
+            A single platform that bridges SAST, DAST, secret scanning, and infrastructure auditing.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-3xl border border-slate-800 bg-surface-900/80 overflow-x-auto shadow-2xl">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-surface-950 border-b border-slate-800 text-slate-400 font-mono">
+              <tr>
+                <th class="p-4 pl-6">Capabilities</th>
+                <th class="p-4 text-indigo-400 font-bold">ShieldCI Tri-Vector</th>
+                <th class="p-4">Legacy SAST</th>
+                <th class="p-4">Siloed Secret Scanners</th>
+                <th class="p-4 pr-6">Heavyweight CSPM</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80">
+              <tr>
+                <td class="p-4 pl-6 font-semibold text-white">Tri-Vector Coverage (Code, Web, DB)</td>
+                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Unified Single Pane</td>
+                <td class="p-4 text-slate-500">Code Only</td>
+                <td class="p-4 text-slate-500">Secrets Only</td>
+                <td class="p-4 text-slate-500">Cloud Configs Only</td>
+              </tr>
+              <tr>
+                <td class="p-4 pl-6 font-semibold text-white">1-Click Automated Self-Healing Patch</td>
+                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Yes (.patch / Git PR)</td>
+                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> PDF Reports Only</td>
+                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> Manual Revocation</td>
+                <td class="p-4 text-slate-500">Complex Playbooks</td>
+              </tr>
+              <tr>
+                <td class="p-4 pl-6 font-semibold text-white">Toxic Combination Exploit Graph</td>
+                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> Automated PES Scoring</td>
+                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> No Cross-Context</td>
+                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> No Perimeter Context</td>
+                <td class="p-4 text-slate-500">Requires Heavy Agents</td>
+              </tr>
+              <tr>
+                <td class="p-4 pl-6 font-semibold text-white">Zero-Agent Ephemeral Execution</td>
+                <td class="p-4 text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i> 100% Agentless</td>
+                <td class="p-4 text-slate-400">Slow Server Builds</td>
+                <td class="p-4 text-emerald-400">Agentless</td>
+                <td class="p-4 text-rose-400"><i class="fa-solid fa-xmark mr-1.5"></i> Host Agents Mandated</td>
+              </tr>
+              <tr>
+                <td class="p-4 pl-6 font-semibold text-white">Setup Velocity</td>
+                <td class="p-4 text-emerald-400 font-bold">&lt; 60 seconds</td>
+                <td class="p-4 text-slate-400">Weeks / Enterprise Sales</td>
+                <td class="p-4 text-slate-400">Minutes</td>
+                <td class="p-4 text-slate-400">Weeks to Deploy</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 10. PRODUCT-LED TRANSPARENT PRICING TIERS -->
+      <!-- ========================================== -->
+      <div id="homePricingSection" class="max-w-6xl mx-auto space-y-8 pt-8 scroll-mt-20">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <span class="text-xs font-mono uppercase font-bold text-sky-400 tracking-wider bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
+            Transparent PLG Pricing
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Start Free. Scale With Security Confidence.
+          </h2>
+          <p class="text-sm text-slate-400">
+            No credit card required. Free forever tier for developers and open source contributors.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Plan 1: Developer / Free -->
+          <div class="glass-card p-6 rounded-3xl border border-slate-800 bg-surface-900/70 flex flex-col justify-between space-y-6 hover:border-slate-700 transition">
+            <div class="space-y-4">
+              <div class="space-y-1">
+                <span class="text-xs font-mono font-bold text-slate-400 uppercase">Community</span>
+                <h3 class="text-xl font-extrabold text-white">Developer</h3>
+                <div class="pt-2 flex items-baseline gap-1">
+                  <span class="text-4xl font-black text-white font-mono">$0</span>
+                  <span class="text-xs text-slate-400">/ forever free</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-300">Perfect for individual developers and open-source project security auditing.</p>
+              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 5 scans/day guest quota</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Unlimited scans with free account</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Tri-Vector Scans (Code, Web, DB)</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 1-Click Self-Healing Patches</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Full CLI terminal access</li>
+              </ul>
+            </div>
+            <button type="button" onclick="switchNavTab('user')" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-surface-850 hover:bg-surface-800 border border-slate-700 transition cursor-pointer">
+              Start Free (No CC Required)
+            </button>
+          </div>
+
+          <!-- Plan 2: DevSecOps Pro (Highlighted) -->
+          <div class="glass-card p-6 rounded-3xl border-2 border-indigo-500/60 bg-surface-900/90 flex flex-col justify-between space-y-6 relative shadow-2xl shadow-indigo-500/20">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-sky-500 text-white text-[10px] font-mono font-bold uppercase px-3 py-0.5 rounded-full shadow-md">
+              Most Popular
+            </div>
+            <div class="space-y-4">
+              <div class="space-y-1">
+                <span class="text-xs font-mono font-bold text-indigo-400 uppercase">Automated Defense</span>
+                <h3 class="text-xl font-extrabold text-white">DevSecOps Pro</h3>
+                <div class="pt-2 flex items-baseline gap-1">
+                  <span class="text-4xl font-black text-white font-mono">$49</span>
+                  <span class="text-xs text-slate-400">/ seat / month</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-300">Continuous posture enforcement, background cron scheduling, and webhooks.</p>
+              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Everything in Developer</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Continuous 24/7 background scheduler</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Discord, Slack &amp; Webhook alerts</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Toxic combination correlation engine</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Exportable PDF Executive Reports</li>
+              </ul>
+            </div>
+            <button type="button" onclick="openAuthModal('signup')" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-lg shadow-indigo-600/30 transition cursor-pointer">
+              Start 14-Day Free Pro Trial
+            </button>
+          </div>
+
+          <!-- Plan 3: Enterprise Shield -->
+          <div class="glass-card p-6 rounded-3xl border border-amber-500/30 bg-surface-900/70 flex flex-col justify-between space-y-6 hover:border-amber-500/50 transition">
+            <div class="space-y-4">
+              <div class="space-y-1">
+                <span class="text-xs font-mono font-bold text-amber-400 uppercase">Governance</span>
+                <h3 class="text-xl font-extrabold text-white">Enterprise Shield</h3>
+                <div class="pt-2 flex items-baseline gap-1">
+                  <span class="text-4xl font-black text-white font-mono">Custom</span>
+                  <span class="text-xs text-slate-400">/ dedicated deployment</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-300">Dedicated private scanning clusters, SSO/SAML, and custom compliance rules.</p>
+              <ul class="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Everything in Pro</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Dedicated on-prem or VPC nodes</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Custom AST rules &amp; regex policies</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Enterprise RBAC &amp; SSO/SAML</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 99.99% SLA &amp; 24/7 dedicated support</li>
+              </ul>
+            </div>
+            <button type="button" onclick="openAdminLoginModal()" class="w-full py-3 rounded-xl text-xs font-bold text-amber-300 hover:text-slate-950 bg-amber-500/10 hover:bg-amber-400 border border-amber-500/30 transition cursor-pointer">
+              Open Admin Console
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 11. INTERACTIVE FAQ ACCORDION -->
+      <!-- ========================================== -->
+      <div class="max-w-4xl mx-auto space-y-6 pt-8">
+        <div class="text-center space-y-2">
+          <span class="text-xs font-mono uppercase font-bold text-indigo-400 tracking-wider bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+            Frequently Asked Questions
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Got Questions? We Have Answers.
+          </h2>
+        </div>
+
+        <div class="space-y-3">
+          <!-- FAQ 1 -->
+          <div class="glass-card rounded-2xl border border-slate-800 bg-surface-900/70 overflow-hidden">
+            <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer text-sm font-bold text-white hover:text-indigo-300 transition">
+              <span>How does ShieldCI scan without installing any host agents?</span>
+              <i id="faqIcon-1" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+            </button>
+            <div id="faqAns-1" class="hidden px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+              ShieldCI is designed entirely agentless. For code repositories, we clone ephemeral mirrors (or inspect local paths) and execute in-memory AST and entropy parsing. For web and API perimeters, we send non-destructive HTTP/TLS probes. For databases, we perform standard TCP protocol socket audits. No intrusive daemons, kernel drivers, or background processes are ever installed on your production servers.
+            </div>
+          </div>
+
+          <!-- FAQ 2 -->
+          <div class="glass-card rounded-2xl border border-slate-800 bg-surface-900/70 overflow-hidden">
+            <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer text-sm font-bold text-white hover:text-indigo-300 transition">
+              <span>Is my proprietary source code or database data stored on your servers?</span>
+              <i id="faqIcon-2" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+            </button>
+            <div id="faqAns-2" class="hidden px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+              Never. Cloned repositories and scan artifacts are stored in an ephemeral, isolated temporary directory that is automatically purged immediately upon scan completion. Only the structured metadata (findings title, line number, entropy score, PES score) is retained in your local or dedicated database for history and audit tracking.
+            </div>
+          </div>
+
+          <!-- FAQ 3 -->
+          <div class="glass-card rounded-2xl border border-slate-800 bg-surface-900/70 overflow-hidden">
+            <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer text-sm font-bold text-white hover:text-indigo-300 transition">
+              <span>How does the Pipeline Exposure Score (PES) work?</span>
+              <i id="faqIcon-3" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+            </button>
+            <div id="faqAns-3" class="hidden px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+              PES is a standardized mathematical risk score from 0 to 100. Findings are weighted according to severity: Critical (25.0&times;), High (12.0&times;), Medium (4.0&times;), Low (1.0&times;), and Info (0.0&times;). If the cumulative score exceeds your policy threshold (default: 60) or a toxic combination is identified, the gate triggers and blocks the deployment.
+            </div>
+          </div>
+
+          <!-- FAQ 4 -->
+          <div class="glass-card rounded-2xl border border-slate-800 bg-surface-900/70 overflow-hidden">
+            <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer text-sm font-bold text-white hover:text-indigo-300 transition">
+              <span>Can I use ShieldCI as a blocking gate in GitHub Actions and CI/CD?</span>
+              <i id="faqIcon-4" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+            </button>
+            <div id="faqAns-4" class="hidden px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+              Yes. The ShieldCI CLI supports flags like <code class="text-indigo-300">--max-pes 60</code> and <code class="text-indigo-300">--fail-on-critical</code> which return exit code 1 whenever the policy is violated. You can drop it into any GitHub Actions, GitLab CI, Jenkins, or Bitbucket pipeline with just 3 lines of YAML.
+            </div>
+          </div>
+
+          <!-- FAQ 5 -->
+          <div class="glass-card rounded-2xl border border-slate-800 bg-surface-900/70 overflow-hidden">
+            <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer text-sm font-bold text-white hover:text-indigo-300 transition">
+              <span>How does the 1-Click Self-Healing Git Diff work?</span>
+              <i id="faqIcon-5" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+            </button>
+            <div id="faqAns-5" class="hidden px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+              When exposures are detected, ShieldCI's remediation engine parses the offending AST nodes or configuration files and constructs a verified unified diff (.patch). It pins mutable tags to immutable SHA-256 commit hashes, replaces hardcoded keys with environment variable lookups, and applies recommended security headers. You can apply the patch locally via <code class="text-amber-300">git apply</code> or download it directly.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 12. BOTTOM HIGH-CONVERTING CTA & FOOTER -->
+      <!-- ========================================== -->
+      <div class="max-w-6xl mx-auto pt-8">
+        <div class="glass-card p-8 sm:p-12 rounded-3xl border border-indigo-500/40 bg-gradient-to-r from-surface-900 via-indigo-950/40 to-surface-900 shadow-2xl relative overflow-hidden text-center space-y-6">
+          <div class="absolute -right-20 -top-20 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -left-20 -bottom-20 w-72 h-72 bg-sky-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="relative z-10 max-w-2xl mx-auto space-y-3">
+            <span class="text-xs font-mono uppercase font-bold text-amber-400 tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+              Start Free in 60 Seconds
+            </span>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Ready to Eliminate Pipeline Exposures?
+            </h2>
+            <p class="text-sm text-slate-300">
+              Audit your code repositories, live perimeters, and databases with the Universal Tri-Vector Engine.
+            </p>
+          </div>
+
+          <div class="relative z-10 flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button type="button" onclick="switchNavTab('user')" class="px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-xl shadow-indigo-600/35 border border-indigo-400/40 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+              <i class="fa-solid fa-rocket text-amber-300"></i>
+              <span>Launch Free Workspace</span>
+            </button>
+            <button type="button" onclick="openShowcaseTourModal()" class="px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-surface-950 hover:bg-surface-850 border border-slate-700 transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-sparkles text-amber-300"></i>
+              <span>Interactive Platform Tour</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rich PLG Footer -->
+        <footer class="pt-12 pb-6 border-t border-slate-800/80 mt-12 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs text-slate-400">
+          <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-sm font-black text-white shadow">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <span class="text-base font-bold text-white tracking-tight">Shield<span class="text-indigo-400">CI</span></span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Universal Tri-Vector Posture Management &amp; DevSecOps CI/CD Exposure Defense.
+            </p>
+            <div class="flex items-center gap-3 text-slate-400 text-sm">
+              <a href="https://github.com" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-github"></i></a>
+              <a href="#" class="hover:text-indigo-400 transition"><i class="fa-brands fa-discord"></i></a>
+              <a href="#" class="hover:text-sky-400 transition"><i class="fa-brands fa-twitter"></i></a>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h5 class="font-bold text-slate-200 uppercase font-mono tracking-wider text-[11px]">Tri-Vector Vectors</h5>
+            <ul class="space-y-1.5">
+              <li><button type="button" onclick="switchNavTab('domain1')" class="hover:text-indigo-300 transition cursor-pointer">Domain 01: Code &amp; CI/CD</button></li>
+              <li><button type="button" onclick="switchNavTab('domain2')" class="hover:text-sky-300 transition cursor-pointer">Domain 02: Web Perimeter</button></li>
+              <li><button type="button" onclick="switchNavTab('domain3')" class="hover:text-emerald-300 transition cursor-pointer">Domain 03: DB &amp; Cloud</button></li>
+              <li><button type="button" onclick="switchNavTab('portal')" class="hover:text-purple-300 transition cursor-pointer">User Audit Portal</button></li>
+            </ul>
+          </div>
+
+          <div class="space-y-2">
+            <h5 class="font-bold text-slate-200 uppercase font-mono tracking-wider text-[11px]">Product Capabilities</h5>
+            <ul class="space-y-1.5">
+              <li><a href="#productSandbox" class="hover:text-white transition">AST Workflow Linter</a></li>
+              <li><a href="#productSandbox" class="hover:text-white transition">Shannon Entropy Vault</a></li>
+              <li><a href="#productSandbox" class="hover:text-white transition">Toxic Combination Engine</a></li>
+              <li><a href="#productSandbox" class="hover:text-white transition">1-Click Self-Healing PRs</a></li>
+              <li><a href="#homePricingSection" class="hover:text-white transition">Transparent Pricing</a></li>
+            </ul>
+          </div>
+
+          <div class="space-y-2">
+            <h5 class="font-bold text-slate-200 uppercase font-mono tracking-wider text-[11px]">Security &amp; Compliance</h5>
+            <ul class="space-y-1.5">
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-400"></i> Zero Source Retention</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-400"></i> OWASP Top 10 Aligned</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-400"></i> CIS Benchmark Hardened</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-400"></i> AES-256 In-Flight Protection</li>
+            </ul>
+          </div>
+        </footer>
+
+        <div class="py-4 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 font-mono gap-2">
+          <span>&copy; 2026 ShieldCI. Universal Tri-Vector Posture Management. All rights reserved.</span>
+          <span>Engine Status: Active &bull; Response Time: 14ms</span>
+        </div>
+      </div>
+
+    </section>
+
     <!-- ========================================== -->
     <!-- WELCOME & PLATFORM SHOWCASE: WHAT SHIELDCI DOES -->
     <!-- ========================================== -->
-    <section id="platformShowcaseSection" class="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 bg-surface-900/90 shadow-2xl relative overflow-hidden transition-all duration-300">
+    <section id="platformShowcaseSection" class="hidden glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 bg-surface-900/90 shadow-2xl relative overflow-hidden transition-all duration-300">
       <!-- Ambient Backlight Elements -->
       <div class="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -538,7 +1699,7 @@
     </section>
 
     <!-- 2-Section Quick Switcher Bar -->
-    <div class="glass-card rounded-2xl p-2.5 border border-slate-800 bg-surface-900/60 backdrop-blur-md flex items-center justify-between gap-3 overflow-x-auto shadow-md">
+    <div id="quickSwitcherBar" class="hidden glass-card rounded-2xl p-2.5 border border-slate-800 bg-surface-900/60 backdrop-blur-md flex items-center justify-between gap-3 overflow-x-auto shadow-md">
       <div class="flex items-center gap-2 flex-nowrap min-w-max">
         <span class="text-[10px] font-mono font-bold text-slate-500 uppercase px-2 tracking-wider flex items-center gap-1">
           <i class="fa-solid fa-layer-group text-indigo-400"></i> Sections:
@@ -559,7 +1720,7 @@
         <!-- ========================================== -->
     <!-- SECTION 1: USER (MERGED DOMAIN 01, DOMAIN 02, DOMAIN 03 & USER PORTAL) -->
     <!-- ========================================== -->
-    <div id="section-user" class="space-y-6">
+    <div id="section-user" class="hidden space-y-6">
       
       <!-- User Section Sub-Navigation Header Bar -->
       <div class="glass-card rounded-2xl p-3 sm:p-3.5 border border-slate-800 bg-surface-900/80 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xl">
@@ -2462,13 +3623,16 @@
     let categoryChartInst = null;
 
         // ==============================================================
-    // Master Navigation & User Section Subtab Management
+    // Master Navigation & Product-Led Homepage Management
     // ==============================================================
-    let currentMainTab = 'user';
+    let currentMainTab = 'home';
     let currentUserActiveSubTab = 'domain1';
+    let currentHomeVector = 'repository';
 
     function switchNavTab(tabName) {
-      if (['domain1', 'domain2', 'domain3', 'portal'].includes(tabName)) {
+      if (tabName === 'home') {
+        currentMainTab = 'home';
+      } else if (['domain1', 'domain2', 'domain3', 'portal'].includes(tabName)) {
         currentMainTab = 'user';
         currentUserActiveSubTab = tabName;
       } else if (tabName === 'user') {
@@ -2481,17 +3645,42 @@
       }
 
       // Toggle top-level section visibility
+      const homeSec = document.getElementById('section-home');
       const userSec = document.getElementById('section-user');
       const adminSec = document.getElementById('section-admin');
+      const showcaseSec = document.getElementById('platformShowcaseSection');
+      const quickSwitcher = document.getElementById('quickSwitcherBar');
+      const homeNavBtn = document.getElementById('navTab-home');
       const userNavBtn = document.getElementById('navTab-user');
       const adminNavBtn = document.getElementById('navTab-admin');
       const userSubBtn = document.getElementById('subQuickTab-user');
       const adminSubBtn = document.getElementById('subQuickTab-admin');
 
-      if (currentMainTab === 'user') {
+      if (currentMainTab === 'home') {
+        if (homeSec) homeSec.classList.remove('hidden');
+        if (userSec) userSec.classList.add('hidden');
+        if (adminSec) adminSec.classList.add('hidden');
+        if (showcaseSec) showcaseSec.classList.add('hidden');
+        if (quickSwitcher) quickSwitcher.classList.add('hidden');
+
+        if (homeNavBtn) {
+          homeNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-400/40 flex items-center gap-2 whitespace-nowrap";
+        }
+        if (userNavBtn) {
+          userNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
+        }
+        if (adminNavBtn) {
+          adminNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
+        }
+      } else if (currentMainTab === 'user') {
+        if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.remove('hidden');
         if (adminSec) adminSec.classList.add('hidden');
+        if (quickSwitcher) quickSwitcher.classList.remove('hidden');
 
+        if (homeNavBtn) {
+          homeNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
+        }
         if (userNavBtn) {
           userNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-400/40 flex items-center gap-2 whitespace-nowrap";
         }
@@ -2508,11 +3697,17 @@
 
         switchUserSubTab(currentUserActiveSubTab, true);
       } else if (currentMainTab === 'admin') {
+        if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.add('hidden');
         if (adminSec) adminSec.classList.remove('hidden');
+        if (showcaseSec) showcaseSec.classList.add('hidden');
+        if (quickSwitcher) quickSwitcher.classList.remove('hidden');
 
+        if (homeNavBtn) {
+          homeNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
+        }
         if (userNavBtn) {
-          userNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
+          userNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-2 whitespace-nowrap";
         }
         if (adminNavBtn) {
           adminNavBtn.className = "nav-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/30 border border-amber-400/50 flex items-center gap-2 whitespace-nowrap";
@@ -2546,6 +3741,261 @@
 
       updateAuthUI();
       updateDomainLockUI();
+    }
+
+    // ==============================================================
+    // Product-Led Homepage Interactive Controllers
+    // ==============================================================
+    function setHomeVector(vector) {
+      currentHomeVector = vector;
+      const tabs = ['repo', 'web', 'db'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`homeVectorTab-${t}`);
+        if (btn) {
+          btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all flex items-center gap-2 cursor-pointer";
+        }
+      });
+
+      const activeKey = vector === 'repository' ? 'repo' : (vector === 'website' ? 'web' : 'db');
+      const activeBtn = document.getElementById(`homeVectorTab-${activeKey}`);
+      if (activeBtn) {
+        activeBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/40 cursor-pointer";
+      }
+
+      const input = document.getElementById('homeScanInput');
+      const icon = document.getElementById('homeScanInputIcon');
+      if (vector === 'repository') {
+        if (input) {
+          input.placeholder = "https://github.com/owner/repository.git";
+          input.value = "https://github.com/octocat/Hello-World";
+        }
+        if (icon) icon.className = "fa-brands fa-git-alt text-lg text-indigo-400";
+      } else if (vector === 'website') {
+        if (input) {
+          input.placeholder = "https://app.company.com or https://api.service.io";
+          input.value = "https://example.com";
+        }
+        if (icon) icon.className = "fa-solid fa-globe text-lg text-sky-400";
+      } else if (vector === 'database') {
+        if (input) {
+          input.placeholder = "postgresql://user:pass@host:5432/app or redis://127.0.0.1:6379";
+          input.value = "redis://127.0.0.1:6379";
+        }
+        if (icon) icon.className = "fa-solid fa-database text-lg text-emerald-400";
+      }
+    }
+
+    function setHomePreset(presetKey) {
+      if (presetKey === 'sample_fintech') {
+        setHomeVector('repository');
+        const input = document.getElementById('homeScanInput');
+        if (input) input.value = "https://github.com/octocat/Hello-World";
+      } else if (presetKey === 'sample_web') {
+        setHomeVector('website');
+        const input = document.getElementById('homeScanInput');
+        if (input) input.value = "https://example.com";
+      } else if (presetKey === 'sample_db') {
+        setHomeVector('database');
+        const input = document.getElementById('homeScanInput');
+        if (input) input.value = "redis://127.0.0.1:6379";
+      }
+    }
+
+    function launchQuickScanFromHome() {
+      const input = document.getElementById('homeScanInput');
+      const targetVal = input ? input.value.trim() : '';
+      
+      switchNavTab('user');
+
+      if (currentHomeVector === 'repository') {
+        switchUserSubTab('domain1');
+        setRepoSubmode('git');
+        const gitInput = document.getElementById('gitRepoUrl');
+        if (gitInput) gitInput.value = targetVal || "https://github.com/octocat/Hello-World";
+        showToast("⚡ Launching Code & CI/CD Audit...", "info");
+        executeScan('repository');
+      } else if (currentHomeVector === 'website') {
+        switchUserSubTab('domain2');
+        const webInput = document.getElementById('webTargetUrl');
+        if (webInput) webInput.value = targetVal || "https://example.com";
+        showToast("⚡ Launching Web Perimeter Audit...", "info");
+        executeScan('website');
+      } else if (currentHomeVector === 'database') {
+        switchUserSubTab('domain3');
+        const dbInput = document.getElementById('dbTargetUri');
+        if (dbInput) dbInput.value = targetVal || "redis://127.0.0.1:6379";
+        showToast("⚡ Launching Database Exposure Audit...", "info");
+        executeScan('database');
+      }
+    }
+
+    function simulateHomeAutoPatch() {
+      const btn = document.getElementById('homeSimulatePatchBtn');
+      const badge = document.getElementById('homeAutoPatchBadge');
+      const diffBadge = document.getElementById('diffSimulationBadge');
+      const cockpitPes = document.getElementById('cockpitPesVal');
+      const gateStatus = document.getElementById('cockpitGateStatus');
+
+      if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-slate-950"></i> <span>Applying Patch...</span>`;
+      }
+
+      setTimeout(() => {
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-check text-slate-950"></i> <span>Patch Applied!</span>`;
+          btn.className = "w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-all flex items-center justify-center gap-2 cursor-pointer";
+        }
+        if (badge) {
+          badge.innerText = "✓ Hardened Patch Applied";
+          badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        }
+        if (diffBadge) {
+          diffBadge.innerText = "✓ Patch Verified & Pinned";
+          diffBadge.className = "text-emerald-400 font-bold";
+        }
+        if (cockpitPes) {
+          cockpitPes.innerText = "12";
+          cockpitPes.classList.remove('text-rose-500');
+          cockpitPes.classList.add('text-emerald-400');
+        }
+        if (gateStatus) {
+          gateStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span class="text-emerald-300 font-bold">Gate Action: Deployment Allowed (PES: 12/100)</span>`;
+        }
+        showToast("1-Click Self-Healing Simulated: PES dropped from 84 to 12 (PASSED)!", "success");
+      }, 700);
+    }
+
+    function switchSandboxTab(tabKey) {
+      const tabs = ['repo', 'web', 'db', 'patch'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`sandboxTab-${t}`);
+        const content = document.getElementById(`sandboxContent-${t}`);
+        if (btn) {
+          btn.className = "px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition flex items-center gap-2 cursor-pointer whitespace-nowrap";
+        }
+        if (content) content.classList.add('hidden');
+      });
+
+      const activeBtn = document.getElementById(`sandboxTab-${tabKey}`);
+      const activeContent = document.getElementById(`sandboxContent-${tabKey}`);
+      if (activeBtn) {
+        activeBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30 cursor-pointer whitespace-nowrap";
+      }
+      if (activeContent) {
+        activeContent.classList.remove('hidden');
+      }
+    }
+
+    function switchCliTab(tabKey) {
+      const tabs = ['terminal', 'github', 'gitlab'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`cliTabBtn-${t}`);
+        if (btn) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition cursor-pointer";
+        }
+      });
+
+      const activeBtn = document.getElementById(`cliTabBtn-${tabKey}`);
+      if (activeBtn) {
+        activeBtn.className = "px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-indigo-600 text-white transition cursor-pointer";
+      }
+
+      const contentBox = document.getElementById('cliSnippetContent');
+      if (!contentBox) return;
+
+      if (tabKey === 'terminal') {
+        contentBox.innerHTML = `<code class="text-emerald-400"># Audit local codebase with maximum PES threshold of 60</code>
+python -m app.cli scan ./my-project --max-pes 60 --fail-on-critical
+
+<code class="text-emerald-400"># Audit remote Git repo and output unified Git patch</code>
+python -m app.cli scan https://github.com/my-org/api.git --output patch
+
+<code class="text-emerald-400"># Audit live Web perimeter and database infrastructure</code>
+python -m app.cli web https://api.staging.company.com
+python -m app.cli db postgresql://readonly:pass@db.internal:5432/app`;
+      } else if (tabKey === 'github') {
+        contentBox.innerHTML = `<code class="text-emerald-400"># .github/workflows/shieldci.yml - Automated CI/CD Gate</code>
+name: ShieldCI Exposure Gate
+on: [push, pull_request]
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run ShieldCI Exposure Audit
+        run: |
+          pip install -r requirements.txt
+          python -m app.cli scan . --max-pes 60 --fail-on-critical --output patch`;
+      } else if (tabKey === 'gitlab') {
+        contentBox.innerHTML = `<code class="text-emerald-400"># .gitlab-ci.yml - Tri-Vector Pipeline Gate</code>
+stages:
+  - test
+  - security
+
+shieldci_audit:
+  stage: security
+  image: python:3.11-slim
+  script:
+    - pip install -r requirements.txt
+    - python -m app.cli scan . --max-pes 60 --fail-on-critical
+  artifacts:
+    when: always
+    paths:
+      - shieldci-remediation.patch`;
+      }
+    }
+
+    function copyCliSnippet() {
+      const contentBox = document.getElementById('cliSnippetContent');
+      if (!contentBox) return;
+      const text = contentBox.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('cliCopyBtn');
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>Copied!</span>`;
+          setTimeout(() => {
+            btn.innerHTML = `<i class="fa-regular fa-copy"></i> <span>Copy Code</span>`;
+          }, 2000);
+        }
+        showToast("Snippet copied to clipboard!", "success");
+      }).catch(() => {
+        showToast("Could not copy to clipboard", "warning");
+      });
+    }
+
+    function updateRoiCalculations() {
+      const r = parseInt(document.getElementById('roiSliderRepos')?.value || 25);
+      const w = parseInt(document.getElementById('roiSliderWeb')?.value || 10);
+      const d = parseInt(document.getElementById('roiSliderDb')?.value || 5);
+
+      if (document.getElementById('roiValRepos')) document.getElementById('roiValRepos').innerText = `${r} Repos`;
+      if (document.getElementById('roiValWeb')) document.getElementById('roiValWeb').innerText = `${w} Domains`;
+      if (document.getElementById('roiValDb')) document.getElementById('roiValDb').innerText = `${d} Databases`;
+
+      const hoursSaved = Math.round(r * 3.8 + w * 2.5 + d * 4.0);
+      if (document.getElementById('roiHoursSaved')) {
+        document.getElementById('roiHoursSaved').innerText = `${hoursSaved} hrs`;
+      }
+    }
+
+    function toggleFaq(faqId) {
+      const ans = document.getElementById(`faqAns-${faqId}`);
+      const icon = document.getElementById(`faqIcon-${faqId}`);
+      if (ans) {
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+          ans.classList.remove('hidden');
+          if (icon) icon.className = "fa-solid fa-chevron-up text-xs text-indigo-400 transition-transform";
+        } else {
+          ans.classList.add('hidden');
+          if (icon) icon.className = "fa-solid fa-chevron-down text-xs text-slate-400 transition-transform";
+        }
+      }
     }
 
     function switchUserSubTab(subTab, force = false) {
@@ -6321,7 +7771,25 @@
       initAuth();
       fetchQuota();
       renderPresets('repository');
-      executeScan('repository');
+
+      const hash = (window.location.hash || '').toLowerCase();
+      if (hash === '#workspace' || hash === '#user' || hash === '#domain1') {
+        switchNavTab('user');
+        switchUserSubTab('domain1');
+        executeScan('repository');
+      } else if (hash === '#domain2' || hash === '#web') {
+        switchNavTab('user');
+        switchUserSubTab('domain2');
+        executeScan('website');
+      } else if (hash === '#domain3' || hash === '#db') {
+        switchNavTab('user');
+        switchUserSubTab('domain3');
+        executeScan('database');
+      } else if (hash === '#admin') {
+        switchNavTab('admin');
+      } else {
+        switchNavTab('home');
+      }
     });
   </script>
 
