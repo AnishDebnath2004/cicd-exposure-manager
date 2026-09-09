@@ -26,8 +26,9 @@ for t in expected_subtabs:
 # 4. Check nav tabs
 nav_tabs = re.findall(r'id=["\'](navTab-[^"\']+)["\']', content)
 print("Found Top Nav Tabs:", nav_tabs)
-assert 'navTab-user' in nav_tabs, "Missing navTab-user"
+assert 'navTab-home' in nav_tabs, "Missing navTab-home"
 assert 'navTab-admin' in nav_tabs, "Missing navTab-admin"
+assert 'navTab-user' not in nav_tabs, "navTab-user should not be present in top navbar"
 
 # 5. Check functions
 key_functions = [

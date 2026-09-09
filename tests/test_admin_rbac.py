@@ -23,6 +23,16 @@ def test_admin_rbac():
 
     # 1. Fetch real admin user and developer user from storage
     admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
+    if not admin_dict:
+        storage.create_user(
+            email="debnathanish19@gmail.com",
+            password_hash="mockhash",
+            salt="mocksalt",
+            full_name="Anish Debnath",
+            role="admin",
+            preferred_domain="domain_01"
+        )
+        admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
     developer_dict = storage.get_user_by_email("arkapravamaity2000@gmail.com")
     if not developer_dict:
         storage.create_user(
