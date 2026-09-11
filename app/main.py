@@ -457,9 +457,9 @@ async def delete_scan(scan_id: str):
 
 
 @app.get("/api/scans/{scan_id}/export")
-async def export_scan(scan_id: str, format: str = Query("sarif", pattern="^(sarif|json|csv)$")):
+async def export_scan(scan_id: str, format: str = Query("sarif", pattern="^(sarif|json|csv|pdf)$")):
     """
-    Exports a scan report in SARIF 2.1.0, JSON, or CSV formats.
+    Exports a scan report in SARIF 2.1.0, JSON, CSV, or executive PDF formats.
     """
     scan = storage.get_scan(scan_id)
     if not scan:
@@ -480,11 +480,27 @@ async def export_scan(scan_id: str, format: str = Query("sarif", pattern="^(sari
             media_type="text/csv",
             headers={"Content-Disposition": f'attachment; filename="shieldci_{clean_name}_{scan_id[:8]}.csv"'}
         )
+    elif format == "pdf":
+        pdf_bytes = storage.export_pdf(scan)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="shieldci_{clean_name}_{scan_id[:8]}.pdf"'}
+        )
     else:
         return JSONResponse(
             content=scan.model_dump(),
             headers={"Content-Disposition": f'attachment; filename="shieldci_{clean_name}_{scan_id[:8]}.json"'}
         )
+
+
+@app.get("/api/scans/{scan_id}/pdf")
+async def download_scan_pdf(scan_id: str):
+    """
+    Directly downloads the executive PDF security audit report.
+    """
+    return await export_scan(scan_id=scan_id, format="pdf")
+
 
 
 @app.get("/api/scans/{scan_id}/patch")

@@ -121,12 +121,18 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs (Home, Admin) -->
+      <!-- Navigation Tabs (Home, Workspace, Documentation, Admin) -->
       <nav class="flex items-center bg-surface-900/90 border border-slate-800/90 p-1 rounded-xl gap-1 shadow-inner">
-        <button onclick="switchNavTab('home')" id="navTab-home" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm" title="Product-Led Homepage &amp; Live Sandbox">
+        <button onclick="switchNavTab('home')" id="navTab-home" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm" title="Product-Led Homepage &amp; Live Sandbox">
           <i class="fa-solid fa-house text-sky-300 text-[11px]"></i> <span>Home</span>
         </button>
-        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Administrator Governance">
+        <button onclick="switchNavTab('user')" id="navTab-user" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent" title="Tri-Vector Security Workstation">
+          <i class="fa-solid fa-terminal text-indigo-400 text-[11px]"></i> <span>Workspace</span>
+        </button>
+        <button onclick="switchNavTab('docs')" id="navTab-docs" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent" title="Step-by-Step Documentation &amp; User Guide">
+          <i class="fa-solid fa-book-open text-emerald-400 text-[11px]"></i> <span>Documentation</span>
+        </button>
+        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Administrator Governance">
           <i class="fa-solid fa-crown text-amber-400 text-[11px]"></i> <span>Admin</span>
         </button>
       </nav>
@@ -718,6 +724,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
               <li><button type="button" onclick="switchNavTab('domain2')" class="hover:text-sky-300 transition cursor-pointer">Domain 02: Web Perimeter</button></li>
               <li><button type="button" onclick="switchNavTab('domain3')" class="hover:text-emerald-300 transition cursor-pointer">Domain 03: DB &amp; Cloud</button></li>
               <li><button type="button" onclick="switchNavTab('portal')" class="hover:text-purple-300 transition cursor-pointer">User Audit Portal</button></li>
+              <li><button type="button" onclick="switchNavTab('docs')" class="hover:text-emerald-300 transition cursor-pointer flex items-center gap-1"><i class="fa-solid fa-book-open text-[10px]"></i> User Documentation</button></li>
             </ul>
           </div>
 
@@ -1727,11 +1734,17 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="exportUserScan('json')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm">
-              <i class="fa-solid fa-file-code text-indigo-400"></i> Download JSON
+            <button onclick="exportUserScan('pdf')" class="px-4 py-2 bg-gradient-to-r from-rose-600 via-rose-500 to-pink-500 hover:from-rose-500 hover:to-pink-400 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/30 border border-rose-400/40 transition-all flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-file-pdf"></i> Download PDF Report
             </button>
-            <button onclick="exportUserScan('markdown')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
-              <i class="fa-solid fa-file-lines"></i> Download Report (MD)
+            <button onclick="exportUserScan('sarif')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+              <i class="fa-solid fa-shield-virus text-indigo-400"></i> Download SARIF
+            </button>
+            <button onclick="exportUserScan('json')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+              <i class="fa-solid fa-file-code text-sky-400"></i> Download JSON
+            </button>
+            <button onclick="exportUserScan('csv')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+              <i class="fa-solid fa-table text-emerald-400"></i> Download CSV
             </button>
           </div>
         </div>
@@ -1837,7 +1850,11 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
               <button onclick="toggleDropdown('exportMenu')" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-download text-indigo-400"></i> Export <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
               </button>
-              <div id="exportMenu" class="hidden absolute right-0 mt-2 w-52 bg-surface-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30">
+              <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 bg-surface-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30">
+                <button onclick="exportCurrentScan('pdf')" class="w-full text-left px-4 py-2.5 text-xs text-rose-300 hover:bg-rose-600/20 hover:text-white flex items-center gap-2 font-bold transition">
+                  <i class="fa-solid fa-file-pdf text-rose-400"></i> Download PDF Audit Report
+                </button>
+                <div class="h-px bg-slate-800 my-1"></div>
                 <button onclick="exportCurrentScan('sarif')" class="w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-indigo-600/20 hover:text-indigo-300 flex items-center gap-2">
                   <i class="fa-solid fa-shield-virus text-indigo-400"></i> SARIF 2.1.0 (GitHub / GitLab)
                 </button>
@@ -2985,6 +3002,440 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       </div>
 
     </div>
+
+    <!-- ============================================================== -->
+    <!-- SECTION: DOCUMENTATION & USER GUIDE (STEP-BY-STEP IN EASY WORDS) -->
+    <!-- ============================================================== -->
+    <section id="section-docs" class="hidden space-y-12 py-4">
+
+      <!-- Docs Hero Header -->
+      <div class="relative overflow-hidden rounded-3xl p-8 sm:p-10 border border-emerald-500/30 bg-gradient-to-b from-surface-900 via-surface-950 to-surface-950 shadow-2xl">
+        <div class="absolute -top-24 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 left-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-4xl space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold">
+            <i class="fa-solid fa-book-bookmark text-[11px]"></i>
+            <span>User Documentation &bull; Easy Step-by-Step Guide</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            How to Use ShieldCI <br/>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">In Simple, Plain Words.</span>
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-3xl">
+            ShieldCI is your automated security assistant. It checks your <strong>code repositories</strong>, 
+            <strong>live websites</strong>, and <strong>cloud databases</strong> to find hidden passwords, security flaws, 
+            and misconfigurations before hackers do. Follow this friendly guide to audit your assets and fix problems in minutes.
+          </p>
+
+          <!-- Quick Navigation Jump Pills -->
+          <div class="flex flex-wrap gap-2 pt-2">
+            <a href="#doc-step-1" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Step 1: The 3 Domains
+            </a>
+            <a href="#doc-step-2" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-sky-400"></span> Step 2: Running a Scan
+            </a>
+            <a href="#doc-step-3" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> Step 3: Understanding Scores
+            </a>
+            <a href="#doc-step-4" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-teal-400"></span> Step 4: 1-Click Fixes
+            </a>
+            <a href="#doc-step-5" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Step 5: PDF Reports
+            </a>
+            <a href="#doc-step-6" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Step 6: CI/CD Automation
+            </a>
+            <a href="#doc-faq" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span> FAQ
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1: THE THREE DOMAINS -->
+      <div id="doc-step-1" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base border border-indigo-500/30">
+            1
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 1: Choose What You Want to Audit (The 3 Domains)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">ShieldCI organizes your security into three simple areas. You don't need to install any agents.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+          
+          <!-- Domain 1 Card -->
+          <div class="p-5 rounded-2xl bg-surface-900/90 border border-indigo-500/20 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="w-9 h-9 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-base">
+                <i class="fa-solid fa-code-branch"></i>
+              </div>
+              <h3 class="font-bold text-white text-base">Domain 01: Code &amp; CI/CD</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Audits your source code repository or GitHub Actions workflows.
+              </p>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                <li>Finds leaked passwords &amp; API keys</li>
+                <li>Flags risky GitHub Actions (<code class="text-indigo-300">@v1</code> tags)</li>
+                <li>Catches dangerous script injection flaws</li>
+                <li>Verifies Dockerfile &amp; IaC safety</li>
+              </ul>
+            </div>
+            <button onclick="switchNavTab('domain1')" class="w-full py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>Open Code Workstation</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+
+          <!-- Domain 2 Card -->
+          <div class="p-5 rounded-2xl bg-surface-900/90 border border-sky-500/20 hover:border-sky-500/50 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="w-9 h-9 rounded-lg bg-sky-600/20 text-sky-400 flex items-center justify-center text-base">
+                <i class="fa-solid fa-globe"></i>
+              </div>
+              <h3 class="font-bold text-white text-base">Domain 02: Web Perimeter</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Audits any live website, public domain, or REST API endpoint.
+              </p>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                <li>Checks SSL/TLS certificate expiration</li>
+                <li>Detects missing security headers (HSTS, CSP)</li>
+                <li>Finds accidentally exposed <code class="text-sky-300">.env</code> or admin files</li>
+                <li>Tests CORS &amp; clickjacking defenses</li>
+              </ul>
+            </div>
+            <button onclick="switchNavTab('domain2')" class="w-full py-2 px-3 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>Open Web Workstation</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+
+          <!-- Domain 3 Card -->
+          <div class="p-5 rounded-2xl bg-surface-900/90 border border-emerald-500/20 hover:border-emerald-500/50 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-base">
+                <i class="fa-solid fa-database"></i>
+              </div>
+              <h3 class="font-bold text-white text-base">Domain 03: DB &amp; Cloud</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Audits databases (PostgreSQL, MySQL, Redis, MongoDB).
+              </p>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                <li>Verifies database is NOT open to the public web</li>
+                <li>Checks for weak or default passwords</li>
+                <li>Flags unencrypted plaintext transmission</li>
+                <li>Validates TLS connection encryption</li>
+              </ul>
+            </div>
+            <button onclick="switchNavTab('domain3')" class="w-full py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <span>Open DB Workstation</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- STEP 2: HOW TO RUN A SCAN -->
+      <div id="doc-step-2" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-base border border-sky-500/30">
+            2
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 2: How to Run a Security Scan (In 4 Simple Clicks)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Running an audit takes less than 15 seconds. Here is the step-by-step walkthrough:</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+          
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-bold text-sky-400">01. Open Workstation</span>
+            <h4 class="font-semibold text-white text-sm">Click "Workspace" in the top bar</h4>
+            <p class="text-xs text-slate-400">Or use the interactive Sandbox on the Home page.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-bold text-sky-400">02. Pick Target Type</span>
+            <h4 class="font-semibold text-white text-sm">Choose Repo, Website, or DB</h4>
+            <p class="text-xs text-slate-400">Switch tabs depending on what you want to test.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-bold text-sky-400">03. Enter Target URL</span>
+            <h4 class="font-semibold text-white text-sm">Paste your URL or folder path</h4>
+            <p class="text-xs text-slate-400">For example: <code>owner/repo</code> or <code>https://mywebsite.com</code>.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-2">
+            <span class="text-xs font-mono font-bold text-sky-400">04. Run Deep Audit</span>
+            <h4 class="font-semibold text-white text-sm">Click "Start Deep Scan"</h4>
+            <p class="text-xs text-slate-400">Results, scores, and findings appear instantly.</p>
+          </div>
+
+        </div>
+
+        <!-- Try Sample Targets Shortcut Box -->
+        <div class="p-5 rounded-xl bg-gradient-to-r from-surface-900 to-surface-850 border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> Want to test right now with safe sample data?
+            </h4>
+            <p class="text-xs text-slate-400 mt-0.5">Click any of these presets to jump straight into a live audit demonstration:</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="switchNavTab('domain1'); document.getElementById('targetInput').value = './sample_vulnerable_repo'; executeScan();" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition cursor-pointer">
+              <i class="fa-solid fa-play text-[9px] mr-1"></i> Sample Repo
+            </button>
+            <button onclick="switchNavTab('domain2'); document.getElementById('webTargetInput').value = 'https://example.com'; executeScan();" class="px-3 py-1.5 rounded-lg bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 text-xs font-semibold transition cursor-pointer">
+              <i class="fa-solid fa-play text-[9px] mr-1"></i> Sample Website
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: UNDERSTANDING SCORES (PES) -->
+      <div id="doc-step-3" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/30">
+            3
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 3: Understanding Your Security Score (PES Explained Simply)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">The Pipeline Exposure Score (PES) measures how vulnerable your target is, from 0 (Best) to 100 (Worst).</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+          
+          <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-emerald-400">PES 0 – 25</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Grade A</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Safe &amp; Clean</h4>
+            <p class="text-xs text-slate-300">Zero or minimal security issues. Your asset passes all automated policy gates.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-amber-400">PES 26 – 50</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Grade B</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Moderate Exposure</h4>
+            <p class="text-xs text-slate-300">Minor misconfigurations or informational warnings. Recommended to review before release.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-orange-400">PES 51 – 75</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/20 text-orange-300">Grade C</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">High Exposure</h4>
+            <p class="text-xs text-slate-300">Actionable vulnerabilities found (unpinned actions, missing TLS headers). Fix soon!</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-rose-400">PES 76 – 100</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300">Grade F</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Critical Risk (BLOCKED)</h4>
+            <p class="text-xs text-slate-300">High severity flaw (plaintext secret, exposed database). The CI/CD Quality Gate stops deployment.</p>
+          </div>
+
+        </div>
+
+        <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 text-xs text-slate-300 space-y-1">
+          <strong class="text-white">What does "Quality Gate" mean?</strong>
+          <p>
+            The Quality Gate is a safety check: if your project contains critical vulnerabilities or your PES score is too high, 
+            ShieldCI returns a <span class="text-rose-400 font-bold">FAILED / BLOCKED</span> status. When used in GitHub Actions, 
+            this automatically stops broken or compromised builds before they can hurt your production environment.
+          </p>
+        </div>
+      </div>
+
+      <!-- STEP 4: 1-CLICK SELF-HEALING & REMEDIATION -->
+      <div id="doc-step-4" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-base border border-teal-500/30">
+            4
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 4: 1-Click Self-Healing (How to Fix Issues Automatically)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">ShieldCI doesn't just complain about bugs — it automatically writes the code to fix them for you.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <h3 class="text-sm font-bold text-white">How to apply an auto-fix patch:</h3>
+            <ol class="space-y-2 list-decimal list-inside text-slate-300">
+              <li>When your scan finishes, click the green <strong class="text-emerald-300">1-Click Fix Patch</strong> button.</li>
+              <li>A <code class="text-indigo-300 font-mono">shieldci-remediation.patch</code> file will download to your computer.</li>
+              <li>Open your computer's terminal inside your repository folder.</li>
+              <li>Run the command shown on the right to automatically apply the fix!</li>
+              <li>Git will rewrite the dangerous lines with secure alternatives (like commit SHA pinning and encrypted secret references).</li>
+            </ol>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <span class="text-[10px] font-mono uppercase text-slate-500 font-bold">Terminal Command</span>
+              <div class="mt-2 p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs font-mono text-emerald-400 select-all overflow-x-auto">
+                git apply shieldci-remediation.patch &amp;&amp; git commit -am "fix: apply ShieldCI security hardening"
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              <i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Tested and validated for standard Git repositories on macOS, Linux, and Windows.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: DOWNLOADING AUDIT REPORTS IN PDF FORMAT -->
+      <div id="doc-step-5" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-base border border-rose-500/30">
+            5
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 5: Downloading &amp; Sharing Audit Reports (PDF Format)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Need to share results with your team, manager, or security compliance auditor? You can download official PDF reports with one click.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+            <h3 class="text-sm font-bold text-white">What is included in the PDF Audit Report?</h3>
+            <ul class="space-y-1.5 list-disc list-inside text-slate-300">
+              <li><strong>Executive Summary:</strong> Overall Risk Score, Grade, and Quality Gate Pass/Fail verdict.</li>
+              <li><strong>Target Information:</strong> Repository name, tested URL, scan duration, and timestamp.</li>
+              <li><strong>Tri-Vector Matrix:</strong> Complete posture status across Code, Web, and Database layers.</li>
+              <li><strong>Detailed Findings:</strong> Exact file paths, line numbers, severity tags, and remediation advice.</li>
+              <li><strong>Compliance Mapping:</strong> Cross-referenced with OWASP Top 10, CIS Benchmarks, and NIST standards.</li>
+              <li><strong>Clean Layout:</strong> Formatted cleanly for corporate printing or emailing to clients.</li>
+            </ul>
+          </div>
+
+          <div class="p-6 rounded-2xl bg-gradient-to-br from-rose-950/40 via-surface-900 to-surface-950 border border-rose-500/30 space-y-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-xl shadow-lg shadow-rose-500/20">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white text-sm">Export Any Scan to PDF</h4>
+              <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                After any scan completes, simply click <strong>"Download PDF Report"</strong> or choose PDF from the Export menu.
+              </p>
+            </div>
+            <div>
+              <button onclick="switchNavTab('domain1'); document.getElementById('targetInput').value = './sample_vulnerable_repo'; executeScan();" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition flex items-center gap-2 mx-auto cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Run Demo Scan &amp; Download PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6: AUTOMATING IN CI/CD -->
+      <div id="doc-step-6" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base border border-indigo-500/30">
+            6
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Step 6: Automating Security in GitHub Actions (CI/CD Quality Gate)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Stop vulnerabilities automatically before any pull request is merged into production.</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-xs text-slate-300">
+            Create a file named <code class="text-indigo-300 font-mono">.github/workflows/security.yml</code> in your repository and paste this snippet:
+          </p>
+
+          <div class="relative rounded-2xl bg-surface-950 border border-slate-800 p-4 font-mono text-xs text-slate-300 overflow-x-auto">
+            <pre><code>name: "ShieldCI Security Audit"
+on: [push, pull_request]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run ShieldCI Security Audit
+        run: |
+          # Automatically trigger scan and fail if policy threshold exceeded
+          curl -s -X POST "http://your-shieldci-instance.com/api/scans" \
+            -H "Content-Type: application/json" \
+            -d '{"target_path": ".", "fail_on_severity": "HIGH", "max_allowed_pes": 60}' \
+            --fail
+</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ SECTION -->
+      <div id="doc-faq" class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-base border border-purple-500/30">
+            <i class="fa-solid fa-circle-question"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Frequently Asked Questions (FAQ)</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Quick answers to common questions in plain words.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-1.5">
+            <h4 class="font-bold text-white text-xs flex items-center gap-2">
+              <i class="fa-solid fa-check text-emerald-400"></i> Do I need to install any software or agents on my servers?
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              No! ShieldCI is completely agentless. It audits your websites via standard HTTPS queries, tests repositories via shallow Git clones, and inspects database endpoints without needing intrusive daemons.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-1.5">
+            <h4 class="font-bold text-white text-xs flex items-center gap-2">
+              <i class="fa-solid fa-check text-emerald-400"></i> Is my source code permanently stored or shared?
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Never. When you audit a remote repository, ShieldCI clones it into an isolated temporary folder, scans it in memory, and immediately purges the repository files once analysis completes.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-1.5">
+            <h4 class="font-bold text-white text-xs flex items-center gap-2">
+              <i class="fa-solid fa-check text-emerald-400"></i> What formats can I export my audit reports in?
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              You can export in <strong>PDF</strong> (executive summary &amp; compliance report), <strong>SARIF 2.1.0</strong> (for GitHub &amp; GitLab native security dashboards), <strong>JSON</strong> (for scripts and SIEMs), and <strong>CSV</strong> (for spreadsheets).
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-900/80 border border-slate-800 space-y-1.5">
+            <h4 class="font-bold text-white text-xs flex items-center gap-2">
+              <i class="fa-solid fa-check text-emerald-400"></i> Can I set up automatic continuous scans?
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Yes! In the Workspace or Admin panel, you can configure continuous recurring schedules (hourly, daily, or custom intervals) so ShieldCI monitors your assets 24/7.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
     </main>
 
   <!-- Footer -->
@@ -2995,6 +3446,9 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
         <span>Repositories &bull; Websites &bull; Databases</span>
       </div>
       <div class="flex items-center gap-4 text-slate-400">
+        <button type="button" onclick="switchNavTab('docs')" class="hover:text-emerald-400 transition cursor-pointer flex items-center gap-1">
+          <i class="fa-solid fa-book-bookmark text-emerald-400"></i> Documentation &amp; Guide
+        </button>
         <a href="/docs" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-solid fa-book-open mr-1"></i> Interactive Swagger API</a>
         <a href="https://github.com" target="_blank" class="hover:text-indigo-400 transition"><i class="fa-brands fa-github mr-1"></i> GitHub</a>
       </div>
@@ -3027,6 +3481,8 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
         if (!currentUserActiveSubTab) {
           currentUserActiveSubTab = 'domain1';
         }
+      } else if (tabName === 'docs' || tabName === 'documentation') {
+        currentMainTab = 'docs';
       } else if (tabName === 'admin') {
         currentMainTab = 'admin';
       }
@@ -3035,10 +3491,12 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
       const homeSec = document.getElementById('section-home');
       const userSec = document.getElementById('section-user');
       const adminSec = document.getElementById('section-admin');
+      const docsSec = document.getElementById('section-docs');
       const showcaseSec = document.getElementById('platformShowcaseSection');
       const quickSwitcher = document.getElementById('quickSwitcherBar');
       const homeNavBtn = document.getElementById('navTab-home');
       const userNavBtn = document.getElementById('navTab-user');
+      const docsNavBtn = document.getElementById('navTab-docs');
       const adminNavBtn = document.getElementById('navTab-admin');
       const userSubBtn = document.getElementById('subQuickTab-user');
       const adminSubBtn = document.getElementById('subQuickTab-admin');
@@ -3047,32 +3505,40 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
         if (homeSec) homeSec.classList.remove('hidden');
         if (userSec) userSec.classList.add('hidden');
         if (adminSec) adminSec.classList.add('hidden');
+        if (docsSec) docsSec.classList.add('hidden');
         if (showcaseSec) showcaseSec.classList.add('hidden');
         if (quickSwitcher) quickSwitcher.classList.add('hidden');
 
         if (homeNavBtn) {
-          homeNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+          homeNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
         }
         if (userNavBtn) {
-          userNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+          userNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+        }
+        if (docsNavBtn) {
+          docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
         if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
         }
       } else if (currentMainTab === 'user') {
         if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.remove('hidden');
         if (adminSec) adminSec.classList.add('hidden');
+        if (docsSec) docsSec.classList.add('hidden');
         if (quickSwitcher) quickSwitcher.classList.remove('hidden');
 
         if (homeNavBtn) {
-          homeNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+          homeNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
         if (userNavBtn) {
-          userNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+          userNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-indigo-600/20 text-white border border-indigo-500/30 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+        }
+        if (docsNavBtn) {
+          docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
         if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
         }
 
         if (userSubBtn) {
@@ -3083,22 +3549,48 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
         }
 
         switchUserSubTab(currentUserActiveSubTab, true);
+      } else if (currentMainTab === 'docs') {
+        if (homeSec) homeSec.classList.add('hidden');
+        if (userSec) userSec.classList.add('hidden');
+        if (adminSec) adminSec.classList.add('hidden');
+        if (docsSec) docsSec.classList.remove('hidden');
+        if (showcaseSec) showcaseSec.classList.add('hidden');
+        if (quickSwitcher) quickSwitcher.classList.add('hidden');
+
+        if (homeNavBtn) {
+          homeNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+        }
+        if (userNavBtn) {
+          userNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+        }
+        if (docsNavBtn) {
+          docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+        }
+        if (adminNavBtn) {
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (currentMainTab === 'admin') {
         if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.add('hidden');
         if (adminSec) adminSec.classList.remove('hidden');
+        if (docsSec) docsSec.classList.add('hidden');
         if (showcaseSec) showcaseSec.classList.add('hidden');
         if (quickSwitcher) quickSwitcher.classList.remove('hidden');
 
         if (homeNavBtn) {
-          homeNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+          homeNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
         if (userNavBtn) {
-          userNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+          userNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
+        }
+        if (docsNavBtn) {
+          docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
         if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
         }
+
 
         if (userSubBtn) {
           userSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-850";
@@ -4011,6 +4503,9 @@ shieldci_audit:
               </span>
             </td>
             <td class="px-5 py-3.5 text-right space-x-2">
+              <button onclick="window.location.href='/api/scans/${item.scan_id}/export?format=pdf'" class="px-2.5 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded text-xs font-semibold transition" title="Download PDF Audit Report">
+                <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+              </button>
               <button onclick="loadAndDisplayScan('${item.scan_id}')" class="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded text-xs font-semibold transition">
                 View
               </button>

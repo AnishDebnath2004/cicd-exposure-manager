@@ -1788,6 +1788,13 @@ class StorageEngine:
             ])
         return output.getvalue()
 
+    @staticmethod
+    def export_pdf(scan: ScanResult) -> bytes:
+        """Generates executive-grade, downloadable PDF audit report."""
+        from app.core.pdf_exporter import generate_pdf_report
+        return generate_pdf_report(scan)
+
+
 
     def close(self):
         """Closes the underlying adapter and its connection pool if open."""
