@@ -1429,6 +1429,33 @@ class StorageEngine:
 
         self._initialize_backend()
         self._sync_runtime_settings()
+        self._auto_seed_owner_admin()
+
+    def _auto_seed_owner_admin(self):
+        """
+        Seeds the platform owner admin account if not already present.
+        Prevents admin lockout in ephemeral hosting environments (Render free tier, containers)
+        when local SQLite is recreated from scratch on redeploy.
+        """
+        try:
+            admin_email = "debnathanish19@gmail.com"
+            existing = self.get_user_by_email(admin_email)
+            if not existing:
+                from app.core.security import hash_password
+                seed_pw = os.getenv("SHIELDCI_ADMIN_PASSWORD", "ShieldCI@Admin2026!")
+                pw_hash, salt = hash_password(seed_pw)
+                self.create_user(
+                    email=admin_email,
+                    password_hash=pw_hash,
+                    salt=salt,
+                    full_name="Anish Debnath",
+                    organization="ShieldCI Admin",
+                    role="admin",
+                    preferred_domain="domain_01"
+                )
+                logger.info(f"Auto-seeded platform owner admin account ({admin_email}).")
+        except Exception as e:
+            logger.warning(f"Could not auto-seed platform owner admin: {e}")
 
     def _initialize_backend(self):
         """Attempts to initialize PostgreSQL backend; gracefully falls back to SQLite."""
@@ -1628,8 +1655,9 @@ class StorageEngine:
             pass
 
     def refresh(self) -> Dict[str, Any]:
-        """Synchronizes runtime settings and verifies health of active database backend."""
+        """Synchronizes runtime settings, verifies owner admin presence, and checks backend health."""
         self._sync_runtime_settings()
+        self._auto_seed_owner_admin()
         connected = self.check_connection()
         return {
             "engine": self.engine_type,

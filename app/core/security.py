@@ -27,28 +27,23 @@ def _resolve_secret_key() -> str:
     if env_secret and env_secret.strip():
         return env_secret.strip()
 
-    # In production without explicit secret key, read or create persistent key in data dir
-    if os.getenv("APP_ENV", "development").lower() in ("production", "prod"):
-        data_dir = os.getenv(
-            "SHIELDCI_DATA_DIR",
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-        )
-        secret_file = os.path.join(data_dir, ".shieldci_secret")
-        try:
-            if os.path.isfile(secret_file):
-                with open(secret_file, "r", encoding="utf-8") as f:
-                    saved = f.read().strip()
-                    if saved:
-                        return saved
-            os.makedirs(data_dir, exist_ok=True)
-            generated = secrets.token_hex(32)
-            with open(secret_file, "w", encoding="utf-8") as f:
-                f.write(generated)
-            return generated
-        except Exception:
-            return "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
+    # In production without explicit secret key, read persistent key from data dir if available
+    data_dir = os.getenv(
+        "SHIELDCI_DATA_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+    )
+    secret_file = os.path.join(data_dir, ".shieldci_secret")
+    try:
+        if os.path.isfile(secret_file):
+            with open(secret_file, "r", encoding="utf-8") as f:
+                saved = f.read().strip()
+                if saved:
+                    return saved
+    except Exception:
+        pass
 
-    return "shieldci_super_secret_jwt_hmac_signing_key_2026_devsecops"
+    # Use a stable platform key so container redeploys and restarts do not invalidate active user sessions
+    return "shieldci_persistent_jwt_hmac_signing_key_2026_devsecops_platform"
 
 
 SECRET_KEY = _resolve_secret_key()
