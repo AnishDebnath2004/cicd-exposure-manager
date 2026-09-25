@@ -277,6 +277,8 @@ async def trigger_scan(
         raise HTTPException(status_code=404, detail=str(e))
     except TimeoutError as e:
         raise HTTPException(status_code=408, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Scan Error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scan Error: {str(e)}")
 

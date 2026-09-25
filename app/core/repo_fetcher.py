@@ -29,14 +29,54 @@ def _remove_readonly(func, path, exc_info):
 class RepoFetcher:
     """Manages cloning, extracting, and preparing repositories for security scanning."""
 
+    PROFILE_PATTERNS = [
+        (re.compile(r"^(?:https?://)?(?:www\.)?github\.com/([^/?#]+)/?(?:[?#].*)?$", re.IGNORECASE), "GitHub"),
+        (re.compile(r"^git@github\.com:([^/?#]+)/?$", re.IGNORECASE), "GitHub"),
+        (re.compile(r"^(?:https?://)?(?:www\.)?gitlab\.com/([^/?#]+)/?(?:[?#].*)?$", re.IGNORECASE), "GitLab"),
+        (re.compile(r"^git@gitlab\.com:([^/?#]+)/?$", re.IGNORECASE), "GitLab"),
+        (re.compile(r"^(?:https?://)?(?:www\.)?bitbucket\.org/([^/?#]+)/?(?:[?#].*)?$", re.IGNORECASE), "Bitbucket"),
+        (re.compile(r"^git@bitbucket\.org:([^/?#]+)/?$", re.IGNORECASE), "Bitbucket"),
+    ]
+
     GIT_URL_PATTERNS = [
-        re.compile(r"^https?://", re.IGNORECASE),
+        re.compile(r"^https?://(?:www\.)?(github\.com|gitlab\.com|bitbucket\.org)/", re.IGNORECASE),
+        re.compile(r"^https?://.+\.git(?:[/?#]|$)", re.IGNORECASE),
         re.compile(r"^git@", re.IGNORECASE),
         re.compile(r"^ssh://", re.IGNORECASE),
         re.compile(r"^git://", re.IGNORECASE),
         re.compile(r"^(github\.com|gitlab\.com|bitbucket\.org)/", re.IGNORECASE),
         re.compile(r"^[a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-\.]+$")  # owner/repo shorthand
     ]
+
+    @classmethod
+    def check_profile_url(cls, target: str) -> Optional[Tuple[str, str]]:
+        """
+        Detects if a target URL points to a user/organization profile instead of a repository.
+        Returns (provider_name, username) if matched, else None.
+        """
+        if not target or not isinstance(target, str):
+            return None
+        cleaned = target.strip()
+        for pattern, provider in cls.PROFILE_PATTERNS:
+            match = pattern.match(cleaned)
+            if match:
+                username = match.group(1).rstrip("/")
+                if username.endswith(".git"):
+                    username = username[:-4]
+                return provider, username
+        return None
+
+    @classmethod
+    def raise_if_profile_url(cls, target: str):
+        """Raises ValueError if target is a user/organization profile URL rather than a repository."""
+        profile = cls.check_profile_url(target)
+        if profile:
+            provider, username = profile
+            raise ValueError(
+                f"'{target}' is a {provider} user or organization profile, not a repository. "
+                f"Please specify a specific repository target in the format 'https://{provider.lower()}.com/{username}/<repo_name>' "
+                f"or '{username}/<repo_name>'."
+            )
 
     @classmethod
     def is_git_url(cls, target: str) -> bool:
@@ -86,6 +126,7 @@ class RepoFetcher:
             dest_dir = tempfile.mkdtemp(prefix="shieldci_git_", dir=settings.TEMP_SCAN_DIR)
 
         cleaned = git_url.strip()
+        cls.raise_if_profile_url(cleaned)
         if cleaned.endswith(".git"):
             cleaned = cleaned[:-4]
 
@@ -189,6 +230,7 @@ class RepoFetcher:
         Clones a remote git repository shallowly into a destination directory.
         Automatically falls back to HTTPS archive download if git CLI is absent (e.g. on Vercel).
         """
+        cls.raise_if_profile_url(git_url)
         # If git CLI is not installed on the host, seamlessly download via HTTPS
         if not shutil.which("git"):
             return cls.download_repo_archive(git_url, branch=branch, dest_dir=dest_dir)
@@ -293,6 +335,7 @@ class RepoFetcher:
         """
         temp_dir_to_clean: Optional[str] = None
         cleaned_target = (target_input or "").strip()
+        cls.raise_if_profile_url(cleaned_target)
 
         try:
             if is_zip_upload or (cleaned_target.endswith(".zip") and os.path.isfile(cleaned_target)):
@@ -302,7 +345,7 @@ class RepoFetcher:
                 repo_name = cls.extract_repo_name(cleaned_target)
                 yield scan_path, repo_name, SourceType.UPLOAD
 
-            elif cls.is_git_url(cleaned_target):
+            elif cls.is_git_url(cleaned_target) or cleaned_target.startswith(("http://", "https://", "git@", "ssh://", "git://")):
                 temp_dir = tempfile.mkdtemp(prefix="shieldci_git_", dir=settings.TEMP_SCAN_DIR)
                 temp_dir_to_clean = temp_dir
                 scan_path = cls.clone_git_repo(cleaned_target, branch=branch, dest_dir=temp_dir)

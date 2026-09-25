@@ -4439,6 +4439,15 @@ shieldci_audit:
             const gitBranchEl = document.getElementById('gitBranch');
             const branch = gitBranchEl ? (gitBranchEl.value.trim() || null) : null;
             if (!url) throw new Error("Please enter a Git repository URL (e.g. https://github.com/octocat/Hello-World) or switch to Local Directory.");
+            
+            const profileMatch = url.match(/^(?:https?:\/\/)?(?:www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/([^/?#]+)\/?(?:[?#].*)?$/i);
+            if (profileMatch) {
+              const host = profileMatch[1].toLowerCase();
+              const provider = host.includes('github') ? 'GitHub' : (host.includes('gitlab') ? 'GitLab' : 'Bitbucket');
+              const username = profileMatch[2].replace(/\.git$/i, '');
+              throw new Error(`'${url}' is a ${provider} profile, not a repository. Please enter a full repository URL like https://${host}/${username}/<repo-name> (or ${username}/<repo-name>).`);
+            }
+
             setProgress('40%', `<i class="fa-brands fa-git-alt fa-fade"></i> Shallow cloning remote Git repository...`);
 
             response = await fetch('/api/scan', {

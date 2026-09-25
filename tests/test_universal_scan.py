@@ -39,10 +39,47 @@ def test_repo_fetcher_url_detection():
     assert RepoFetcher.is_git_url("owner/repo")
     assert not RepoFetcher.is_git_url("./sample_vulnerable_repo")
     assert not RepoFetcher.is_git_url("C:\\some\\folder")
+    assert not RepoFetcher.is_git_url("https://example.com")
+    assert not RepoFetcher.is_git_url("https://example.com/api/v1")
+
+    # Profile detection vs repository detection
+    assert RepoFetcher.check_profile_url("https://github.com/driceroland") == ("GitHub", "driceroland")
+    assert RepoFetcher.check_profile_url("https://github.com/driceroland/") == ("GitHub", "driceroland")
+    assert RepoFetcher.check_profile_url("https://gitlab.com/testuser") == ("GitLab", "testuser")
+    assert RepoFetcher.check_profile_url("https://bitbucket.org/teamaccount") == ("Bitbucket", "teamaccount")
+    assert RepoFetcher.check_profile_url("https://github.com/driceroland/Search") is None
+    assert RepoFetcher.check_profile_url("https://github.com/octocat/Hello-World") is None
+
+    # Target category classification
+    orchestrator = ExposureOrchestrator()
+    assert orchestrator.detect_target_type("https://example.com") == TargetCategory.WEBSITE
+    assert orchestrator.detect_target_type("https://github.com/octocat/Hello-World") == TargetCategory.REPOSITORY
+
+    # Profile URL should raise ValueError with informative message
+    import pytest
+    with pytest.raises(ValueError) as excinfo:
+        RepoFetcher.raise_if_profile_url("https://github.com/driceroland")
+    assert "user or organization profile, not a repository" in str(excinfo.value)
+    assert "driceroland" in str(excinfo.value)
 
     assert RepoFetcher.normalize_git_url("owner/repo") == "https://github.com/owner/repo.git"
     assert RepoFetcher.extract_repo_name("https://github.com/owner/super-repo.git") == "super-repo"
     print("[OK] RepoFetcher URL detection passed")
+
+
+def test_scan_profile_url_fails_gracefully():
+    print("Testing scanning profile URL fails gracefully...")
+    orchestrator = ExposureOrchestrator()
+    req = ScanRequest(
+        target="https://github.com/driceroland",
+        target_type=TargetCategory.REPOSITORY
+    )
+    import pytest
+    with pytest.raises(ValueError) as excinfo:
+        orchestrator.run_scan(req)
+    assert "user or organization profile" in str(excinfo.value)
+    assert "driceroland" in str(excinfo.value)
+    print("[OK] Profile URL gracefully rejected")
 
 
 def test_local_scan_and_storage():
