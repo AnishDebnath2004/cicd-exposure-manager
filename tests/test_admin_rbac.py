@@ -180,10 +180,53 @@ def test_admin_signup_restriction():
             cursor = conn.cursor()
             cursor.execute("DELETE FROM users WHERE id = ?", (dev_auth.user.id,))
         conn.commit()
-    storage.refresh()
     print("[OK] Test developer cleaned up successfully.")
+
+
+def test_admin_section_visibility_in_frontend():
+    print("==================================================")
+    print(" Testing Frontend Admin Section Visibility Rules  ")
+    print("==================================================")
+    html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static", "index.html")
+    assert os.path.exists(html_path), "index.html should exist"
+
+    with open(html_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+
+    # 1. Nav tab is hidden by default in raw HTML
+    assert 'id="navTab-admin"' in html_content
+    # Find the navTab-admin element definition
+    admin_btn_match = [line for line in html_content.splitlines() if 'id="navTab-admin"' in line]
+    assert len(admin_btn_match) > 0, "navTab-admin button must be present in HTML"
+    assert "hidden" in admin_btn_match[0], "navTab-admin must have the 'hidden' class by default"
+    print("[OK] Admin nav tab button has 'hidden' class by default in raw HTML")
+
+    # 2. Section admin is hidden by default
+    section_admin_match = [line for line in html_content.splitlines() if 'id="section-admin"' in line]
+    assert len(section_admin_match) > 0, "section-admin div must be present in HTML"
+    assert "hidden" in section_admin_match[0], "section-admin must have the 'hidden' class by default"
+    print("[OK] Admin section container has 'hidden' class by default")
+
+    # 3. switchNavTab contains access control guard for 'admin' tab
+    assert "if (tabName === 'admin')" in html_content
+    assert "!isAdmin" in html_content
+    assert "Access Restricted: Administrator privileges required." in html_content
+    print("[OK] switchNavTab strictly guards against unauthorized admin navigation")
+
+    # 4. updateAuthUI hides admin nav tab and admin section for non-admin users
+    assert "if (adminNavTab)" in html_content
+    assert "adminNavTab.classList.add('hidden')" in html_content
+    assert "if (adminSec) adminSec.classList.add('hidden')" in html_content
+    print("[OK] updateAuthUI explicitly hides admin navigation and admin section for non-admin users")
+
+    # 5. URL hash '#admin' requires currentUser.role === 'admin'
+    assert "hash === '#admin'" in html_content
+    assert "currentUser.role === 'admin'" in html_content
+    print("[OK] URL hash '#admin' routing enforces administrator role check")
 
 
 if __name__ == "__main__":
     test_admin_rbac()
     test_admin_signup_restriction()
+    test_admin_section_visibility_in_frontend()
+

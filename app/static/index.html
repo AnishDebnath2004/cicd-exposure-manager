@@ -300,7 +300,7 @@
         <button onclick="switchNavTab('docs')" id="navTab-docs" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent" title="Step-by-Step Documentation &amp; User Guide">
           <i class="fa-solid fa-book-open text-emerald-400 text-[11px]"></i> <span>Documentation</span>
         </button>
-        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Administrator Governance">
+        <button onclick="switchNavTab('admin')" id="navTab-admin" class="nav-tab-btn hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Administrator Governance">
           <i class="fa-solid fa-crown text-amber-400 text-[11px]"></i> <span>Admin</span>
         </button>
       </nav>
@@ -3747,7 +3747,16 @@ jobs:
     let currentUserActiveSubTab = 'domain1';
 
     function switchNavTab(tabName) {
-      if (tabName === 'home') {
+      const isAdmin = currentUser && currentUser.role === 'admin';
+
+      if (tabName === 'admin') {
+        if (!isAdmin) {
+          showToast("Access Restricted: Administrator privileges required.", "error");
+          switchNavTab('home');
+          return;
+        }
+        currentMainTab = 'admin';
+      } else if (tabName === 'home') {
         currentMainTab = 'home';
       } else if (['domain1', 'domain2', 'domain3', 'portal'].includes(tabName)) {
         currentMainTab = 'user';
@@ -3759,8 +3768,11 @@ jobs:
         }
       } else if (tabName === 'docs' || tabName === 'documentation') {
         currentMainTab = 'docs';
-      } else if (tabName === 'admin') {
-        currentMainTab = 'admin';
+      }
+
+      // Security check: If currentMainTab is admin but user is not admin, redirect
+      if (currentMainTab === 'admin' && !isAdmin) {
+        currentMainTab = 'home';
       }
 
       // Toggle top-level section visibility
@@ -3776,6 +3788,27 @@ jobs:
       const adminNavBtn = document.getElementById('navTab-admin');
       const userSubBtn = document.getElementById('subQuickTab-user');
       const adminSubBtn = document.getElementById('subQuickTab-admin');
+
+      // Admin navigation button visibility: strictly visible only for admin
+      if (adminNavBtn) {
+        if (!isAdmin) {
+          adminNavBtn.className = "nav-tab-btn hidden";
+        } else if (currentMainTab === 'admin') {
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
+        } else {
+          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
+        }
+      }
+
+      if (adminSubBtn) {
+        if (!isAdmin) {
+          adminSubBtn.classList.add('hidden');
+        } else if (currentMainTab === 'admin') {
+          adminSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25 border border-amber-400/50";
+        } else {
+          adminSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30";
+        }
+      }
 
       if (currentMainTab === 'home') {
         if (homeSec) homeSec.classList.remove('hidden');
@@ -3794,9 +3827,6 @@ jobs:
         if (docsNavBtn) {
           docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
-        if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
-        }
       } else if (currentMainTab === 'user') {
         if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.remove('hidden');
@@ -3813,15 +3843,9 @@ jobs:
         if (docsNavBtn) {
           docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
-        if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
-        }
 
         if (userSubBtn) {
           userSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-400/40";
-        }
-        if (adminSubBtn) {
-          adminSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/30";
         }
 
         switchUserSubTab(currentUserActiveSubTab, true);
@@ -3842,11 +3866,13 @@ jobs:
         if (docsNavBtn) {
           docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
         }
-        if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap";
-        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (currentMainTab === 'admin') {
+        if (!isAdmin) {
+          switchNavTab('home');
+          return;
+        }
+
         if (homeSec) homeSec.classList.add('hidden');
         if (userSec) userSec.classList.add('hidden');
         if (adminSec) adminSec.classList.remove('hidden');
@@ -3863,34 +3889,21 @@ jobs:
         if (docsNavBtn) {
           docsNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-surface-850 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border border-transparent";
         }
-        if (adminNavBtn) {
-          adminNavBtn.className = "nav-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 whitespace-nowrap shadow-sm";
-        }
-
 
         if (userSubBtn) {
           userSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-850";
         }
-        if (adminSubBtn) {
-          adminSubBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25 border border-amber-400/50";
-        }
 
-        // Section 4 (Admin) Access Control View Management
-        const isAdmin = currentUser && currentUser.role === 'admin';
+        // Section 4 (Admin) Console View Management
         const gateBox = document.getElementById('adminGateBox');
         const mainContent = document.getElementById('adminMainContent');
-        if (gateBox && mainContent) {
-          if (isAdmin) {
-            gateBox.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            loadAdminUsers();
-            loadSchedules();
-            loadScanHistory();
-            loadSettings();
-          } else {
-            gateBox.classList.remove('hidden');
-            mainContent.classList.add('hidden');
-          }
+        if (gateBox) gateBox.classList.add('hidden');
+        if (mainContent) {
+          mainContent.classList.remove('hidden');
+          loadAdminUsers();
+          loadSchedules();
+          loadScanHistory();
+          loadSettings();
         }
       }
 
@@ -5762,7 +5775,7 @@ shieldci_audit:
       localStorage.removeItem(AUTH_USER_KEY);
       currentUser = null;
       updateAuthUI();
-      switchNavTab('domain1');
+      switchNavTab('home');
       // Auto-refresh all database state and records upon logout
       refreshDatabaseState();
     }
@@ -5774,6 +5787,8 @@ shieldci_audit:
       const userOrgRole = document.getElementById('userOrgRole');
       const userAvatar = document.getElementById('userAvatar');
       const adminNavTab = document.getElementById('navTab-admin');
+      const adminSec = document.getElementById('section-admin');
+      const isAdmin = currentUser && currentUser.role === 'admin';
 
       if (currentUser) {
         if (guestControls) guestControls.classList.add('hidden');
@@ -5791,41 +5806,38 @@ shieldci_audit:
           userAvatar.textContent = initial;
         }
 
-        // Keep admin nav tab always visible with appropriate status title
+        // Show admin nav tab ONLY for Administrator role; hide for all others
         if (adminNavTab) {
-          adminNavTab.classList.remove('hidden');
-          if (currentUser.role === 'admin') {
+          if (isAdmin) {
+            adminNavTab.classList.remove('hidden');
             adminNavTab.title = "Administrator Console (Full Governance Active)";
           } else {
-            adminNavTab.title = "Administrator Console (Restricted)";
+            adminNavTab.classList.add('hidden');
           }
         }
 
-        // If currently on admin section, update gate vs main view
-        const adminSec = document.getElementById('section-admin');
-        if (adminSec && !adminSec.classList.contains('hidden')) {
-          const gateBox = document.getElementById('adminGateBox');
-          const mainContent = document.getElementById('adminMainContent');
-          if (currentUser.role === 'admin') {
+        // If not admin, ensure admin section is completely hidden
+        if (!isAdmin) {
+          if (adminSec) adminSec.classList.add('hidden');
+          if (currentMainTab === 'admin') {
+            switchNavTab('home');
+          }
+        } else {
+          if (adminSec && !adminSec.classList.contains('hidden')) {
+            const gateBox = document.getElementById('adminGateBox');
+            const mainContent = document.getElementById('adminMainContent');
             if (gateBox) gateBox.classList.add('hidden');
             if (mainContent) mainContent.classList.remove('hidden');
             loadAdminUsers();
-          } else {
-            if (gateBox) gateBox.classList.remove('hidden');
-            if (mainContent) mainContent.classList.add('hidden');
           }
         }
       } else {
         if (guestControls) guestControls.classList.remove('hidden');
         if (userControls) userControls.classList.add('hidden');
-        if (adminNavTab) adminNavTab.classList.remove('hidden');
-
-        const adminSec = document.getElementById('section-admin');
-        if (adminSec && !adminSec.classList.contains('hidden')) {
-          const gateBox = document.getElementById('adminGateBox');
-          const mainContent = document.getElementById('adminMainContent');
-          if (gateBox) gateBox.classList.remove('hidden');
-          if (mainContent) mainContent.classList.add('hidden');
+        if (adminNavTab) adminNavTab.classList.add('hidden');
+        if (adminSec) adminSec.classList.add('hidden');
+        if (currentMainTab === 'admin') {
+          switchNavTab('home');
         }
       }
     }
@@ -8089,7 +8101,11 @@ shieldci_audit:
         switchUserSubTab('domain3');
         executeScan('database');
       } else if (hash === '#admin') {
-        switchNavTab('admin');
+        if (currentUser && currentUser.role === 'admin') {
+          switchNavTab('admin');
+        } else {
+          switchNavTab('home');
+        }
       } else {
         switchNavTab('home');
       }
