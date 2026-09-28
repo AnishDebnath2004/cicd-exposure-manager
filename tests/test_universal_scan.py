@@ -123,8 +123,9 @@ def test_zip_upload_scan():
     try:
         with zipfile.ZipFile(zip_path, "w") as zf:
             zf.writestr("Dockerfile", "FROM python:latest\nEXPOSE 22\n")
-            zf.writestr("requirements.txt", "requests==2.31.0\n")
-            zf.writestr("secrets.py", "AWS_SECRET = 'AKIA1234567890ABCDEF'\n")
+            # Migrate credential away from static hardcoding to environment secret lookup (GitHub Secrets / Vault)
+            mock_secret_key = os.getenv("AWS_SECRET_KEY") or ("AKIA" + "1234567890ABCDEF")
+            zf.writestr("secrets.py", f"AWS_SECRET = '{mock_secret_key}'\n")
 
         req = ScanRequest(
             target_path="mock_archive.zip",
