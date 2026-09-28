@@ -61,9 +61,10 @@ class AttackCorrelator:
                 unified_patch=s_finding.fix_patch
             ))
 
-        # 3. Check for Toxic Combination 2: CI/CD Privileged Trigger + Leaked Cloud Access Keys
+        # 3. Check for Toxic Combination 2: CI/CD Privileged Trigger + Leaked Cloud Access Keys or Excessive Write Permissions
         dangerous_workflows = [w for w in workflows if "pull_request_target" in w.title.lower() or "injection" in w.title.lower()]
         cloud_secrets = [s for s in secrets if any(c in s.title.lower() for c in ("aws", "github", "token", "key", "access"))]
+        write_workflows = [w for w in workflows if "write-all" in w.title.lower() or "permission" in w.title.lower()]
 
         if dangerous_workflows and (cloud_secrets or secrets):
             w_finding = dangerous_workflows[0]
@@ -82,6 +83,25 @@ class AttackCorrelator:
                 finding_ids=[w_finding.id, s_finding.id],
                 impact="Unauthenticated code execution in deployment runners and compromise of cloud infrastructure.",
                 remediation_advice="Change GitHub Actions trigger from 'pull_request_target' to 'pull_request', isolate secrets, and rotate cloud keys.",
+                unified_patch=w_finding.fix_patch or "Replace 'pull_request_target' with 'pull_request'"
+            ))
+        elif dangerous_workflows and write_workflows:
+            w_finding = dangerous_workflows[0]
+            p_finding = write_workflows[0]
+            toxic_combinations.append(ToxicCombination(
+                id=str(uuid.uuid4()),
+                title="Critical Toxic Combination: Poisoned Pipeline Execution (PPE) with Write-All Permissions",
+                severity=SeverityLevel.CRITICAL,
+                likelihood="Critical (Direct Repository Compromise)",
+                exploit_chain=[
+                    f"External threat actor opens pull request triggering privileged workflow context ({w_finding.file_path})",
+                    f"Workflow runs with elevated token permissions ({p_finding.title})",
+                    f"Untrusted PR payload executes arbitrary commands in the runner ({w_finding.title})",
+                    "Attacker abuses write-all token to push unauthorized commits, modify releases, or taint artifacts"
+                ],
+                finding_ids=list(dict.fromkeys([w_finding.id, p_finding.id])),
+                impact="Full repository compromise, arbitrary code push to protected branches, release artifact poisoning.",
+                remediation_advice="Change workflow trigger from 'pull_request_target' to 'pull_request', and restrict GITHUB_TOKEN permissions to contents: read.",
                 unified_patch=w_finding.fix_patch or "Replace 'pull_request_target' with 'pull_request'"
             ))
 
