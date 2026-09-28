@@ -66,7 +66,7 @@ for fn in key_functions:
 
 # 6. Check DOM IDs of scans and controls
 crucial_ids = [
-    'localRepoPath', 'gitRepoUrl', 'gitBranch', 'fileInput', 'dropZone',
+    'gitRepoUrl', 'gitBranch', 'fileInput', 'dropZone',
     'webTargetUrl', 'dbTargetUri',
     'userTargetInput', 'userLoginForm', 'userSignupForm', 'userResultsArea',
     'domainResults-repository', 'domainResults-website', 'domainResults-database',
@@ -78,5 +78,11 @@ print("\n--- Crucial DOM Elements check ---")
 for cid in crucial_ids:
     assert f'id="{cid}"' in content, f"Missing DOM ID: {cid}"
     print(f"  [OK] {cid}")
+
+# Ensure Local Directory section has been removed
+assert 'id="localRepoPath"' not in content, "localRepoPath should be removed"
+assert 'id="repoForm-local"' not in content, "repoForm-local should be removed"
+assert 'id="repoSubBtn-local"' not in content, "repoSubBtn-local should be removed"
+print("  [OK] Confirmed Local Directory section elements are successfully removed")
 
 print("\nAll UI structural assertions for Merged User Section passed with 100% success!")

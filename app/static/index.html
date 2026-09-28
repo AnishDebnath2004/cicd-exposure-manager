@@ -1060,14 +1060,14 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
                 </div>
                 <div class="flex items-start gap-2">
                   <i class="fa-solid fa-file-zipper text-indigo-400 mt-1 text-[11px]"></i>
-                  <span><strong>Zero-Friction Ingestion:</strong> Scan local directories directly on host, remote Git URLs with branch support, or uploaded ZIP code packages up to 50MB.</span>
+                  <span><strong>Zero-Friction Ingestion:</strong> Scan remote Git URLs with branch support, or uploaded ZIP code packages up to 50MB.</span>
                 </div>
               </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400 font-mono">Input: Path, Git URL, ZIP</span>
+              <span class="text-[11px] text-slate-400 font-mono">Input: Git URL, ZIP</span>
               <button onclick="launchVectorPreset('domain1')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
                 <i class="fa-solid fa-play text-amber-300"></i> Try Code Audit Demo
               </button>
@@ -1352,24 +1352,12 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
           <!-- Sub-mode buttons -->
           <div class="flex items-center gap-2 mb-3">
             <span class="text-xs text-slate-400 font-semibold mr-1">Code Source:</span>
-            <button onclick="setRepoSubmode('local')" id="repoSubBtn-local" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Local Directory</button>
-            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">Git Remote URL</button>
+            <button onclick="setRepoSubmode('git')" id="repoSubBtn-git" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">Git Remote URL</button>
             <button onclick="setRepoSubmode('upload')" id="repoSubBtn-upload" class="px-3 py-1 rounded-md text-xs font-semibold bg-surface-850 text-slate-400 hover:text-slate-200 border border-slate-700/60">ZIP Upload</button>
           </div>
 
-          <!-- Local Path Form -->
-          <div id="repoForm-local" class="space-y-4">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <i class="fa-solid fa-folder-open text-base"></i>
-              </div>
-              <input type="text" id="localRepoPath" placeholder="./sample_vulnerable_repo or /workspace/project" value="./sample_vulnerable_repo" class="w-full bg-surface-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition-all">
-            </div>
-            <p class="text-xs text-slate-400"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Scan local directories on the host or runner filesystem directly without network transmission.</p>
-          </div>
-
           <!-- Git URL Input Form -->
-          <div id="repoForm-git" class="hidden space-y-4">
+          <div id="repoForm-git" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div class="md:col-span-8 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -1410,9 +1398,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
           <!-- Presets -->
           <div id="presetsContainer-domain1" class="flex flex-wrap items-center gap-2">
             <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400"></i> Presets:</span>
-            <button onclick="applyPreset('repo-sample')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚠️ Local Sample Repo</button>
             <button onclick="applyPreset('repo-github')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐙 GitHub Octocat Demo</button>
-            <button onclick="applyPreset('repo-current')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📁 Current Workspace (.)</button>
           </div>
 
           <!-- Quality Gate Settings -->
@@ -3736,7 +3722,7 @@ jobs:
     let currentScanData = null;
     let selectedZipFile = null;
     let currentAssetCategory = 'repository';
-    let currentRepoSubmode = 'local';
+    let currentRepoSubmode = 'git';
     let severityChartInst = null;
     let categoryChartInst = null;
 
@@ -4205,10 +4191,10 @@ shieldci_audit:
       renderPresets(cat);
     }
 
-    // Repository Submode Switching: Git URL | ZIP Upload | Local Path
+    // Repository Submode Switching: Git URL | ZIP Upload
     function setRepoSubmode(mode) {
       currentRepoSubmode = mode;
-      const modes = ['git', 'upload', 'local'];
+      const modes = ['git', 'upload'];
       modes.forEach(m => {
         const form = document.getElementById(`repoForm-${m}`);
         const btn = document.getElementById(`repoSubBtn-${m}`);
@@ -4236,9 +4222,7 @@ shieldci_audit:
 
       if (category === 'repository') {
         container.innerHTML += `
-          <button onclick="applyPreset('repo-sample')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">⚠️ Local Sample Repo</button>
           <button onclick="applyPreset('repo-github')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">🐙 GitHub Octocat Demo</button>
-          <button onclick="applyPreset('repo-current')" class="px-2.5 py-1 rounded-md bg-surface-850 hover:bg-surface-800 text-slate-300 border border-slate-700/60 transition-all">📁 Current Workspace (.)</button>
         `;
       } else if (category === 'website') {
         container.innerHTML += `
@@ -4255,13 +4239,7 @@ shieldci_audit:
     }
 
     function applyPreset(preset) {
-      if (preset === 'repo-sample') {
-        switchNavTab('domain1');
-        setRepoSubmode('local');
-        const el = document.getElementById('localRepoPath');
-        if (el) el.value = './sample_vulnerable_repo';
-        showToast("Applied sample vulnerable repository preset", "info");
-      } else if (preset === 'repo-github') {
+      if (preset === 'repo-github' || preset === 'repo-sample' || preset === 'repo-current') {
         switchNavTab('domain1');
         setRepoSubmode('git');
         const urlEl = document.getElementById('gitRepoUrl');
@@ -4269,12 +4247,6 @@ shieldci_audit:
         const brEl = document.getElementById('gitBranch');
         if (brEl) brEl.value = 'master';
         showToast("Applied GitHub Octocat preset", "info");
-      } else if (preset === 'repo-current') {
-        switchNavTab('domain1');
-        setRepoSubmode('local');
-        const el = document.getElementById('localRepoPath');
-        if (el) el.value = '.';
-        showToast("Applied current workspace preset", "info");
       } else if (preset === 'web-example') {
         switchNavTab('domain2');
         const el = document.getElementById('webTargetUrl');
@@ -4433,12 +4405,12 @@ shieldci_audit:
               headers: getAuthHeaders(),
               body: formData
             });
-          } else if (currentRepoSubmode === 'git') {
+          } else {
             const gitUrlEl = document.getElementById('gitRepoUrl');
             const url = gitUrlEl ? gitUrlEl.value.trim() : '';
             const gitBranchEl = document.getElementById('gitBranch');
             const branch = gitBranchEl ? (gitBranchEl.value.trim() || null) : null;
-            if (!url) throw new Error("Please enter a Git repository URL (e.g. https://github.com/octocat/Hello-World) or switch to Local Directory.");
+            if (!url) throw new Error("Please enter a Git repository URL (e.g. https://github.com/octocat/Hello-World) or switch to ZIP Upload.");
             
             const profileMatch = url.match(/^(?:https?:\/\/)?(?:www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/([^/?#]+)\/?(?:[?#].*)?$/i);
             if (profileMatch) {
@@ -4457,23 +4429,6 @@ shieldci_audit:
                 target: url,
                 repo_url: url,
                 branch: branch,
-                target_type: 'repository',
-                fail_on_severity: failSeverity,
-                max_allowed_pes: maxPes
-              })
-            });
-          } else {
-            const localPathEl = document.getElementById('localRepoPath');
-            const path = localPathEl ? localPathEl.value.trim() : './sample_vulnerable_repo';
-            if (!path) throw new Error("Please enter a local filesystem path (e.g. ./sample_vulnerable_repo).");
-            setProgress('40%', `<i class="fa-solid fa-folder-open fa-fade"></i> Auditing local codebase...`);
-
-            response = await fetch('/api/scan', {
-              method: 'POST',
-              headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-              body: JSON.stringify({
-                target: path,
-                target_path: path,
                 target_type: 'repository',
                 fail_on_severity: failSeverity,
                 max_allowed_pes: maxPes
@@ -7883,7 +7838,7 @@ shieldci_audit:
     function launchVectorPreset(vector) {
       if (vector === 'domain1') {
         switchNavTab('domain1');
-        applyPreset('repo-sample');
+        applyPreset('repo-github');
         executeScan('repository');
       } else if (vector === 'domain2') {
         switchNavTab('domain2');
