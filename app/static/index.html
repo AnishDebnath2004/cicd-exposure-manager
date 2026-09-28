@@ -510,7 +510,7 @@
                         <span class="text-rose-200 font-bold">AWS IAM Access Key Exposed</span>
                         <span class="text-[10px] font-mono text-rose-400 bg-rose-900/40 px-1.5 rounded">Entropy: 4.85</span>
                       </div>
-                      <p class="text-slate-400 font-mono text-[11px] truncate">File: <code class="text-slate-300">app/config.py:14</code> &bull; <code class="text-rose-400">AKIAIOSFODNN7EXAMPLE...</code></p>
+                      <p class="text-slate-400 font-mono text-[11px] truncate">File: <code class="text-slate-300">app/config.py:14</code> &bull; <code class="text-rose-400 line-through">AKIA****[REVOKED]</code> &bull; <span class="text-emerald-400 font-semibold">&rarr; Migrated to GitHub Secrets / HashiCorp Vault</span></p>
                     </div>
                     <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] font-bold whitespace-nowrap">+25 PES</span>
                   </div>
@@ -1036,7 +1036,7 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
                       <span><i class="fa-solid fa-triangle-exclamation mr-1"></i> [CRITICAL] AWS IAM Secret Token Exposed</span>
                       <span class="text-[9px] font-mono bg-rose-500/20 px-1.5 py-0.5 rounded text-rose-200">Entropy: 4.85</span>
                     </div>
-                    <div class="text-slate-400 text-[10px] mt-1 truncate">File: <span class="text-slate-300">app/config.py:14</span> &bull; Pattern: <code class="text-rose-400">AKIAIOSFODNN7EXAMPLE...</code></div>
+                    <div class="text-slate-400 text-[10px] mt-1 truncate">File: <span class="text-slate-300">app/config.py:14</span> &bull; <code class="text-rose-400 line-through">AKIA****[REVOKED]</code> &bull; <span class="text-emerald-400 font-semibold">&rarr; Migrated to GitHub Secrets / HashiCorp Vault</span></div>
                   </div>
                   <div class="p-2 rounded-lg bg-orange-950/30 border border-orange-500/30 text-[11px]">
                     <div class="flex items-center justify-between text-orange-300 font-bold">
@@ -7907,7 +7907,7 @@ shieldci_audit:
               </div>
               <div class="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/30">
                 <div class="text-rose-300 font-bold text-[11px]"><i class="fa-solid fa-key mr-1"></i> AWS IAM Secret Access Key Exposed</div>
-                <div class="text-slate-400 text-[10px] mt-1 font-mono">Line 14: <code class="text-rose-400">AWS_SECRET_KEY="AKIAIOSFODNN7..."</code> (Entropy: 4.85)</div>
+                <div class="text-slate-400 text-[10px] mt-1 font-mono">Line 14: <code class="text-rose-400 line-through">AKIA****[REVOKED]</code> &rarr; <code class="text-emerald-400">os.getenv("AWS_SECRET_KEY")</code> (GitHub Secrets / Vault)</div>
               </div>
               <div class="p-2.5 rounded-xl bg-orange-950/30 border border-orange-500/30">
                 <div class="text-orange-300 font-bold text-[11px]"><i class="fa-solid fa-shield-virus mr-1"></i> CI/CD Workflow Script Injection Flaw</div>
