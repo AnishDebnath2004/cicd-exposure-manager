@@ -27,14 +27,15 @@ class AutoRemediator:
     @classmethod
     def generate_dockerfile_patch(cls, original_content: str, file_path: str = "Dockerfile") -> Optional[str]:
         """Generates unified diff hardening Dockerfile (adds non-root user, fixes latest tag)."""
-        lines = original_content.splitlines(keepends=True)
+        lines = [l.rstrip("\r\n") for l in original_content.splitlines()]
         remediated = list(lines)
         modified = False
 
         # 1. Check for USER directive
         has_user = any(re.match(r"^\s*USER\s+", line, re.IGNORECASE) for line in lines)
         if not has_user:
-            remediated.append("\n# [ShieldCI Remediation] Run container as non-root user (UID 10001)\nUSER 10001\n")
+            remediated.append("# [ShieldCI Remediation] Run container as non-root user (UID 10001)")
+            remediated.append("USER 10001")
             modified = True
 
         # 2. Check for latest tag in FROM
@@ -44,7 +45,7 @@ class AutoRemediator:
                 # Replace :latest with a pinned version tag or comment
                 cleaned_from = line.strip()
                 if ":latest" in cleaned_from:
-                    fixed_from = cleaned_from.replace(":latest", ":slim-bullseye  # Pin specific tag instead of latest") + "\n"
+                    fixed_from = cleaned_from.replace(":latest", ":slim-bullseye  # Pin specific tag instead of latest")
                     new_lines.append(fixed_from)
                     modified = True
                     continue
@@ -65,7 +66,7 @@ class AutoRemediator:
     @classmethod
     def generate_workflow_patch(cls, original_content: str, file_path: str) -> Optional[str]:
         """Generates unified diff for GitHub Actions (replaces pull_request_target with pull_request)."""
-        lines = original_content.splitlines(keepends=True)
+        lines = [l.rstrip("\r\n") for l in original_content.splitlines()]
         new_lines = []
         modified = False
 
@@ -92,7 +93,7 @@ class AutoRemediator:
     @classmethod
     def generate_requirements_patch(cls, original_content: str, file_path: str = "requirements.txt") -> Optional[str]:
         """Generates unified diff bumping vulnerable dependencies to safe patched versions."""
-        lines = original_content.splitlines(keepends=True)
+        lines = [l.rstrip("\r\n") for l in original_content.splitlines()]
         new_lines = []
         modified = False
 
@@ -106,7 +107,7 @@ class AutoRemediator:
             for pkg, safe_ver in cls.SCA_SAFE_VERSIONS.items():
                 pattern = rf"(?i)^\s*{pkg}\s*([=><~]=?)\s*([0-9\.]+)"
                 if re.match(pattern, trimmed):
-                    new_lines.append(f"{pkg}>={safe_ver}  # [ShieldCI Fix] Upgraded for CVE remediation\n")
+                    new_lines.append(f"{pkg}>={safe_ver}  # [ShieldCI Fix] Upgraded for CVE remediation")
                     modified = True
                     matched = True
                     break
