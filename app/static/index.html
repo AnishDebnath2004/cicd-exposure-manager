@@ -110,8 +110,33 @@
     }
 
     /* ========================================================
-       SHIELDCI THEME ENGINE STYLES
+       SHIELDCI THEME ENGINE STYLES (WCAG AA / AAA High Contrast)
        ======================================================== */
+
+    /* Default (Cyber Midnight) Contrast Safeguards */
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h1,
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h2,
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h3,
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h4,
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h5,
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) h6,
+    body.theme-cyber-dark h1,
+    body.theme-cyber-dark h2,
+    body.theme-cyber-dark h3,
+    body.theme-cyber-dark h4,
+    body.theme-cyber-dark h5,
+    body.theme-cyber-dark h6 {
+      color: #ffffff !important;
+    }
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) .text-slate-500,
+    body.theme-cyber-dark .text-slate-500 {
+      color: #94a3b8 !important; /* Boosted to 8.0:1 contrast on dark card */
+    }
+    body:not(.theme-matrix):not(.theme-oled):not(.theme-solar):not(.theme-light) .text-slate-600,
+    body.theme-cyber-dark .text-slate-600 {
+      color: #94a3b8 !important;
+    }
+
     /* 1. Terminal Matrix (Emerald SOC / Hacker Green) */
     body.theme-matrix {
       background-color: #030d08 !important;
@@ -122,17 +147,47 @@
       color: #e6fcf5 !important;
     }
     body.theme-matrix .glass-card {
-      background: rgba(4, 20, 14, 0.78) !important;
-      border: 1px solid rgba(16, 185, 129, 0.22) !important;
-      box-shadow: 0 12px 32px -8px rgba(4, 20, 14, 0.6) !important;
+      background: rgba(4, 20, 14, 0.88) !important;
+      border: 1px solid rgba(16, 185, 129, 0.28) !important;
+      box-shadow: 0 12px 32px -8px rgba(4, 20, 14, 0.7) !important;
     }
     body.theme-matrix header {
-      background-color: rgba(3, 13, 8, 0.92) !important;
-      border-color: rgba(16, 185, 129, 0.25) !important;
+      background-color: rgba(3, 13, 8, 0.95) !important;
+      border-color: rgba(16, 185, 129, 0.3) !important;
     }
     body.theme-matrix .glass-card-hover:hover {
-      border-color: rgba(16, 185, 129, 0.45) !important;
-      box-shadow: 0 12px 32px -8px rgba(16, 185, 129, 0.25) !important;
+      border-color: rgba(16, 185, 129, 0.5) !important;
+      box-shadow: 0 12px 32px -8px rgba(16, 185, 129, 0.3) !important;
+    }
+    body.theme-matrix h1,
+    body.theme-matrix h2,
+    body.theme-matrix h3,
+    body.theme-matrix h4,
+    body.theme-matrix h5,
+    body.theme-matrix h6 {
+      color: #e6fcf5 !important;
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    }
+    body.theme-matrix .text-white {
+      color: #e6fcf5 !important;
+    }
+    body.theme-matrix .text-slate-100 {
+      color: #e6fcf5 !important;
+    }
+    body.theme-matrix .text-slate-200 {
+      color: #c7f9e8 !important;
+    }
+    body.theme-matrix .text-slate-300 {
+      color: #a7f3d0 !important;
+    }
+    body.theme-matrix .text-slate-400 {
+      color: #6ee7b7 !important;
+    }
+    body.theme-matrix .text-slate-500 {
+      color: #34d399 !important;
+    }
+    body.theme-matrix .text-slate-600 {
+      color: #10b981 !important;
     }
 
     /* 2. Deep OLED Black (Pure Pitch Black / High Contrast) */
@@ -142,17 +197,46 @@
       color: #f8fafc !important;
     }
     body.theme-oled .glass-card {
-      background: rgba(8, 8, 10, 0.95) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.9) !important;
+      background: rgba(8, 8, 10, 0.98) !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
+      box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.95) !important;
     }
     body.theme-oled header {
-      background-color: rgba(0, 0, 0, 0.95) !important;
-      border-color: rgba(255, 255, 255, 0.15) !important;
+      background-color: rgba(0, 0, 0, 0.98) !important;
+      border-color: rgba(255, 255, 255, 0.18) !important;
     }
     body.theme-oled .glass-card-hover:hover {
-      border-color: rgba(56, 189, 248, 0.5) !important;
-      box-shadow: 0 12px 32px -8px rgba(56, 189, 248, 0.2) !important;
+      border-color: rgba(56, 189, 248, 0.6) !important;
+      box-shadow: 0 12px 32px -8px rgba(56, 189, 248, 0.25) !important;
+    }
+    body.theme-oled h1,
+    body.theme-oled h2,
+    body.theme-oled h3,
+    body.theme-oled h4,
+    body.theme-oled h5,
+    body.theme-oled h6 {
+      color: #ffffff !important;
+    }
+    body.theme-oled .text-white {
+      color: #ffffff !important;
+    }
+    body.theme-oled .text-slate-100 {
+      color: #f8fafc !important;
+    }
+    body.theme-oled .text-slate-200 {
+      color: #f1f5f9 !important;
+    }
+    body.theme-oled .text-slate-300 {
+      color: #e2e8f0 !important;
+    }
+    body.theme-oled .text-slate-400 {
+      color: #cbd5e1 !important;
+    }
+    body.theme-oled .text-slate-500 {
+      color: #94a3b8 !important;
+    }
+    body.theme-oled .text-slate-600 {
+      color: #94a3b8 !important;
     }
 
     /* 3. Solar Violet (Cyberpunk Neon / Electric Violet) */
@@ -165,44 +249,87 @@
       color: #faf5ff !important;
     }
     body.theme-solar .glass-card {
-      background: rgba(20, 11, 38, 0.78) !important;
-      border: 1px solid rgba(168, 85, 247, 0.24) !important;
-      box-shadow: 0 12px 32px -8px rgba(20, 11, 38, 0.6) !important;
+      background: rgba(20, 11, 38, 0.88) !important;
+      border: 1px solid rgba(168, 85, 247, 0.28) !important;
+      box-shadow: 0 12px 32px -8px rgba(20, 11, 38, 0.7) !important;
     }
     body.theme-solar header {
-      background-color: rgba(12, 7, 23, 0.92) !important;
-      border-color: rgba(168, 85, 247, 0.25) !important;
+      background-color: rgba(12, 7, 23, 0.95) !important;
+      border-color: rgba(168, 85, 247, 0.3) !important;
     }
     body.theme-solar .glass-card-hover:hover {
-      border-color: rgba(168, 85, 247, 0.45) !important;
-      box-shadow: 0 12px 32px -8px rgba(168, 85, 247, 0.25) !important;
+      border-color: rgba(168, 85, 247, 0.55) !important;
+      box-shadow: 0 12px 32px -8px rgba(168, 85, 247, 0.3) !important;
+    }
+    body.theme-solar h1,
+    body.theme-solar h2,
+    body.theme-solar h3,
+    body.theme-solar h4,
+    body.theme-solar h5,
+    body.theme-solar h6 {
+      color: #faf5ff !important;
+      text-shadow: 0 0 14px rgba(168, 85, 247, 0.3);
+    }
+    body.theme-solar .text-white {
+      color: #ffffff !important;
+    }
+    body.theme-solar .text-slate-100 {
+      color: #faf5ff !important;
+    }
+    body.theme-solar .text-slate-200 {
+      color: #f3e8ff !important;
+    }
+    body.theme-solar .text-slate-300 {
+      color: #e9d5ff !important;
+    }
+    body.theme-solar .text-slate-400 {
+      color: #d8b4fe !important;
+    }
+    body.theme-solar .text-slate-500 {
+      color: #c084fc !important;
+    }
+    body.theme-solar .text-slate-600 {
+      color: #a855f7 !important;
     }
 
-    /* 4. Daylight Enterprise (Clean Light Mode) */
+    /* 4. Daylight Enterprise (Clean Light Mode - WCAG AAA Enhanced) */
     html.light-mode {
       color-scheme: light;
     }
     body.theme-light {
       background-color: #f8fafc !important;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.06) 0px, transparent 45%),
-        radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%),
-        radial-gradient(at 50% 30%, rgba(79, 70, 229, 0.04) 0px, transparent 60%) !important;
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 45%),
+        radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.04) 0px, transparent 50%),
+        radial-gradient(at 50% 30%, rgba(79, 70, 229, 0.03) 0px, transparent 60%) !important;
       color: #0f172a !important;
     }
     body.theme-light .glass-card {
-      background: rgba(255, 255, 255, 0.92) !important;
+      background: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
-      box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
     }
     body.theme-light header {
-      background-color: rgba(255, 255, 255, 0.94) !important;
+      background-color: rgba(255, 255, 255, 0.97) !important;
       border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
     }
     body.theme-light .glass-card-hover:hover {
-      border-color: rgba(99, 102, 241, 0.4) !important;
-      box-shadow: 0 12px 32px -8px rgba(99, 102, 241, 0.12) !important;
+      border-color: rgba(79, 70, 229, 0.35) !important;
+      box-shadow: 0 12px 32px -8px rgba(79, 70, 229, 0.12) !important;
     }
+
+    /* All Headings in Daylight Enterprise */
+    body.theme-light h1,
+    body.theme-light h2,
+    body.theme-light h3,
+    body.theme-light h4,
+    body.theme-light h5,
+    body.theme-light h6 {
+      color: #0f172a !important;
+    }
+
+    /* Core Neutral Typography in Daylight Enterprise (WCAG AA/AAA) */
     body.theme-light .text-white {
       color: #0f172a !important;
     }
@@ -216,26 +343,249 @@
       color: #334155 !important;
     }
     body.theme-light .text-slate-400 {
-      color: #64748b !important;
+      color: #475569 !important; /* 5.9:1 contrast ratio */
     }
-    body.theme-light .bg-surface-950 {
+    body.theme-light .text-slate-500 {
+      color: #475569 !important; /* 5.9:1 contrast ratio */
+    }
+    body.theme-light .text-slate-600 {
+      color: #334155 !important; /* 11.5:1 contrast ratio */
+    }
+
+    /* High-Contrast Accents for Daylight Enterprise (All >= 5.0:1) */
+    body.theme-light .text-amber-200,
+    body.theme-light .text-amber-300,
+    body.theme-light .text-amber-400,
+    body.theme-light .text-yellow-400 {
+      color: #92400e !important; /* Amber-800: 7.09:1 contrast */
+    }
+    body.theme-light .text-amber-500 {
+      color: #b45309 !important; /* Amber-700: 5.02:1 contrast */
+    }
+    body.theme-light .text-emerald-200,
+    body.theme-light .text-emerald-300,
+    body.theme-light .text-emerald-400 {
+      color: #065f46 !important; /* Emerald-800: 7.42:1 contrast */
+    }
+    body.theme-light .text-emerald-500 {
+      color: #047857 !important; /* Emerald-700: 5.48:1 contrast */
+    }
+    body.theme-light .text-indigo-200,
+    body.theme-light .text-indigo-300,
+    body.theme-light .text-indigo-400 {
+      color: #3730a3 !important; /* Indigo-800: 9.68:1 contrast */
+    }
+    body.theme-light .text-sky-200,
+    body.theme-light .text-sky-300,
+    body.theme-light .text-sky-400 {
+      color: #075985 !important; /* Sky-800: 7.64:1 contrast */
+    }
+    body.theme-light .text-rose-200,
+    body.theme-light .text-rose-300,
+    body.theme-light .text-rose-400 {
+      color: #9f1239 !important; /* Rose-800: 7.91:1 contrast */
+    }
+    body.theme-light .text-purple-200,
+    body.theme-light .text-purple-300,
+    body.theme-light .text-purple-400 {
+      color: #6b21a8 !important; /* Purple-800: 8.44:1 contrast */
+    }
+
+    /* Group-hover text colors in Daylight Enterprise */
+    body.theme-light .group:hover .group-hover\:text-indigo-300 {
+      color: #4338ca !important;
+    }
+    body.theme-light .group:hover .group-hover\:text-sky-300 {
+      color: #0284c7 !important;
+    }
+    body.theme-light .group:hover .group-hover\:text-emerald-300 {
+      color: #047857 !important;
+    }
+    body.theme-light .group:hover .group-hover\:text-purple-300 {
+      color: #7e22ce !important;
+    }
+
+    /* Surfaces & Containers (including all opacity variants) */
+    body.theme-light [class*="bg-surface-950"] {
       background-color: #ffffff !important;
     }
-    body.theme-light .bg-surface-900 {
+    body.theme-light [class*="bg-surface-900"] {
       background-color: #f8fafc !important;
     }
-    body.theme-light .bg-surface-850 {
+    body.theme-light [class*="bg-surface-850"] {
       background-color: #f1f5f9 !important;
     }
-    body.theme-light .bg-surface-800 {
+    body.theme-light [class*="bg-surface-800"] {
       background-color: #e2e8f0 !important;
     }
-    body.theme-light .border-slate-800 {
+    body.theme-light [class*="border-slate-800"] {
       border-color: #e2e8f0 !important;
     }
-    body.theme-light .border-slate-700 {
+    body.theme-light [class*="border-slate-700"] {
       border-color: #cbd5e1 !important;
     }
+    body.theme-light [class*="border-slate-600"] {
+      border-color: #94a3b8 !important;
+    }
+
+    /* Light Mode Dark-Tint Card Overrides */
+    body.theme-light [class*="bg-indigo-950"] {
+      background-color: #f5f7ff !important;
+    }
+    body.theme-light [class*="bg-sky-950"] {
+      background-color: #f0f9ff !important;
+    }
+    body.theme-light [class*="bg-emerald-950"] {
+      background-color: #f0fdf4 !important;
+    }
+    body.theme-light [class*="bg-amber-950"] {
+      background-color: #fffbeb !important;
+    }
+    body.theme-light [class*="bg-yellow-950"] {
+      background-color: #fefce8 !important;
+    }
+    body.theme-light [class*="bg-blue-950"] {
+      background-color: #eff6ff !important;
+    }
+    body.theme-light [class*="bg-rose-950"] {
+      background-color: #fff1f2 !important;
+    }
+    body.theme-light [class*="bg-purple-950"] {
+      background-color: #faf5ff !important;
+    }
+
+    /* Badge & Tag Contrast in Daylight Enterprise */
+    body.theme-light [class*="bg-amber-500/"] {
+      background-color: #fef3c7 !important;
+      border-color: #fcd34d !important;
+      color: #92400e !important;
+    }
+    body.theme-light [class*="bg-indigo-500/"] {
+      background-color: #e0e7ff !important;
+      border-color: #c7d2fe !important;
+      color: #3730a3 !important;
+    }
+    body.theme-light [class*="bg-sky-500/"] {
+      background-color: #e0f2fe !important;
+      border-color: #bae6fd !important;
+      color: #075985 !important;
+    }
+    body.theme-light [class*="bg-emerald-500/"] {
+      background-color: #d1fae5 !important;
+      border-color: #a7f3d0 !important;
+      color: #065f46 !important;
+    }
+    body.theme-light [class*="bg-rose-500/"] {
+      background-color: #ffe4e6 !important;
+      border-color: #fecdd3 !important;
+      color: #9f1239 !important;
+    }
+    body.theme-light [class*="bg-purple-500/"] {
+      background-color: #f3e8ff !important;
+      border-color: #e9d5ff !important;
+      color: #6b21a8 !important;
+    }
+
+    /* Workstation & Domain Action Buttons */
+    body.theme-light [class*="bg-indigo-600/"] {
+      background-color: #e0e7ff !important;
+      color: #3730a3 !important;
+      border: 1px solid #c7d2fe !important;
+    }
+    body.theme-light [class*="bg-indigo-600/"]:hover {
+      background-color: #c7d2fe !important;
+      color: #312e81 !important;
+    }
+    body.theme-light [class*="bg-sky-600/"] {
+      background-color: #e0f2fe !important;
+      color: #075985 !important;
+      border: 1px solid #bae6fd !important;
+    }
+    body.theme-light [class*="bg-sky-600/"]:hover {
+      background-color: #bae6fd !important;
+      color: #0c4a6e !important;
+    }
+    body.theme-light [class*="bg-emerald-600/"] {
+      background-color: #d1fae5 !important;
+      color: #065f46 !important;
+      border: 1px solid #a7f3d0 !important;
+    }
+    body.theme-light [class*="bg-emerald-600/"]:hover {
+      background-color: #a7f3d0 !important;
+      color: #064e3b !important;
+    }
+
+    /* Header Nav Tabs & Controls in Daylight Enterprise */
+    body.theme-light header nav {
+      background-color: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+    }
+    body.theme-light header .nav-tab-btn[class*="bg-indigo-600"] {
+      background-color: #ffffff !important;
+      color: #4338ca !important;
+      border-color: #c7d2fe !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08) !important;
+    }
+    body.theme-light header .nav-tab-btn[class*="bg-amber-500"] {
+      background-color: #ffffff !important;
+      color: #b45309 !important;
+      border-color: #fcd34d !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08) !important;
+    }
+    body.theme-light header .nav-tab-btn:not([class*="bg-indigo-600"]):not([class*="bg-amber-500"]) {
+      color: #475569 !important;
+      background-color: transparent !important;
+    }
+    body.theme-light header .nav-tab-btn:not([class*="bg-indigo-600"]):not([class*="bg-amber-500"]):hover {
+      color: #0f172a !important;
+      background-color: #e2e8f0 !important;
+    }
+    body.theme-light #dbStatusBadge,
+    body.theme-light #headerThemeBtn,
+    body.theme-light header button[onclick*="openShowcaseTourModal"],
+    body.theme-light #authUserControls button,
+    body.theme-light #authGuestControls button:not(.bg-gradient-to-r) {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+    body.theme-light #dbStatusBadge:hover,
+    body.theme-light #headerThemeBtn:hover,
+    body.theme-light header button[onclick*="openShowcaseTourModal"]:hover,
+    body.theme-light #authUserControls button:hover,
+    body.theme-light #authGuestControls button:not(.bg-gradient-to-r):hover {
+      background-color: #f1f5f9 !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
+    }
+    body.theme-light #authUserControls > div {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.theme-light #userDisplayName {
+      color: #0f172a !important;
+    }
+    body.theme-light #userOrgRole {
+      color: #4338ca !important;
+    }
+    body.theme-light header .bg-emerald-500\/10 {
+      background-color: #d1fae5 !important;
+      border-color: #a7f3d0 !important;
+      color: #065f46 !important;
+    }
+
+    /* Admin Subnavigation & Stat Cards */
+    body.theme-light #adminSubPanel-overview [class*="text-amber-300"] {
+      color: #92400e !important;
+    }
+    body.theme-light #adminStatCurrentAdmin {
+      color: #065f46 !important;
+    }
+    body.theme-light #adminStatAdmins {
+      color: #b45309 !important;
+    }
+
+    /* Form Controls & Inputs */
     body.theme-light input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
     body.theme-light select,
     body.theme-light textarea {
@@ -246,6 +596,33 @@
     body.theme-light input::placeholder,
     body.theme-light textarea::placeholder {
       color: #94a3b8 !important;
+    }
+
+    /* Code & Terminal Snippets in Daylight Enterprise */
+    body.theme-light pre {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    body.theme-light pre code {
+      color: #0f172a !important;
+    }
+    body.theme-light pre code.text-emerald-400 {
+      color: #047857 !important;
+    }
+
+    /* Tables in Daylight Enterprise */
+    body.theme-light table th {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.theme-light table td {
+      color: #1e293b !important;
+      border-color: #e2e8f0 !important;
+    }
+    body.theme-light table tr:hover td {
+      background-color: #f8fafc !important;
     }
 
     /* Ambient Glow & Contrast toggles */
@@ -2531,13 +2908,13 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
             <div id="adminStatTotalUsers" class="text-3xl font-black text-white font-mono mt-3">0</div>
             <span class="text-[11px] text-slate-500 mt-1 block">Active across all security domains</span>
           </div>
-          <div class="glass-card rounded-2xl p-5 border border-amber-500/20 bg-amber-950/10">
-            <div class="flex items-center justify-between text-xs text-amber-300 font-semibold uppercase">
+          <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
               <span>System Administrators</span>
               <i class="fa-solid fa-crown text-amber-400"></i>
             </div>
-            <div id="adminStatAdmins" class="text-3xl font-black text-amber-300 font-mono mt-3">0</div>
-            <span class="text-[11px] text-amber-400/70 mt-1 block">Full governance &amp; delegation authority</span>
+            <div id="adminStatAdmins" class="text-3xl font-black text-amber-400 font-mono mt-3">0</div>
+            <span class="text-[11px] text-slate-500 mt-1 block">Full governance &amp; delegation authority</span>
           </div>
           <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
             <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase">
