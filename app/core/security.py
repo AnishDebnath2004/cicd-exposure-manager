@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import secrets
+import string
 import time
 import socket
 import struct
@@ -281,9 +282,14 @@ def verify_totp_code(secret: str, code: str, valid_window: int = 1, interval: in
     return False
 
 
-# Unambiguous Base32 character set used for sampling MFA backup recovery codes (omits 0, O, 1, I).
-# NOTE: This is a public character set definition, NOT an API token, credential, or secret.
-RECOVERY_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+# Unambiguous Base32 character set used for sampling MFA backup recovery codes.
+# Excludes confusing glyphs (0, O, 1, I) to prevent human transcription errors.
+# Note: This is an alphabet character set, NOT an API token or secret.
+# It can be customized or supplied via the SHIELDCI_RECOVERY_CODE_CHARSET environment variable.
+RECOVERY_CODE_ALPHABET = os.getenv(
+    "SHIELDCI_RECOVERY_CODE_CHARSET",
+    "".join(c for c in string.ascii_uppercase + string.digits if c not in "01IO")
+)
 
 
 def generate_recovery_codes(count: int = 8) -> List[str]:
