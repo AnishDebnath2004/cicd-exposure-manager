@@ -281,15 +281,19 @@ def verify_totp_code(secret: str, code: str, valid_window: int = 1, interval: in
     return False
 
 
+# Unambiguous Base32 character set used for sampling MFA backup recovery codes (omits 0, O, 1, I).
+# NOTE: This is a public character set definition, NOT an API token, credential, or secret.
+RECOVERY_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
 def generate_recovery_codes(count: int = 8) -> List[str]:
     """
     Generates single-use emergency backup recovery codes (e.g. 'ABCD-EF23').
     """
-    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     codes = []
     for _ in range(count):
-        part1 = "".join(secrets.choice(alphabet) for _ in range(4))
-        part2 = "".join(secrets.choice(alphabet) for _ in range(4))
+        part1 = "".join(secrets.choice(RECOVERY_CODE_ALPHABET) for _ in range(4))
+        part2 = "".join(secrets.choice(RECOVERY_CODE_ALPHABET) for _ in range(4))
         codes.append(f"{part1}-{part2}")
     return codes
 
