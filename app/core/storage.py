@@ -169,6 +169,12 @@ class SQLiteStorageAdapter:
                 cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1")
             if "preferred_domain" not in user_columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN preferred_domain TEXT DEFAULT 'domain_01'")
+            if "mfa_enabled" not in user_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN mfa_enabled INTEGER NOT NULL DEFAULT 0")
+            if "mfa_secret" not in user_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN mfa_secret TEXT")
+            if "mfa_recovery_codes" not in user_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN mfa_recovery_codes TEXT")
 
             conn.commit()
 
@@ -493,18 +499,31 @@ class SQLiteStorageAdapter:
             row = cursor.fetchone()
             if not row:
                 return None
-            return dict(row)
+            res = dict(row)
+            cursor.execute("SELECT COUNT(*) FROM scans WHERE LOWER(user_email) = LOWER(?)", (email.strip(),))
+            sc = cursor.fetchone()
+            res["scan_count"] = sc[0] if sc else 0
+            res["mfa_enabled"] = bool(res.get("mfa_enabled", 0))
+            return res
 
     def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at FROM users WHERE id = ?", (user_id,))
+            cursor.execute("""
+                SELECT u.id, u.email, u.full_name, u.organization, u.role, u.token_version, u.preferred_domain, u.created_at, u.last_login_at,
+                       COALESCE(u.mfa_enabled, 0) AS mfa_enabled,
+                       (SELECT COUNT(*) FROM scans s WHERE LOWER(s.user_email) = LOWER(u.email)) AS scan_count
+                FROM users u
+                WHERE u.id = ?
+            """, (user_id,))
             row = cursor.fetchone()
             if not row:
                 return None
             keys = row.keys()
             tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
             pref_dom = row["preferred_domain"] if "preferred_domain" in keys and row["preferred_domain"] else "domain_01"
+            mfa_on = bool(row["mfa_enabled"]) if "mfa_enabled" in keys else False
+            scan_cnt = row["scan_count"] if "scan_count" in keys and row["scan_count"] is not None else 0
             return UserResponse(
                 id=row["id"],
                 email=row["email"],
@@ -514,7 +533,9 @@ class SQLiteStorageAdapter:
                 preferred_domain=pref_dom,
                 token_version=tok_ver,
                 created_at=datetime.fromisoformat(row["created_at"]),
-                last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
+                last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None,
+                scan_count=scan_cnt,
+                mfa_enabled=mfa_on
             )
 
     def update_last_login(self, user_id: str):
@@ -566,9 +587,11 @@ class SQLiteStorageAdapter:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at
-                FROM users
-                ORDER BY created_at DESC
+                SELECT u.id, u.email, u.full_name, u.organization, u.role, u.token_version, u.preferred_domain, u.created_at, u.last_login_at,
+                       COALESCE(u.mfa_enabled, 0) AS mfa_enabled,
+                       (SELECT COUNT(*) FROM scans s WHERE LOWER(s.user_email) = LOWER(u.email)) AS scan_count
+                FROM users u
+                ORDER BY u.created_at DESC
                 LIMIT ? OFFSET ?
             """, (limit, offset))
             rows = cursor.fetchall()
@@ -577,6 +600,8 @@ class SQLiteStorageAdapter:
                 keys = row.keys()
                 tok_ver = row["token_version"] if "token_version" in keys and row["token_version"] is not None else 1
                 pref_dom = row["preferred_domain"] if "preferred_domain" in keys and row["preferred_domain"] else "domain_01"
+                mfa_on = bool(row["mfa_enabled"]) if "mfa_enabled" in keys else False
+                scan_cnt = row["scan_count"] if "scan_count" in keys and row["scan_count"] is not None else 0
                 results.append(UserResponse(
                     id=row["id"],
                     email=row["email"],
@@ -586,9 +611,132 @@ class SQLiteStorageAdapter:
                     preferred_domain=pref_dom,
                     token_version=tok_ver,
                     created_at=datetime.fromisoformat(row["created_at"]),
-                    last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None
+                    last_login_at=datetime.fromisoformat(row["last_login_at"]) if row["last_login_at"] else None,
+                    scan_count=scan_cnt,
+                    mfa_enabled=mfa_on
                 ))
             return results
+
+    def enable_user_mfa(self, user_id: str, mfa_secret: str, recovery_codes_hashed: List[str]) -> bool:
+        """Enables MFA for a user, stores secret and hashed recovery codes."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET mfa_enabled = 1,
+                    mfa_secret = ?,
+                    mfa_recovery_codes = ?,
+                    token_version = COALESCE(token_version, 1) + 1
+                WHERE id = ?
+            """, (mfa_secret, json.dumps(recovery_codes_hashed), user_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def disable_user_mfa(self, user_id: str) -> bool:
+        """Disables MFA for a user, clearing secret and recovery codes."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users
+                SET mfa_enabled = 0,
+                    mfa_secret = NULL,
+                    mfa_recovery_codes = NULL,
+                    token_version = COALESCE(token_version, 1) + 1
+                WHERE id = ?
+            """, (user_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_user_mfa_credentials(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves raw MFA credentials for verification."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT mfa_enabled, mfa_secret, mfa_recovery_codes FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            raw_codes = row["mfa_recovery_codes"]
+            codes = json.loads(raw_codes) if raw_codes else []
+            return {
+                "mfa_enabled": bool(row["mfa_enabled"]),
+                "mfa_secret": row["mfa_secret"],
+                "recovery_codes": codes
+            }
+
+    def consume_user_recovery_code(self, user_id: str, matched_hash: str) -> bool:
+        """Consumes a single-use recovery code upon successful login."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT mfa_recovery_codes FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            if not row or not row["mfa_recovery_codes"]:
+                return False
+            codes = json.loads(row["mfa_recovery_codes"])
+            if matched_hash in codes:
+                codes.remove(matched_hash)
+                cursor.execute("UPDATE users SET mfa_recovery_codes = ? WHERE id = ?", (json.dumps(codes), user_id))
+                conn.commit()
+                return True
+            return False
+
+    def update_user_recovery_codes(self, user_id: str, new_hashed_codes: List[str]) -> bool:
+        """Updates recovery codes for a user."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET mfa_recovery_codes = ? WHERE id = ?", (json.dumps(new_hashed_codes), user_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_mfa_stats(self) -> Dict[str, Any]:
+        """Calculates platform-wide MFA adoption statistics."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users")
+            total = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM users WHERE mfa_enabled = 1")
+            enrolled = cursor.fetchone()[0]
+            pct = round((enrolled / total * 100.0), 1) if total > 0 else 0.0
+            return {
+                "total_users": total,
+                "enrolled_users": enrolled,
+                "adoption_percentage": pct
+            }
+
+    def get_user_scans(self, user_email: str, limit: int = 50) -> List[ScanHistorySummary]:
+        """Retrieves scan history filtered by a specific user email for admin view."""
+        if not user_email or not user_email.strip():
+            return []
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
+                       pipeline_exposure_score, risk_grade, total_findings,
+                       critical_count, high_count, policy_passed, scan_duration_seconds, user_email
+                FROM scans
+                WHERE LOWER(user_email) = LOWER(?)
+                ORDER BY timestamp DESC
+                LIMIT ?
+            """, (user_email.strip(), limit))
+            rows = cursor.fetchall()
+            summaries = []
+            for r in rows:
+                summaries.append(ScanHistorySummary(
+                    scan_id=r["scan_id"],
+                    repo_name=r["repo_name"],
+                    target_path=r["target_path"] if "target_path" in r.keys() else r["repo_name"],
+                    source_type=r["source_type"] if "source_type" in r.keys() else "cli",
+                    target_type=r["target_type"] if "target_type" in r.keys() else "repository",
+                    timestamp=datetime.fromisoformat(r["timestamp"]),
+                    pipeline_exposure_score=r["pipeline_exposure_score"] if "pipeline_exposure_score" in r.keys() else 0.0,
+                    risk_grade=r["risk_grade"] if "risk_grade" in r.keys() else "A",
+                    total_findings=r["total_findings"],
+                    critical_count=r["critical_count"],
+                    high_count=r["high_count"],
+                    policy_passed=bool(r["policy_passed"]),
+                    scan_duration_seconds=r["scan_duration_seconds"],
+                    user_email=r["user_email"] if "user_email" in r.keys() else None
+                ))
+            return summaries
 
     def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
@@ -860,6 +1008,12 @@ class PostgresStorageAdapter:
                     cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1;")
                 if "preferred_domain" not in user_cols:
                     cursor.execute("ALTER TABLE users ADD COLUMN preferred_domain VARCHAR(64) DEFAULT 'domain_01';")
+                if "mfa_enabled" not in user_cols:
+                    cursor.execute("ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE;")
+                if "mfa_secret" not in user_cols:
+                    cursor.execute("ALTER TABLE users ADD COLUMN mfa_secret VARCHAR(255);")
+                if "mfa_recovery_codes" not in user_cols:
+                    cursor.execute("ALTER TABLE users ADD COLUMN mfa_recovery_codes TEXT;")
 
                 # Ensure grade columns have sufficient capacity for descriptive grades like 'F (Critical Exposure)'
                 try:
@@ -1230,17 +1384,30 @@ class PostgresStorageAdapter:
                 row = cursor.fetchone()
                 if not row:
                     return None
-                return dict(row)
+                res = dict(row)
+                cursor.execute("SELECT COUNT(*) AS cnt FROM scans WHERE LOWER(user_email) = LOWER(%s)", (email.strip(),))
+                sc = cursor.fetchone()
+                res["scan_count"] = sc["cnt"] if isinstance(sc, dict) and "cnt" in sc else (sc[0] if sc else 0)
+                res["mfa_enabled"] = bool(res.get("mfa_enabled", False))
+                return res
 
     def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
             with self._get_cursor(conn) as cursor:
-                cursor.execute("SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at FROM users WHERE id = %s", (user_id,))
+                cursor.execute("""
+                    SELECT u.id, u.email, u.full_name, u.organization, u.role, u.token_version, u.preferred_domain, u.created_at, u.last_login_at,
+                           COALESCE(u.mfa_enabled, FALSE) AS mfa_enabled,
+                           (SELECT COUNT(*) FROM scans s WHERE LOWER(s.user_email) = LOWER(u.email)) AS scan_count
+                    FROM users u
+                    WHERE u.id = %s
+                """, (user_id,))
                 row = cursor.fetchone()
                 if not row:
                     return None
                 tok_ver = row.get("token_version") or 1
                 pref_dom = row.get("preferred_domain") or "domain_01"
+                mfa_on = bool(row.get("mfa_enabled", False))
+                scan_cnt = row.get("scan_count", 0) or 0
                 return UserResponse(
                     id=row["id"],
                     email=row["email"],
@@ -1250,7 +1417,9 @@ class PostgresStorageAdapter:
                     preferred_domain=pref_dom,
                     token_version=tok_ver,
                     created_at=datetime.fromisoformat(row["created_at"]),
-                    last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None
+                    last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None,
+                    scan_count=scan_cnt,
+                    mfa_enabled=mfa_on
                 )
 
     def update_last_login(self, user_id: str):
@@ -1303,9 +1472,11 @@ class PostgresStorageAdapter:
         with self._get_connection() as conn:
             with self._get_cursor(conn) as cursor:
                 cursor.execute("""
-                    SELECT id, email, full_name, organization, role, token_version, preferred_domain, created_at, last_login_at
-                    FROM users
-                    ORDER BY created_at DESC
+                    SELECT u.id, u.email, u.full_name, u.organization, u.role, u.token_version, u.preferred_domain, u.created_at, u.last_login_at,
+                           COALESCE(u.mfa_enabled, FALSE) AS mfa_enabled,
+                           (SELECT COUNT(*) FROM scans s WHERE LOWER(s.user_email) = LOWER(u.email)) AS scan_count
+                    FROM users u
+                    ORDER BY u.created_at DESC
                     LIMIT %s OFFSET %s
                 """, (limit, offset))
                 rows = cursor.fetchall()
@@ -1313,6 +1484,8 @@ class PostgresStorageAdapter:
                 for row in rows:
                     tok_ver = row.get("token_version") or 1
                     pref_dom = row.get("preferred_domain") or "domain_01"
+                    mfa_on = bool(row.get("mfa_enabled", False))
+                    scan_cnt = row.get("scan_count", 0) or 0
                     results.append(UserResponse(
                         id=row["id"],
                         email=row["email"],
@@ -1322,9 +1495,138 @@ class PostgresStorageAdapter:
                         preferred_domain=pref_dom,
                         token_version=tok_ver,
                         created_at=datetime.fromisoformat(row["created_at"]),
-                        last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None
+                        last_login_at=datetime.fromisoformat(row["last_login_at"]) if row.get("last_login_at") else None,
+                        scan_count=scan_cnt,
+                        mfa_enabled=mfa_on
                     ))
                 return results
+
+    def enable_user_mfa(self, user_id: str, mfa_secret: str, recovery_codes_hashed: List[str]) -> bool:
+        """Enables MFA for a user, stores secret and hashed recovery codes in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET mfa_enabled = TRUE,
+                        mfa_secret = %s,
+                        mfa_recovery_codes = %s,
+                        token_version = COALESCE(token_version, 1) + 1
+                    WHERE id = %s
+                """, (mfa_secret, json.dumps(recovery_codes_hashed), user_id))
+                rc = cursor.rowcount
+            conn.commit()
+            return rc > 0
+
+    def disable_user_mfa(self, user_id: str) -> bool:
+        """Disables MFA for a user in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET mfa_enabled = FALSE,
+                        mfa_secret = NULL,
+                        mfa_recovery_codes = NULL,
+                        token_version = COALESCE(token_version, 1) + 1
+                    WHERE id = %s
+                """, (user_id,))
+                rc = cursor.rowcount
+            conn.commit()
+            return rc > 0
+
+    def get_user_mfa_credentials(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves raw MFA credentials for verification in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("SELECT mfa_enabled, mfa_secret, mfa_recovery_codes FROM users WHERE id = %s", (user_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                raw_codes = row.get("mfa_recovery_codes")
+                codes = json.loads(raw_codes) if raw_codes else []
+                return {
+                    "mfa_enabled": bool(row.get("mfa_enabled", False)),
+                    "mfa_secret": row.get("mfa_secret"),
+                    "recovery_codes": codes
+                }
+
+    def consume_user_recovery_code(self, user_id: str, matched_hash: str) -> bool:
+        """Consumes single-use recovery code in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("SELECT mfa_recovery_codes FROM users WHERE id = %s", (user_id,))
+                row = cursor.fetchone()
+                if not row or not row.get("mfa_recovery_codes"):
+                    return False
+                codes = json.loads(row["mfa_recovery_codes"])
+                if matched_hash in codes:
+                    codes.remove(matched_hash)
+                    cursor.execute("UPDATE users SET mfa_recovery_codes = %s WHERE id = %s", (json.dumps(codes), user_id))
+                    rc = cursor.rowcount
+                    conn.commit()
+                    return rc > 0
+                return False
+
+    def update_user_recovery_codes(self, user_id: str, new_hashed_codes: List[str]) -> bool:
+        """Updates recovery codes for a user in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("UPDATE users SET mfa_recovery_codes = %s WHERE id = %s", (json.dumps(new_hashed_codes), user_id))
+                rc = cursor.rowcount
+            conn.commit()
+            return rc > 0
+
+    def get_mfa_stats(self) -> Dict[str, Any]:
+        """Calculates platform-wide MFA adoption statistics in PostgreSQL."""
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("SELECT COUNT(*) AS total FROM users")
+                r_tot = cursor.fetchone()
+                total = r_tot["total"] if isinstance(r_tot, dict) else r_tot[0]
+                cursor.execute("SELECT COUNT(*) AS enrolled FROM users WHERE mfa_enabled = TRUE")
+                r_enr = cursor.fetchone()
+                enrolled = r_enr["enrolled"] if isinstance(r_enr, dict) else r_enr[0]
+                pct = round((enrolled / total * 100.0), 1) if total > 0 else 0.0
+                return {
+                    "total_users": total,
+                    "enrolled_users": enrolled,
+                    "adoption_percentage": pct
+                }
+
+    def get_user_scans(self, user_email: str, limit: int = 50) -> List[ScanHistorySummary]:
+        """Retrieves scan history filtered by a specific user email for admin view in PostgreSQL."""
+        if not user_email or not user_email.strip():
+            return []
+        with self._get_connection() as conn:
+            with self._get_cursor(conn) as cursor:
+                cursor.execute("""
+                    SELECT scan_id, repo_name, target_path, source_type, target_type, timestamp,
+                           pipeline_exposure_score, risk_grade, total_findings,
+                           critical_count, high_count, policy_passed, scan_duration_seconds, user_email
+                    FROM scans
+                    WHERE LOWER(user_email) = LOWER(%s)
+                    ORDER BY timestamp DESC
+                    LIMIT %s
+                """, (user_email.strip(), limit))
+                rows = cursor.fetchall()
+                summaries = []
+                for r in rows:
+                    summaries.append(ScanHistorySummary(
+                        scan_id=r["scan_id"],
+                        repo_name=r["repo_name"],
+                        target_path=r.get("target_path") or r["repo_name"],
+                        source_type=r.get("source_type") or "cli",
+                        target_type=r.get("target_type", "repository"),
+                        timestamp=datetime.fromisoformat(r["timestamp"]),
+                        pipeline_exposure_score=r.get("pipeline_exposure_score", 0.0) or 0.0,
+                        risk_grade=r.get("risk_grade", "A") or "A",
+                        total_findings=r["total_findings"],
+                        critical_count=r["critical_count"],
+                        high_count=r["high_count"],
+                        policy_passed=bool(r["policy_passed"]),
+                        scan_duration_seconds=r["scan_duration_seconds"],
+                        user_email=r.get("user_email")
+                    ))
+                return summaries
 
     def update_user_role(self, user_id: str, new_role: str) -> Optional[UserResponse]:
         with self._get_connection() as conn:
@@ -1646,6 +1948,27 @@ class StorageEngine:
     def delete_user(self, user_id: str) -> bool:
         return self.adapter.delete_user(user_id=user_id)
 
+    def enable_user_mfa(self, user_id: str, mfa_secret: str, recovery_codes_hashed: List[str]) -> bool:
+        return self.adapter.enable_user_mfa(user_id=user_id, mfa_secret=mfa_secret, recovery_codes_hashed=recovery_codes_hashed)
+
+    def disable_user_mfa(self, user_id: str) -> bool:
+        return self.adapter.disable_user_mfa(user_id=user_id)
+
+    def get_user_mfa_credentials(self, user_id: str) -> Optional[Dict[str, Any]]:
+        return self.adapter.get_user_mfa_credentials(user_id=user_id)
+
+    def consume_user_recovery_code(self, user_id: str, matched_hash: str) -> bool:
+        return self.adapter.consume_user_recovery_code(user_id=user_id, matched_hash=matched_hash)
+
+    def update_user_recovery_codes(self, user_id: str, new_hashed_codes: List[str]) -> bool:
+        return self.adapter.update_user_recovery_codes(user_id=user_id, new_hashed_codes=new_hashed_codes)
+
+    def get_mfa_stats(self) -> Dict[str, Any]:
+        return self.adapter.get_mfa_stats()
+
+    def get_user_scans(self, user_email: str, limit: int = 50) -> List[ScanHistorySummary]:
+        return self.adapter.get_user_scans(user_email=user_email, limit=limit)
+
     def _sync_runtime_settings(self):
         """Synchronizes persisted settings into in-memory settings config."""
         try:
@@ -1685,6 +2008,8 @@ class StorageEngine:
             "webhook_url": getattr(settings, "WEBHOOK_URL", None),
             "webhook_enabled": getattr(settings, "WEBHOOK_ENABLED", False),
             "notify_on_gate_failure_only": getattr(settings, "NOTIFY_ON_GATE_FAILURE_ONLY", True),
+            "enforce_admin_mfa": False,
+            "enforce_all_users_mfa": False,
         }
 
     def get_system_settings(self) -> Dict[str, Any]:

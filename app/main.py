@@ -32,10 +32,14 @@ from app.models.schemas import (
 from app.models.auth_schemas import (
     UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse,
     UserProfileUpdateRequest, PasswordChangeRequest, UserRoleUpdateRequest,
-    AdminCreateUserRequest, UserListResponse
+    AdminCreateUserRequest, UserListResponse, MfaSetupResponse, MfaEnableRequest,
+    MfaDisableRequest, MfaVerifyRequest, MfaStatusResponse, MfaPolicyUpdateRequest,
+    UserScansResponse
 )
 from app.core.security import (
-    hash_password, verify_password, create_access_token, decode_access_token, validate_safe_url
+    hash_password, verify_password, create_access_token, decode_access_token, validate_safe_url,
+    generate_totp_secret, get_totp_uri, verify_totp_code, generate_recovery_codes,
+    hash_recovery_code, verify_recovery_code, create_mfa_challenge_token, decode_mfa_challenge_token
 )
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
@@ -754,6 +758,16 @@ async def login(req: UserLoginRequest):
                 detail=f"Access denied: Account '{req.email}' is not authorized."
             )
 
+    # Check if Multi-Factor Authentication (MFA) is enabled for this user account
+    if user_record.get("mfa_enabled"):
+        mfa_token = create_mfa_challenge_token(user_id=user_record["id"], email=user_record["email"])
+        return AuthTokenResponse(
+            access_token=None,
+            mfa_required=True,
+            mfa_token=mfa_token,
+            message="Two-Factor Authentication required. Please enter the 6-digit code from your authenticator app or an emergency recovery code."
+        )
+
     storage.update_last_login(user_record["id"])
     storage.refresh()
     user = storage.get_user_by_id(user_record["id"])
@@ -765,6 +779,60 @@ async def login(req: UserLoginRequest):
         access_token=token,
         token_type="bearer",
         user=user
+    )
+
+
+@app.post("/api/auth/mfa/verify", response_model=AuthTokenResponse)
+async def verify_mfa_challenge(req: MfaVerifyRequest):
+    """
+    Verifies 6-digit TOTP code or single-use recovery code against an active MFA challenge token.
+    """
+    claims = decode_mfa_challenge_token(req.mfa_token)
+    if not claims or not claims.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="MFA challenge session has expired or is invalid. Please sign in again with your password."
+        )
+
+    user_id = claims["sub"]
+    mfa_creds = storage.get_user_mfa_credentials(user_id)
+    if not mfa_creds or not mfa_creds.get("mfa_enabled"):
+        raise HTTPException(status_code=400, detail="MFA is not enabled for this user account.")
+
+    code_clean = req.code.strip()
+    is_valid = False
+
+    # 1. Try TOTP code first (6 digits)
+    digits_only = code_clean.replace(" ", "").replace("-", "")
+    if len(digits_only) == 6 and digits_only.isdigit():
+        if verify_totp_code(mfa_creds["mfa_secret"], digits_only):
+            is_valid = True
+
+    # 2. Try single-use recovery backup codes
+    if not is_valid:
+        matched, matched_hash = verify_recovery_code(code_clean, mfa_creds.get("recovery_codes", []))
+        if matched and matched_hash:
+            storage.consume_user_recovery_code(user_id, matched_hash)
+            is_valid = True
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication code or recovery code. Please try again."
+        )
+
+    storage.update_last_login(user_id)
+    storage.refresh()
+    user = storage.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="User lookup failed.")
+
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
+    return AuthTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=user,
+        message="Two-factor authentication verified successfully."
     )
 
 
@@ -948,6 +1016,227 @@ async def admin_create_user(
     )
     storage.refresh()
     return user
+
+
+@app.get("/api/admin/users/{user_id}/scans", response_model=UserScansResponse)
+async def admin_get_user_scans(
+    user_id: str,
+    limit: int = Query(50, ge=1, le=200),
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """
+    Retrieves all security exposure scans executed by a specified user.
+    Enables administrators to inspect scan volume, targets, risk grades, and findings.
+    """
+    target = storage.get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    user_scans = storage.get_user_scans(user_email=target.email, limit=limit)
+    return UserScansResponse(
+        user_id=target.id,
+        email=target.email,
+        full_name=target.full_name,
+        total_scans=len(user_scans),
+        scans=user_scans
+    )
+
+
+# ==============================================================
+# Admin Multi-Factor Authentication (MFA / 2FA) Endpoints
+# ==============================================================
+@app.get("/api/admin/mfa/status", response_model=MfaStatusResponse)
+async def admin_get_mfa_status(admin_user: UserResponse = Depends(require_admin)):
+    """
+    Retrieves the administrator's MFA configuration status, remaining recovery codes,
+    and platform-wide MFA adoption statistics.
+    """
+    creds = storage.get_user_mfa_credentials(admin_user.id) or {}
+    codes = creds.get("recovery_codes", [])
+    stats = storage.get_mfa_stats()
+    sys_settings = storage.get_system_settings()
+    return MfaStatusResponse(
+        mfa_enabled=bool(creds.get("mfa_enabled", False)),
+        recovery_codes_remaining=len(codes),
+        enforce_admin_mfa=bool(sys_settings.get("enforce_admin_mfa", False)),
+        enforce_all_users_mfa=bool(sys_settings.get("enforce_all_users_mfa", False)),
+        total_users_enrolled=stats.get("enrolled_users", 0),
+        total_users_count=stats.get("total_users", 0),
+        adoption_percentage=stats.get("adoption_percentage", 0.0),
+        metrics=stats
+    )
+
+
+@app.post("/api/admin/mfa/setup", response_model=MfaSetupResponse)
+async def admin_setup_mfa(admin_user: UserResponse = Depends(require_admin)):
+    """
+    Initiates TOTP multi-factor enrollment by generating a cryptographically secure
+    Base32 secret, an otpauth:// provisioning URI, and 8 single-use emergency recovery codes.
+    """
+    secret = generate_totp_secret()
+    uri = get_totp_uri(secret=secret, email=admin_user.email, issuer="ShieldCI")
+    recovery_codes = generate_recovery_codes(count=8)
+    return MfaSetupResponse(
+        secret=secret,
+        otpauth_uri=uri,
+        recovery_codes=recovery_codes
+    )
+
+
+@app.post("/api/admin/mfa/enable")
+async def admin_enable_mfa(
+    req: MfaEnableRequest,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """
+    Validates the 6-digit TOTP code against the generated secret and commits MFA enrollment.
+    Saves the secret and hashed recovery codes to the database.
+    """
+    if not verify_totp_code(req.secret, req.code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid 6-digit verification code. Please verify the code displayed in your authenticator app."
+        )
+
+    hashed_codes = [hash_recovery_code(c) for c in req.recovery_codes]
+    success = storage.enable_user_mfa(
+        user_id=admin_user.id,
+        mfa_secret=req.secret,
+        recovery_codes_hashed=hashed_codes
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to enable Multi-Factor Authentication in database."
+        )
+
+    storage.refresh()
+    return {
+        "status": "success",
+        "message": "Two-factor authentication has been successfully activated on your administrator account.",
+        "recovery_codes_count": len(hashed_codes)
+    }
+
+
+@app.post("/api/admin/mfa/disable")
+async def admin_disable_mfa(
+    req: MfaDisableRequest,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """
+    Disables MFA on the administrator account after verifying the current account password.
+    """
+    user_record = storage.get_user_by_email(admin_user.email)
+    if not user_record or not verify_password(req.password, user_record["password_hash"], user_record["salt"]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect administrator password."
+        )
+
+    if req.code:
+        creds = storage.get_user_mfa_credentials(admin_user.id) or {}
+        secret = creds.get("mfa_secret")
+        if secret and not verify_totp_code(secret, req.code):
+            matched, _ = verify_recovery_code(req.code, creds.get("recovery_codes", []))
+            if not matched:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid authenticator code or recovery code."
+                )
+
+    success = storage.disable_user_mfa(admin_user.id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to disable MFA."
+        )
+
+    storage.refresh()
+    return {
+        "status": "success",
+        "message": "Two-factor authentication has been successfully disabled."
+    }
+
+
+@app.post("/api/admin/mfa/regenerate-recovery-codes")
+async def admin_regenerate_recovery_codes(admin_user: UserResponse = Depends(require_admin)):
+    """
+    Generates a new set of 8 single-use emergency backup recovery codes for the administrator.
+    """
+    creds = storage.get_user_mfa_credentials(admin_user.id)
+    if not creds or not creds.get("mfa_enabled"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Multi-Factor Authentication is not enabled on this account."
+        )
+
+    new_codes = generate_recovery_codes(8)
+    hashed = [hash_recovery_code(c) for c in new_codes]
+    storage.update_user_recovery_codes(admin_user.id, hashed)
+    return {
+        "status": "success",
+        "message": "New emergency recovery codes generated successfully.",
+        "recovery_codes": new_codes
+    }
+
+
+@app.post("/api/admin/users/{user_id}/reset-mfa")
+async def admin_reset_user_mfa(
+    user_id: str,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """
+    Emergency lockout remediation: Allows an administrator to reset/disable MFA
+    for any registered user in the directory (Admin privilege required).
+    """
+    target = storage.get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    storage.disable_user_mfa(user_id)
+    storage.refresh()
+    return {
+        "status": "success",
+        "message": f"Multi-Factor Authentication was reset for '{target.email}'. The user may now authenticate with their password.",
+        "user_id": user_id
+    }
+
+
+@app.get("/api/admin/mfa/policy")
+async def admin_get_mfa_policy(admin_user: UserResponse = Depends(require_admin)):
+    """
+    Retrieves global platform MFA enforcement policies.
+    """
+    curr = storage.get_system_settings()
+    return {
+        "enforce_admin_mfa": bool(curr.get("enforce_admin_mfa", False)),
+        "enforce_all_users_mfa": bool(curr.get("enforce_all_users_mfa", False))
+    }
+
+
+@app.put("/api/admin/mfa/policy")
+async def admin_update_mfa_policy(
+    req: MfaPolicyUpdateRequest,
+    admin_user: UserResponse = Depends(require_admin)
+):
+    """
+    Updates global platform MFA enforcement policies.
+    """
+    updated = storage.save_system_settings({
+        "enforce_admin_mfa": req.enforce_admin_mfa,
+        "enforce_all_users_mfa": req.enforce_all_users_mfa
+    })
+    return {
+        "status": "success",
+        "message": "Platform MFA security policy updated successfully.",
+        "enforce_admin_mfa": bool(updated.get("enforce_admin_mfa", False)),
+        "enforce_all_users_mfa": bool(updated.get("enforce_all_users_mfa", False))
+    }
 
 
 # ==============================================================

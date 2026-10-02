@@ -12,9 +12,10 @@ import json
 import secrets
 import time
 import socket
+import struct
 import ipaddress
 from urllib.parse import urlparse
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
 # pyrefly: ignore [missing-import]
 from fastapi import Header, HTTPException, status
@@ -219,4 +220,133 @@ def validate_safe_url(url: str, allow_private: Optional[bool] = None) -> Tuple[b
             return False, f"Invalid IP address resolved: {ip_str}"
 
     return True, "Target URL validated successfully."
+
+
+# ==============================================================
+# Multi-Factor Authentication (MFA / 2FA - RFC 6238 TOTP)
+# ==============================================================
+
+def generate_totp_secret() -> str:
+    """
+    Generates a cryptographically strong 160-bit Base32 secret for TOTP (RFC 6238).
+    Fully compatible with Google Authenticator, Microsoft Authenticator, Authy, Apple Passwords, 1Password.
+    """
+    return base64.b32encode(secrets.token_bytes(20)).decode('utf-8').replace('=', '')
+
+
+def get_totp_uri(secret: str, email: str, issuer: str = "ShieldCI") -> str:
+    """
+    Constructs standard otpauth:// URI for authenticator applications.
+    """
+    clean_secret = secret.strip().replace(" ", "").upper()
+    clean_email = email.strip()
+    return f"otpauth://totp/{issuer}:{clean_email}?secret={clean_secret}&issuer={issuer}&algorithm=SHA1&digits=6&period=30"
+
+
+def generate_totp_code(secret: str, for_time: Optional[int] = None, interval: int = 30, digits: int = 6) -> str:
+    """
+    Computes standard RFC 6238 TOTP 6-digit code for a given timestamp.
+    """
+    if for_time is None:
+        for_time = int(time.time())
+    counter = int(for_time // interval)
+    clean_secret = secret.strip().replace(" ", "").upper()
+    # Add Base32 padding if missing
+    padded_secret = clean_secret + '=' * ((8 - len(clean_secret) % 8) % 8)
+    secret_bytes = base64.b32decode(padded_secret)
+    msg = struct.pack(">Q", counter)
+    h = hmac.new(secret_bytes, msg, hashlib.sha1).digest()
+    offset = h[-1] & 0x0F
+    code_int = struct.unpack(">I", h[offset:offset + 4])[0] & 0x7FFFFFFF
+    return f"{code_int % (10 ** digits):0{digits}d}"
+
+
+def verify_totp_code(secret: str, code: str, valid_window: int = 1, interval: int = 30, digits: int = 6) -> bool:
+    """
+    Verifies a 6-digit TOTP code against the secret.
+    Allows clock drift by checking +/- valid_window time intervals (default +/- 30s).
+    """
+    if not secret or not code:
+        return False
+    clean_code = str(code).strip().replace(" ", "").replace("-", "")
+    if len(clean_code) != digits or not clean_code.isdigit():
+        return False
+
+    current_time = int(time.time())
+    for offset in range(-valid_window, valid_window + 1):
+        check_time = current_time + (offset * interval)
+        expected = generate_totp_code(secret, check_time, interval, digits)
+        if hmac.compare_digest(expected, clean_code):
+            return True
+    return False
+
+
+def generate_recovery_codes(count: int = 8) -> List[str]:
+    """
+    Generates single-use emergency backup recovery codes (e.g. 'ABCD-EF23').
+    """
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    codes = []
+    for _ in range(count):
+        part1 = "".join(secrets.choice(alphabet) for _ in range(4))
+        part2 = "".join(secrets.choice(alphabet) for _ in range(4))
+        codes.append(f"{part1}-{part2}")
+    return codes
+
+
+def hash_recovery_code(code: str) -> str:
+    """
+    Hashes a recovery code for secure persistent database storage using SHA-256.
+    """
+    clean = str(code).strip().upper().replace(" ", "").replace("-", "")
+    return hashlib.sha256(clean.encode("utf-8")).hexdigest()
+
+
+def verify_recovery_code(code: str, hashed_codes: List[str]) -> Tuple[bool, Optional[str]]:
+    """
+    Verifies whether a provided code matches any stored hashed recovery codes.
+    Returns (True, matched_hash) if matched, otherwise (False, None).
+    """
+    if not code or not hashed_codes:
+        return False, None
+    input_hash = hash_recovery_code(code)
+    for stored_hash in hashed_codes:
+        if hmac.compare_digest(input_hash, stored_hash):
+            return True, stored_hash
+    return False, None
+
+
+def create_mfa_challenge_token(user_id: str, email: str, expires_seconds: int = 300) -> str:
+    """
+    Issues a short-lived cryptographically signed token (5 minutes) for completing 2FA challenge.
+    """
+    now = int(time.time())
+    header = {"alg": "HS256", "typ": "MFA"}
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "action": "mfa_challenge",
+        "iat": now,
+        "exp": now + expires_seconds
+    }
+
+    header_b64 = _b64_url_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+    payload_b64 = _b64_url_encode(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
+    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+
+    signature = hmac.new(SECRET_KEY.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    signature_b64 = _b64_url_encode(signature)
+
+    return f"{header_b64}.{payload_b64}.{signature_b64}"
+
+
+def decode_mfa_challenge_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Decodes and validates a short-lived MFA challenge token.
+    """
+    claims = decode_access_token(token)
+    if not claims or claims.get("action") != "mfa_challenge":
+        return None
+    return claims
+
 

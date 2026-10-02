@@ -58,6 +58,7 @@
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <style>
@@ -2843,6 +2844,9 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
         <button onclick="switchAdminSubTab('settings')" id="adminSubTab-settings" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
           <i class="fa-solid fa-sliders"></i> System Posture &amp; Gates
         </button>
+        <button onclick="switchAdminSubTab('mfa')" id="adminSubTab-mfa" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i> Multi-Factor Auth (MFA)
+        </button>
       </div>
 
       <!-- Subpanel 1: Multi-Domain Control Hub Overview -->
@@ -2960,13 +2964,15 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
                 <th class="px-5 py-3.5">Organization</th>
                 <th class="px-5 py-3.5">Access Role</th>
                 <th class="px-5 py-3.5">Preferred Domain</th>
+                <th class="px-5 py-3.5">Scans Used</th>
+                <th class="px-5 py-3.5">MFA Security</th>
                 <th class="px-5 py-3.5">Registered</th>
                 <th class="px-5 py-3.5 text-right">Role Delegation</th>
               </tr>
             </thead>
             <tbody id="adminUsersTableBody" class="divide-y divide-slate-800 text-xs">
               <tr>
-                <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                <td colspan="8" class="px-5 py-12 text-center text-slate-500">
                   <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user directory...
                 </td>
               </tr>
@@ -3638,6 +3644,159 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
     <!-- ========================================== -->
     <!-- TAB 6: ADMINISTRATOR GOVERNANCE & RBAC -->
     <!-- ========================================== -->
+      </div>
+
+      <!-- Subpanel 6: Multi-Factor Authentication (MFA / 2FA) -->
+      <div id="adminSubPanel-mfa" class="hidden space-y-6">
+        <!-- Hero Header -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-surface-900 to-indigo-950/20">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-lock text-[10px]"></i> Zero-Trust Identity
+              </span>
+              <span class="text-xs text-slate-500">&bull;</span>
+              <span class="text-xs text-slate-400 font-mono">RFC 6238 TOTP Standard</span>
+            </div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-solid fa-shield-halved text-amber-400"></i> Multi-Factor Authentication (MFA / 2FA)
+            </h2>
+            <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+              Safeguard administrator privileges and platform governance with hardware-backed or software authenticator apps (Google Authenticator, Microsoft Authenticator, Authy, Apple Passwords, 1Password).
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="loadAdminMfa()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-surface-850 hover:bg-surface-800 border border-slate-700/80 transition flex items-center gap-2 shadow-sm">
+              <i class="fa-solid fa-rotate text-amber-400"></i> Refresh Status
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 Column Layout: Admin Status & Global Policy -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Card 1: Current Admin MFA Status -->
+          <div class="glass-card rounded-2xl p-6 space-y-6 flex flex-col justify-between border border-slate-800">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i class="fa-solid fa-user-shield text-indigo-400"></i> Administrator 2FA Status
+                </h3>
+                <span id="adminMfaBadge" class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-slate-800 text-slate-400 border border-slate-700">
+                  <i class="fa-solid fa-spinner fa-spin mr-1"></i> Checking...
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                When enabled, sign-in to the administrator control hub mandates both your password and a dynamic 6-digit verification code from your authenticator device.
+              </p>
+
+              <!-- Dynamic Status Details Box -->
+              <div id="adminMfaDetailsBox" class="mt-5 p-5 rounded-xl bg-surface-950/80 border border-slate-800/90 space-y-4">
+                <div class="flex items-center justify-center py-6 text-slate-500 text-xs">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying MFA security state...
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons for Current Admin -->
+            <div id="adminMfaActionRow" class="pt-4 border-t border-slate-800/80 flex items-center justify-between gap-3 flex-wrap">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Card 2: Global MFA Enforcement Policy -->
+          <div class="glass-card rounded-2xl p-6 space-y-6 flex flex-col justify-between border border-slate-800">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i class="fa-solid fa-gavel text-amber-400"></i> Platform MFA Security Policies
+                </h3>
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-mono uppercase bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold">
+                  Governance
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Define mandatory multi-factor authentication rules across organization tiers. When mandatory policy is enforced, users must enroll in 2FA to access protected workstations.
+              </p>
+
+              <div class="mt-5 space-y-4">
+                <!-- Toggle: Mandatory for Admins -->
+                <div class="p-4 rounded-xl bg-surface-950/80 border border-slate-800/90 flex items-center justify-between gap-4">
+                  <div>
+                    <span class="text-xs font-bold text-slate-200 block">Mandatory MFA for Administrators</span>
+                    <span class="text-[11px] text-slate-400">Require all administrator accounts to enroll in two-factor authentication.</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="policyEnforceAdminMfa" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+
+                <!-- Toggle: Require for All Users -->
+                <div class="p-4 rounded-xl bg-surface-950/80 border border-slate-800/90 flex items-center justify-between gap-4">
+                  <div>
+                    <span class="text-xs font-bold text-slate-200 block">Require MFA for Developers &amp; Users</span>
+                    <span class="text-[11px] text-slate-400">Enforce two-factor verification across developer workstations and scanning portals.</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="policyEnforceAllMfa" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800/80 flex items-center justify-end">
+              <button onclick="saveAdminMfaPolicy()" id="saveMfaPolicyBtn" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 border border-amber-400/40 shadow-lg shadow-amber-500/20 transition flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk text-slate-950"></i> Save Platform Policy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Adoption & Enrolled Users Overview Card -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 space-y-6 border border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-emerald-400"></i> Platform MFA Adoption Metrics
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">Real-time tracking of two-factor enrollment across all registered platform users.</p>
+            </div>
+            <button onclick="switchAdminSubTab('users')" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-2">
+              <i class="fa-solid fa-users-gear text-[11px]"></i> Manage Users in Directory &rarr;
+            </button>
+          </div>
+
+          <!-- Adoption Stats Counters -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded-xl bg-surface-950/80 border border-slate-800">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Registered Users</span>
+              <div id="mfaMetricTotalUsers" class="text-2xl font-black text-white font-mono mt-2">0</div>
+              <span class="text-[10px] text-slate-500">Across all security domains</span>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-950/80 border border-slate-800">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">2FA Enrolled Accounts</span>
+              <div id="mfaMetricEnrolledUsers" class="text-2xl font-black text-emerald-400 font-mono mt-2">0</div>
+              <span class="text-[10px] text-slate-500">Protected by TOTP authenticator</span>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-950/80 border border-slate-800">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Platform Adoption Rate</span>
+              <div id="mfaMetricAdoptionPct" class="text-2xl font-black text-indigo-400 font-mono mt-2">0%</div>
+              <span class="text-[10px] text-slate-500">Compliance progress</span>
+            </div>
+          </div>
+
+          <!-- Adoption Progress Bar -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">MFA Compliance Progress</span>
+              <span id="mfaProgressBarLabel" class="font-mono font-bold text-indigo-400">0%</span>
+            </div>
+            <div class="w-full h-3 bg-surface-950 rounded-full overflow-hidden border border-slate-800 p-0.5">
+              <div id="mfaProgressBarFill" class="h-full bg-gradient-to-r from-indigo-500 via-emerald-500 to-amber-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
       </div>
       </div>
 
@@ -4536,7 +4695,7 @@ shieldci_audit:
     }
 
     function switchAdminSubTab(subTab) {
-      const subtabs = ['overview', 'users', 'schedules', 'history', 'settings'];
+      const subtabs = ['overview', 'users', 'schedules', 'history', 'settings', 'mfa'];
       subtabs.forEach(s => {
         const panel = document.getElementById(`adminSubPanel-${s}`);
         const btn = document.getElementById(`adminSubTab-${s}`);
@@ -4557,6 +4716,7 @@ shieldci_audit:
       if (subTab === 'schedules') loadSchedules();
       if (subTab === 'history') loadScanHistory();
       if (subTab === 'settings') loadSettings();
+      if (subTab === 'mfa') loadAdminMfa();
     }
 
     // Asset Category Switching: Repository | Website | Database
@@ -5962,6 +6122,19 @@ shieldci_audit:
           throw new Error(data.detail || "Authentication failed. Invalid administrator credentials.");
         }
 
+        if (data.mfa_required) {
+          openMfaChallengeModal(data.mfa_token, 'admin', (verifyData) => {
+            if (verifyData.user.role !== 'admin') {
+              showToast(`Access Denied: Account '${verifyData.user.email}' is a ${verifyData.user.role}. Administrator login is strictly disabled for other users.`, "error");
+              return;
+            }
+            setAuthState(verifyData.access_token, verifyData.user);
+            switchNavTab('admin');
+            showToast("Administrator logged in successfully! Full control hub unlocked.", "success");
+          });
+          return;
+        }
+
         if (data.user.role !== 'admin') {
           throw new Error(`Access Denied: Account '${data.user.email}' is a ${data.user.role}. Administrator login is strictly disabled for other users and developers.`);
         }
@@ -6419,6 +6592,22 @@ shieldci_audit:
         const data = await res.json();
         if (!res.ok) {
           showAuthAlert(data.detail || "Authentication failed. Please check credentials.", "error");
+          return;
+        }
+
+        if (data.mfa_required) {
+          closeAuthModal();
+          openMfaChallengeModal(data.mfa_token, currentAuthTabMode, (verifyData) => {
+            if (currentAuthTabMode === 'admin' && verifyData.user.role !== 'admin') {
+              showToast(`Access Denied: Account '${verifyData.user.email}' is a ${verifyData.user.role}. Administrator login is strictly disabled for other users.`, "error");
+              return;
+            }
+            setAuthState(verifyData.access_token, verifyData.user);
+            showToast(`Welcome back, ${verifyData.user.full_name || verifyData.user.email}!`, "success");
+            if (verifyData.user.role === 'admin' && currentAuthTabMode === 'admin') {
+              switchNavTab('admin');
+            }
+          });
           return;
         }
 
@@ -7170,7 +7359,7 @@ shieldci_audit:
       const statCurrent = document.getElementById('adminStatCurrentAdmin');
 
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying system user directory...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying system user directory...</td></tr>`;
       }
 
       if (statCurrent && currentUser) {
@@ -7211,7 +7400,7 @@ shieldci_audit:
       } catch (err) {
         console.error("Failed to load admin users:", err);
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> Failed to load directory: ${err.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> Failed to load directory: ${err.message}</td></tr>`;
         }
       }
     }
@@ -7221,7 +7410,7 @@ shieldci_audit:
       if (!tbody) return;
 
       if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 font-medium">No users found matching query.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-10 text-center text-slate-500 font-medium">No users found matching query.</td></tr>`;
         return;
       }
 
@@ -7255,16 +7444,41 @@ shieldci_audit:
           return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
+        const scanCount = typeof u.scan_count === 'number' ? u.scan_count : 0;
+        const scanBadge = `
+          <button onclick="openUserScansModal('${u.id}', '${escapeJs(u.email)}', '${escapeJs(u.full_name || '')}', ${scanCount})" 
+            class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold ${scanCount > 0 ? 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 border border-slate-700/60'} transition flex items-center gap-1.5 cursor-pointer shadow-sm" title="Click to inspect all scans executed by this user">
+            <i class="fa-solid fa-radar text-[10px] ${scanCount > 0 ? 'text-indigo-400 animate-pulse' : 'text-slate-500'}"></i>
+            <span>${scanCount} ${scanCount === 1 ? 'scan' : 'scans'}</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-slate-400"></i>
+          </button>
+        `;
+
+        const mfaBadge = u.mfa_enabled ? `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-fit shadow-sm">
+            <i class="fa-solid fa-shield-halved text-[10px]"></i> Active (TOTP)
+          </span>
+        ` : `
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/60 flex items-center gap-1 w-fit">
+            <i class="fa-solid fa-circle-xmark text-[10px] text-slate-500"></i> Disabled
+          </span>
+        `;
+
         let actionHtml = '';
         if (isSelf) {
           actionHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold"><i class="fa-solid fa-crown text-[10px]"></i> You (Active Admin)</span>`;
         } else {
           actionHtml = `
             <div class="flex items-center justify-end gap-1.5 flex-wrap">
-              <button onclick="openRoleDelegationModal('${u.id}', '${escapeJs(u.email)}', '${role}', '${prefDom}', '${escapeJs(u.full_name || '')}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm" title="Change Role & Domain Delegation">
+              <button onclick="openRoleDelegationModal('${u.id}', '${escapeJs(u.email)}', '${role}', '${prefDom}', '${escapeJs(u.full_name || '')}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Change Role & Domain Delegation">
                 <i class="fa-solid fa-user-gear text-[10px]"></i> <span>Change Role</span>
               </button>
-              <button onclick="deleteAdminUser('${u.id}', '${escapeJs(u.email)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center gap-1.5 shadow-sm" title="Permanently Delete User">
+              ${u.mfa_enabled ? `
+                <button onclick="promptResetUserMfa('${u.id}', '${escapeJs(u.email)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Reset MFA (Revoke TOTP if locked out)">
+                  <i class="fa-solid fa-key text-[10px]"></i> <span>Reset MFA</span>
+                </button>
+              ` : ''}
+              <button onclick="deleteAdminUser('${u.id}', '${escapeJs(u.email)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Permanently Delete User">
                 <i class="fa-solid fa-trash-can text-[10px]"></i> <span>Delete</span>
               </button>
             </div>
@@ -7291,6 +7505,12 @@ shieldci_audit:
           </td>
           <td class="px-5 py-3.5">
             ${domainBadge}
+          </td>
+          <td class="px-5 py-3.5">
+            ${scanBadge}
+          </td>
+          <td class="px-5 py-3.5">
+            ${mfaBadge}
           </td>
           <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">
             ${joinedDate}
@@ -7626,6 +7846,20 @@ shieldci_audit:
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Login failed. Please check credentials.");
+
+        if (data.mfa_required) {
+          openMfaChallengeModal(data.mfa_token, 'user', (verifyData) => {
+            setAuthState(verifyData.access_token, verifyData.user);
+            if (verifyData.user.role === 'admin') {
+              switchNavTab('admin');
+              showToast(`Welcome Administrator ${verifyData.user.full_name || verifyData.user.email}! Console unlocked.`, "success");
+            } else {
+              switchNavTab('user');
+            }
+          });
+          return;
+        }
+
         setAuthState(data.access_token, data.user);
         if (data.user.role === 'admin') {
           switchNavTab('admin');
@@ -8419,6 +8653,689 @@ shieldci_audit:
       }
     }
 
+    // ==============================================================
+    // Multi-Factor Authentication (MFA / 2FA) & User Scans Inspector
+    // ==============================================================
+    let currentMfaSetupSecret = null;
+    let mfaChallengeCallback = null;
+    let mfaChallengeToken = null;
+    let activeInspectedUserId = null;
+    let activeRecoveryCodesList = [];
+    let isRecoveryCodeMode = false;
+
+    async function loadAdminMfa() {
+      const badge = document.getElementById('adminMfaBadge');
+      const detailsBox = document.getElementById('adminMfaDetailsBox');
+      const actionRow = document.getElementById('adminMfaActionRow');
+      const token = getAuthToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch('/api/admin/mfa/status', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to load MFA status: HTTP ${res.status}`);
+        }
+        const data = await res.json();
+
+        // Update status badge
+        if (badge) {
+          if (data.mfa_enabled) {
+            badge.className = "px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm";
+            badge.innerHTML = `<i class="fa-solid fa-shield-halved text-emerald-400"></i> Active &amp; Enforced`;
+          } else {
+            badge.className = "px-3 py-1 rounded-full text-xs font-bold font-mono bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm";
+            badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Inactive (Recommended)`;
+          }
+        }
+
+        // Update details card box
+        if (detailsBox) {
+          if (data.mfa_enabled) {
+            detailsBox.innerHTML = `
+              <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs pb-2.5 border-b border-slate-800">
+                  <span class="text-slate-400">Primary Method:</span>
+                  <span class="font-mono text-white font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen-button text-indigo-400"></i> Authenticator App (Time-Based TOTP)
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-xs pb-2.5 border-b border-slate-800">
+                  <span class="text-slate-400">Security Standard:</span>
+                  <span class="font-mono text-slate-300">RFC 6238 (HMAC-SHA1, 30s interval, 6 digits)</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-400">Emergency Backup Codes:</span>
+                  <span class="font-mono font-bold ${data.recovery_codes_remaining > 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${data.recovery_codes_remaining} valid codes remaining
+                  </span>
+                </div>
+              </div>
+            `;
+          } else {
+            detailsBox.innerHTML = `
+              <div class="text-xs text-slate-400 space-y-2">
+                <p class="leading-relaxed">Your administrator account is currently unprotected by secondary two-factor verification. Any compromised credentials would grant direct entry to the management console.</p>
+                <div class="flex items-center gap-2 text-amber-400 font-medium">
+                  <i class="fa-solid fa-circle-info text-[11px]"></i>
+                  <span>Setup takes less than 60 seconds with any free authenticator app.</span>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        // Update action buttons row
+        if (actionRow) {
+          if (data.mfa_enabled) {
+            actionRow.innerHTML = `
+              <div class="flex items-center gap-2">
+                <button onclick="openAdminRecoveryCodesModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700/80 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                  <i class="fa-solid fa-key text-indigo-400"></i> <span>Manage Emergency Recovery Codes</span>
+                </button>
+              </div>
+              <button onclick="openAdminDisableMfaModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-power-off text-rose-400"></i> <span>Disable 2FA</span>
+              </button>
+            `;
+          } else {
+            actionRow.innerHTML = `
+              <div></div>
+              <button onclick="openAdminMfaSetupModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 shadow-lg shadow-emerald-600/25 border border-emerald-400/30 transition flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-qrcode text-white"></i> <span>Configure Two-Factor Authentication Now</span>
+              </button>
+            `;
+          }
+        }
+
+        // Update policy toggles
+        const chkAdmin = document.getElementById('policyEnforceAdminMfa');
+        const chkAll = document.getElementById('policyEnforceAllMfa');
+        if (chkAdmin) chkAdmin.checked = !!data.enforce_admin_mfa;
+        if (chkAll) chkAll.checked = !!data.enforce_all_users_mfa;
+
+        // Update metrics
+        const totalUsers = data.total_users_count ?? data.metrics?.total_users ?? 0;
+        const enrolledUsers = data.total_users_enrolled ?? data.metrics?.enrolled_users ?? 0;
+        const adoptionPct = data.adoption_percentage ?? data.metrics?.adoption_percentage ?? 0;
+
+        const mTotal = document.getElementById('mfaMetricTotalUsers');
+        const mEnrolled = document.getElementById('mfaMetricEnrolledUsers');
+        const mPct = document.getElementById('mfaMetricAdoptionPct');
+        const mFill = document.getElementById('mfaProgressBarFill');
+        const mLabel = document.getElementById('mfaProgressBarLabel');
+
+        if (mTotal) mTotal.textContent = totalUsers;
+        if (mEnrolled) mEnrolled.textContent = enrolledUsers;
+        const pct = `${adoptionPct}%`;
+        if (mPct) mPct.textContent = pct;
+        if (mLabel) mLabel.textContent = pct;
+        if (mFill) mFill.style.width = pct;
+
+      } catch (err) {
+        console.error("Failed to load admin MFA status:", err);
+      }
+    }
+
+    async function saveAdminMfaPolicy() {
+      const btn = document.getElementById('saveMfaPolicyBtn');
+      const token = getAuthToken();
+      if (!token) return;
+
+      const enforce_admin_mfa = document.getElementById('policyEnforceAdminMfa')?.checked || false;
+      const enforce_all_users_mfa = document.getElementById('policyEnforceAllMfa')?.checked || false;
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...`;
+      }
+
+      try {
+        const res = await fetch('/api/admin/mfa/policy', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ enforce_admin_mfa, enforce_all_users_mfa })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to update MFA policy");
+        showToast("Platform MFA governance policy updated successfully!", "success");
+        loadAdminMfa();
+      } catch (err) {
+        showToast(`Policy save error: ${err.message}`, "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-floppy-disk text-slate-950"></i> Save Platform Policy`;
+        }
+      }
+    }
+
+    async function openAdminMfaSetupModal() {
+      const modal = document.getElementById('adminMfaSetupModal');
+      const token = getAuthToken();
+      if (!token || !modal) return;
+
+      document.getElementById('mfaSetupStep1').classList.remove('hidden');
+      document.getElementById('mfaSetupStep3').classList.add('hidden');
+      document.getElementById('mfaSetupAlert').classList.add('hidden');
+      const codeInput = document.getElementById('mfaVerifyInput');
+      if (codeInput) codeInput.value = '';
+
+      const qrContainer = document.getElementById('mfaQrCodeContainer');
+      const secretDisplay = document.getElementById('mfaSecretDisplay');
+      if (qrContainer) qrContainer.innerHTML = '<div class="py-12 text-slate-500 text-xs flex items-center justify-center"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Generating TOTP Secret...</div>';
+
+      modal.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/admin/mfa/setup', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to initiate MFA setup");
+
+        currentMfaSetupSecret = data.secret;
+        if (secretDisplay) secretDisplay.textContent = data.secret;
+
+        if (qrContainer) {
+          qrContainer.innerHTML = '';
+          new QRCode(qrContainer, {
+            text: data.totp_uri,
+            width: 170,
+            height: 170,
+            colorDark: "#020617",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+        setTimeout(() => {
+          if (codeInput) codeInput.focus();
+        }, 200);
+      } catch (err) {
+        if (qrContainer) {
+          qrContainer.innerHTML = `<div class="p-4 text-xs text-rose-400 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${err.message}</div>`;
+        }
+      }
+    }
+
+    function closeAdminMfaSetupModal() {
+      const modal = document.getElementById('adminMfaSetupModal');
+      if (modal) modal.classList.add('hidden');
+      currentMfaSetupSecret = null;
+    }
+
+    function copyMfaSecret() {
+      if (!currentMfaSetupSecret) return;
+      navigator.clipboard.writeText(currentMfaSetupSecret).then(() => {
+        showToast("Secret key copied to clipboard!", "info");
+      });
+    }
+
+    async function submitAdminMfaEnable(event) {
+      if (event) event.preventDefault();
+      const codeInput = document.getElementById('mfaVerifyInput');
+      const alertBox = document.getElementById('mfaSetupAlert');
+      const btn = document.getElementById('mfaVerifySubmitBtn');
+      const token = getAuthToken();
+      const code = (codeInput?.value || '').trim();
+
+      if (!code || code.length !== 6) {
+        if (alertBox) {
+          alertBox.textContent = "Please enter the dynamic 6-digit code shown in your authenticator app.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Activating...`;
+      }
+      if (alertBox) alertBox.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/mfa/enable', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            secret: currentMfaSetupSecret,
+            code: code
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Verification failed. Invalid code.");
+
+        activeRecoveryCodesList = data.recovery_codes || [];
+        renderRecoveryCodesGrid('mfaSetupRecoveryGrid', activeRecoveryCodesList);
+
+        // Switch to Step 3 (Backup Codes)
+        document.getElementById('mfaSetupStep1').classList.add('hidden');
+        document.getElementById('mfaSetupStep3').classList.remove('hidden');
+
+        showToast("Two-Factor Authentication successfully activated!", "success");
+        loadAdminMfa();
+        if (currentUser) currentUser.mfa_enabled = true;
+      } catch (err) {
+        if (alertBox) {
+          alertBox.textContent = err.message;
+          alertBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-shield-check text-white"></i> <span>Verify &amp; Activate 2FA</span>`;
+        }
+      }
+    }
+
+    function renderRecoveryCodesGrid(elementId, codes) {
+      const container = document.getElementById(elementId);
+      if (!container) return;
+      container.innerHTML = '';
+      (codes || []).forEach(code => {
+        const div = document.createElement('div');
+        div.className = "px-3 py-2 bg-surface-900 border border-slate-700/80 rounded-lg text-center font-mono text-xs font-bold text-amber-300 tracking-wider select-all shadow-inner";
+        div.textContent = code;
+        container.appendChild(div);
+      });
+    }
+
+    function copyRecoveryCodes(codes) {
+      const list = codes || activeRecoveryCodesList;
+      if (!list || list.length === 0) return;
+      const text = `SHIELDCI EMERGENCY RECOVERY CODES\nAccount: ${currentUser ? currentUser.email : 'Admin'}\nDate: ${new Date().toISOString()}\n\nEach code can be used once to unlock your account if you lose your authenticator:\n` + list.join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Emergency recovery codes copied to clipboard!", "success");
+      });
+    }
+
+    function downloadRecoveryCodes(codes) {
+      const list = codes || activeRecoveryCodesList;
+      if (!list || list.length === 0) return;
+      const text = `SHIELDCI EMERGENCY RECOVERY CODES\nAccount: ${currentUser ? currentUser.email : 'Admin'}\nDate: ${new Date().toISOString()}\n\nEach single-use recovery code can be used to unlock your account if your device is unavailable:\n\n` + list.map((c, i) => `${i + 1}. ${c}`).join('\n') + `\n\nStore this backup file in a secure password manager or offline vault!`;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `shieldci-recovery-codes-${(currentUser?.email || 'admin').split('@')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Recovery codes saved to download file!", "success");
+    }
+
+    function openAdminDisableMfaModal() {
+      const modal = document.getElementById('adminMfaDisableModal');
+      const alertBox = document.getElementById('adminMfaDisableAlert');
+      const pwInput = document.getElementById('adminMfaDisablePassword');
+      if (alertBox) alertBox.classList.add('hidden');
+      if (pwInput) pwInput.value = '';
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAdminDisableMfaModal() {
+      const modal = document.getElementById('adminMfaDisableModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function confirmDisableAdminMfa(event) {
+      if (event) event.preventDefault();
+      const pwInput = document.getElementById('adminMfaDisablePassword');
+      const alertBox = document.getElementById('adminMfaDisableAlert');
+      const btn = document.getElementById('adminMfaDisableBtn');
+      const token = getAuthToken();
+      const password = (pwInput?.value || '').trim();
+
+      if (!password) {
+        if (alertBox) {
+          alertBox.textContent = "Please enter your administrator password to confirm.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Deactivating...`;
+      }
+      if (alertBox) alertBox.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/mfa/disable', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to disable MFA. Please verify password.");
+
+        closeAdminDisableMfaModal();
+        showToast("Two-Factor Authentication disabled.", "info");
+        loadAdminMfa();
+        if (currentUser) currentUser.mfa_enabled = false;
+      } catch (err) {
+        if (alertBox) {
+          alertBox.textContent = err.message;
+          alertBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-power-off"></i> Disable 2FA`;
+        }
+      }
+    }
+
+    function openAdminRecoveryCodesModal() {
+      const modal = document.getElementById('adminRecoveryCodesModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+    }
+
+    function closeAdminRecoveryCodesModal() {
+      const modal = document.getElementById('adminRecoveryCodesModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function regenerateAdminRecoveryCodes() {
+      if (!confirm("Regenerating recovery codes will invalidate all existing recovery codes. Proceed?")) {
+        return;
+      }
+      const token = getAuthToken();
+      const btn = document.getElementById('regenerateCodesBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Generating...`;
+      }
+
+      try {
+        const res = await fetch('/api/admin/mfa/regenerate-recovery-codes', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to regenerate recovery codes");
+
+        activeRecoveryCodesList = data.recovery_codes || [];
+        renderRecoveryCodesGrid('adminRecoveryCodesGrid', activeRecoveryCodesList);
+        document.getElementById('adminRecoveryCodesSection')?.classList.remove('hidden');
+        showToast("New recovery codes generated! Please store them securely.", "success");
+        loadAdminMfa();
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span>Regenerate New Codes</span>`;
+        }
+      }
+    }
+
+    // ==========================================
+    // User Scan Inspection Modal
+    // ==========================================
+    async function openUserScansModal(userId, userEmail, userName, scanCount) {
+      const modal = document.getElementById('adminUserScansModal');
+      const titleEmail = document.getElementById('userScansModalEmail');
+      const titleName = document.getElementById('userScansModalName');
+      const countBadge = document.getElementById('userScansModalCount');
+      const tbody = document.getElementById('userScansModalTableBody');
+      const token = getAuthToken();
+      if (!modal || !token) return;
+
+      activeInspectedUserId = userId;
+      if (titleEmail) titleEmail.textContent = userEmail;
+      if (titleName) titleName.textContent = userName || 'Anonymous User';
+      if (countBadge) countBadge.textContent = `${scanCount || 0} Total Scans`;
+
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying scan activity log for ${escapeHtml(userEmail)}...</td></tr>`;
+      }
+      modal.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/scans`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to fetch user scan activity");
+
+        const scans = data.scans || [];
+        if (countBadge) countBadge.textContent = `${scans.length} Scans Run`;
+
+        if (scans.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center text-slate-500">
+                <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-600 block"></i>
+                <span>No scans recorded for this user yet.</span>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = '';
+        scans.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-surface-850/50 transition-colors";
+
+          let gradeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+          if (s.risk_grade === 'B') gradeColor = 'text-sky-400 bg-sky-500/10 border-sky-500/30';
+          else if (s.risk_grade === 'C') gradeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+          else if (s.risk_grade === 'D') gradeColor = 'text-orange-400 bg-orange-500/10 border-orange-500/30';
+          else if (s.risk_grade === 'F') gradeColor = 'text-rose-400 bg-rose-500/10 border-rose-500/30';
+
+          const dateStr = s.timestamp ? new Date(s.timestamp).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+          const domainLabel = s.target_type === 'website' ? '🌐 Web & API' : (s.target_type === 'database' ? '🗄️ Database' : '💻 Code & CI/CD');
+
+          tr.innerHTML = `
+            <td class="px-5 py-3.5">
+              <div class="font-mono font-bold text-white text-xs truncate max-w-[220px]" title="${escapeHtml(s.repo_name || s.target_path)}">${escapeHtml(s.repo_name || s.target_path || 'Unnamed Scan')}</div>
+              <div class="text-[10px] text-slate-500 font-mono truncate max-w-[220px]">${escapeHtml(s.scan_id)}</div>
+            </td>
+            <td class="px-5 py-3.5 text-xs">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-surface-900 border border-slate-700/60 text-slate-300">${domainLabel}</span>
+            </td>
+            <td class="px-5 py-3.5 text-xs text-slate-400 font-mono">
+              ${dateStr}
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono border ${gradeColor} inline-flex items-center gap-1.5">
+                <span>Grade ${s.risk_grade || 'N/A'}</span>
+                <span class="text-slate-400 text-[10px]">(${s.pipeline_exposure_score || 0}/100)</span>
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-white">${s.total_findings || 0} findings</span>
+                <span class="text-[10px] text-rose-400 font-semibold font-mono">${s.critical_count || 0} crit</span>
+                <span class="text-[10px] text-amber-400 font-semibold font-mono">${s.high_count || 0} high</span>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-right space-x-2">
+              <button onclick="window.location.href='/api/scans/${s.scan_id}/export?format=pdf'" class="px-2 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded text-xs font-semibold transition" title="Export PDF Audit Report">
+                <i class="fa-solid fa-file-pdf"></i>
+              </button>
+              <button onclick="viewScanFromModal('${s.scan_id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition inline-flex items-center gap-1 cursor-pointer" title="Inspect report in auditor">
+                <i class="fa-solid fa-eye text-[10px]"></i> <span>View</span>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> ${err.message}</td></tr>`;
+        }
+      }
+    }
+
+    function closeUserScansModal() {
+      const modal = document.getElementById('adminUserScansModal');
+      if (modal) modal.classList.add('hidden');
+      activeInspectedUserId = null;
+    }
+
+    function viewScanFromModal(scanId) {
+      closeUserScansModal();
+      loadAndDisplayScan(scanId);
+    }
+
+    async function promptResetUserMfa(userId, userEmail) {
+      if (!confirm(`Are you sure you want to reset Multi-Factor Authentication for:\n${userEmail}?\n\nThis will immediately revoke their TOTP authenticator secret and all emergency recovery codes. The user will be required to re-enroll next time.`)) {
+        return;
+      }
+      const token = getAuthToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/reset-mfa`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to reset user MFA");
+        showToast(`MFA has been successfully revoked for ${userEmail}.`, "success");
+        loadAdminUsers();
+        loadAdminMfa();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    // ==========================================
+    // Login 2FA Challenge Modal Controller
+    // ==========================================
+    function openMfaChallengeModal(mfaToken, roleContext, onSuccess) {
+      mfaChallengeToken = mfaToken;
+      mfaChallengeCallback = onSuccess;
+      isRecoveryCodeMode = false;
+
+      const modal = document.getElementById('mfaChallengeModal');
+      const input = document.getElementById('mfaChallengeCodeInput');
+      const alertBox = document.getElementById('mfaChallengeAlert');
+      const title = document.getElementById('mfaChallengeTitle');
+      const desc = document.getElementById('mfaChallengeDesc');
+      const toggleBtn = document.getElementById('mfaChallengeToggleBtn');
+
+      if (alertBox) alertBox.classList.add('hidden');
+      if (title) title.textContent = "Two-Factor Verification Required";
+      if (desc) desc.textContent = "Enter the dynamic 6-digit verification code from your authenticator app.";
+      if (toggleBtn) toggleBtn.innerHTML = `<i class="fa-solid fa-key mr-1"></i> Lost device? Use emergency recovery code`;
+      if (input) {
+        input.value = '';
+        input.placeholder = "000000";
+        input.maxLength = 6;
+        setTimeout(() => input.focus(), 150);
+      }
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function toggleMfaChallengeMode() {
+      isRecoveryCodeMode = !isRecoveryCodeMode;
+      const input = document.getElementById('mfaChallengeCodeInput');
+      const desc = document.getElementById('mfaChallengeDesc');
+      const toggleBtn = document.getElementById('mfaChallengeToggleBtn');
+      const alertBox = document.getElementById('mfaChallengeAlert');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (isRecoveryCodeMode) {
+        if (desc) desc.textContent = "Enter one of your 8-character emergency single-use recovery codes.";
+        if (toggleBtn) toggleBtn.innerHTML = `<i class="fa-solid fa-mobile-screen-button mr-1"></i> Switch back to 6-digit Authenticator code`;
+        if (input) {
+          input.placeholder = "A1B2C3D4";
+          input.maxLength = 8;
+          input.value = '';
+          input.focus();
+        }
+      } else {
+        if (desc) desc.textContent = "Enter the dynamic 6-digit verification code from your authenticator app.";
+        if (toggleBtn) toggleBtn.innerHTML = `<i class="fa-solid fa-key mr-1"></i> Lost device? Use emergency recovery code`;
+        if (input) {
+          input.placeholder = "000000";
+          input.maxLength = 6;
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    function closeMfaChallengeModal() {
+      const modal = document.getElementById('mfaChallengeModal');
+      if (modal) modal.classList.add('hidden');
+      mfaChallengeToken = null;
+      mfaChallengeCallback = null;
+    }
+
+    async function submitMfaChallenge(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById('mfaChallengeCodeInput');
+      const alertBox = document.getElementById('mfaChallengeAlert');
+      const btn = document.getElementById('mfaChallengeSubmitBtn');
+      const code = (input?.value || '').trim();
+
+      if (!code) {
+        if (alertBox) {
+          alertBox.textContent = isRecoveryCodeMode ? "Please enter an 8-character recovery code." : "Please enter your 6-digit authenticator code.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verifying...`;
+      }
+      if (alertBox) alertBox.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/auth/mfa/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mfa_token: mfaChallengeToken,
+            code: code
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Verification failed. Invalid code or token expired.");
+
+        const callback = mfaChallengeCallback;
+        closeMfaChallengeModal();
+
+        if (callback) {
+          callback(data);
+        } else {
+          setAuthState(data.access_token, data.user);
+          showToast(`Welcome back, ${data.user.full_name || data.user.email}!`, "success");
+        }
+      } catch (err) {
+        if (alertBox) {
+          alertBox.textContent = err.message;
+          alertBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-shield-check"></i> Verify &amp; Sign In`;
+        }
+      }
+    }
+
     // Initialize defaults on load
     window.addEventListener('DOMContentLoaded', () => {
       initThemeState();
@@ -8957,6 +9874,318 @@ shieldci_audit:
           </button>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- Modal: Administrator MFA Setup Wizard (TOTP RFC 6238) -->
+  <div id="adminMfaSetupModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-lg border border-amber-500/40 shadow-2xl overflow-hidden flex flex-col relative">
+      <!-- Glow Effects -->
+      <div class="absolute -right-16 -top-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-16 -bottom-16 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/90 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 text-slate-950 flex items-center justify-center text-lg font-bold shadow-md shadow-amber-500/30">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Configure Two-Factor Authentication</h3>
+            <p class="text-xs text-slate-400">TOTP Standard RFC 6238 Authenticator App</p>
+          </div>
+        </div>
+        <button onclick="closeAdminMfaSetupModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Setup Alert -->
+      <div id="mfaSetupAlert" class="hidden mx-6 mt-4 p-3 rounded-xl text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30 font-medium"></div>
+
+      <!-- Step 1 & 2: QR Code Scan & Verification -->
+      <div id="mfaSetupStep1" class="p-6 space-y-5 bg-surface-950/95 relative z-10 max-h-[75vh] overflow-y-auto">
+        <div class="space-y-1">
+          <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold inline-block">Step 1: Scan Authenticator QR Code</span>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Open Google Authenticator, Microsoft Authenticator, Authy, Apple Passwords, or 1Password and scan the QR code below.
+          </p>
+        </div>
+
+        <!-- QR Code Canvas Container -->
+        <div class="flex flex-col items-center justify-center p-5 rounded-2xl bg-surface-900/90 border border-slate-800 shadow-inner">
+          <div id="mfaQrCodeContainer" class="p-3 bg-white rounded-xl shadow-lg">
+            <!-- QR code generated here -->
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 text-center">Scan with your smartphone or password manager</p>
+        </div>
+
+        <!-- Manual Secret Key Entry -->
+        <div class="space-y-2">
+          <span class="text-xs font-semibold text-slate-400 block">Can't scan the QR code? Enter secret key manually:</span>
+          <div class="flex items-center gap-2">
+            <div id="mfaSecretDisplay" class="flex-1 p-2.5 rounded-xl bg-surface-900 border border-slate-700/80 font-mono text-xs font-bold text-amber-300 tracking-wider truncate select-all">
+              Generating...
+            </div>
+            <button onclick="copyMfaSecret()" class="px-3.5 py-2.5 bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer flex-shrink-0" title="Copy Secret Key">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Verification Code Input -->
+        <form onsubmit="submitAdminMfaEnable(event)" class="space-y-3 pt-2 border-t border-slate-800">
+          <div class="space-y-1">
+            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold inline-block">Step 2: Enter Verification Code</span>
+            <label for="mfaVerifyInput" class="text-xs text-slate-300 block">Enter the dynamic 6-digit security code generated by your app:</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="text" id="mfaVerifyInput" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" autocomplete="one-time-code" required class="flex-1 bg-surface-900 border border-slate-700/90 rounded-xl px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 transition" />
+            <button type="submit" id="mfaVerifySubmitBtn" class="px-6 py-3 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 shadow-lg shadow-amber-400/25 border border-amber-300/40 transition flex items-center gap-2 cursor-pointer flex-shrink-0">
+              <i class="fa-solid fa-shield-check text-slate-950"></i> <span>Verify &amp; Activate 2FA</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 3: Emergency Backup Recovery Codes (Shown upon successful activation) -->
+      <div id="mfaSetupStep3" class="hidden p-6 space-y-5 bg-surface-950/95 relative z-10 max-h-[75vh] overflow-y-auto">
+        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-start gap-3">
+          <i class="fa-solid fa-circle-check text-base text-emerald-400 mt-0.5"></i>
+          <div class="text-xs leading-relaxed">
+            <span class="font-bold block text-sm text-emerald-200">2FA Successfully Activated!</span>
+            Store these emergency backup codes now. If you ever lose your phone or authenticator app, each single-use code allows instant account recovery.
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-semibold uppercase tracking-wider font-mono text-[11px]">Single-Use Recovery Codes:</span>
+            <span class="text-amber-400 text-[11px] font-mono">Keep these private &amp; secure</span>
+          </div>
+          <div id="mfaSetupRecoveryGrid" class="grid grid-cols-2 gap-2 p-3 rounded-xl bg-surface-900/90 border border-slate-800">
+            <!-- Dynamically populated 8 recovery codes -->
+          </div>
+        </div>
+
+        <!-- Recovery Code Actions -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+          <div class="flex items-center gap-2">
+            <button onclick="copyRecoveryCodes()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-copy"></i> Copy Codes
+            </button>
+            <button onclick="downloadRecoveryCodes()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-download"></i> Download .txt
+            </button>
+          </div>
+          <button onclick="closeAdminMfaSetupModal()" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-600/30 transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-check"></i> <span>I've Saved My Codes</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Administrator Inspection of User Scans -->
+  <div id="adminUserScansModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-4xl border border-indigo-500/40 shadow-2xl overflow-hidden flex flex-col relative max-h-[85vh]">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/90 relative z-10 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-indigo-600/30">
+            <i class="fa-solid fa-radar"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white tracking-tight">User Scan Activity Audit</h3>
+              <span id="userScansModalCount" class="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/40">0 Scans</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+              <span id="userScansModalName" class="font-medium text-slate-200">User</span>
+              <span>&bull;</span>
+              <span id="userScansModalEmail" class="font-mono text-slate-400">email@example.com</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeUserScansModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Scans Table Content -->
+      <div class="overflow-y-auto flex-1 bg-surface-950/95 relative z-10">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-surface-950 text-[11px] uppercase text-slate-400 border-b border-slate-800 font-mono sticky top-0 z-10">
+            <tr>
+              <th class="px-5 py-3">Scan Target</th>
+              <th class="px-5 py-3">Domain</th>
+              <th class="px-5 py-3">Timestamp</th>
+              <th class="px-5 py-3">Score &amp; Grade</th>
+              <th class="px-5 py-3">Findings</th>
+              <th class="px-5 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userScansModalTableBody" class="divide-y divide-slate-800 text-xs font-normal">
+            <!-- Dynamically populated scan rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-surface-950 flex items-center justify-between text-xs text-slate-400 relative z-10 flex-shrink-0">
+        <span>Admin Governance &bull; Scan Inspection Log</span>
+        <button onclick="closeUserScansModal()" class="px-4 py-1.5 rounded-xl bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 transition text-xs font-semibold cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Disable Administrator 2FA Confirmation -->
+  <div id="adminMfaDisableModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-md border border-rose-500/40 shadow-2xl overflow-hidden flex flex-col relative">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/90 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-power-off"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Disable Two-Factor Auth</h3>
+            <p class="text-xs text-slate-400">Security Verification Required</p>
+          </div>
+        </div>
+        <button onclick="closeAdminDisableMfaModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="confirmDisableAdminMfa(event)" class="p-6 space-y-4 bg-surface-950/95 relative z-10">
+        <div id="adminMfaDisableAlert" class="hidden p-3 rounded-xl text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30 font-medium"></div>
+
+        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs leading-relaxed">
+          <i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-400"></i>
+          Disabling two-factor authentication significantly reduces administrator account security. You will only need your password to access governance controls.
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="adminMfaDisablePassword" class="text-xs font-semibold text-slate-300 block">Current Administrator Password</label>
+          <input type="password" id="adminMfaDisablePassword" placeholder="••••••••" required autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500 font-mono" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeAdminDisableMfaModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-surface-900 hover:bg-surface-850 border border-slate-700 transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="adminMfaDisableBtn" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 shadow-md shadow-rose-600/30 border border-rose-400/40 transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-power-off"></i> <span>Disable 2FA</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: View & Regenerate Recovery Codes -->
+  <div id="adminRecoveryCodesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-lg border border-slate-800 shadow-2xl overflow-hidden flex flex-col relative">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/90 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Emergency Recovery Codes</h3>
+            <p class="text-xs text-slate-400">Account Unlock &amp; Backup Credentials</p>
+          </div>
+        </div>
+        <button onclick="closeAdminRecoveryCodesModal()" class="w-8 h-8 rounded-lg bg-surface-900 text-slate-400 hover:text-white hover:bg-surface-850 flex items-center justify-center transition-all cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5 bg-surface-950/95 relative z-10">
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Emergency single-use recovery codes provide an alternative sign-in method if you lose your phone or authenticator app.
+        </p>
+
+        <!-- Initial action before regeneration -->
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="text-xs text-slate-300">
+            <span class="font-bold text-white block">Generate Fresh Code Set</span>
+            <span class="text-[11px] text-slate-500">Invalidates all old codes and issues 8 new single-use tokens.</span>
+          </div>
+          <button onclick="regenerateAdminRecoveryCodes()" id="regenerateCodesBtn" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 hover:from-amber-400 hover:to-amber-300 rounded-xl text-xs font-bold shadow-md shadow-amber-500/25 transition flex items-center gap-2 flex-shrink-0 cursor-pointer">
+            <i class="fa-solid fa-arrows-rotate text-slate-950"></i> <span>Regenerate Codes</span>
+          </button>
+        </div>
+
+        <!-- Container for newly generated codes -->
+        <div id="adminRecoveryCodesSection" class="hidden space-y-4 pt-2 border-t border-slate-800">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-semibold uppercase tracking-wider font-mono text-[11px]">Active Recovery Codes:</span>
+            <span class="text-emerald-400 font-mono text-[10px]">Newly Generated</span>
+          </div>
+          <div id="adminRecoveryCodesGrid" class="grid grid-cols-2 gap-2 p-3 rounded-xl bg-surface-900/90 border border-slate-800">
+            <!-- Codes populated dynamically -->
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <button onclick="copyRecoveryCodes()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-copy"></i> Copy All
+            </button>
+            <button onclick="downloadRecoveryCodes()" class="px-3.5 py-2 bg-surface-850 hover:bg-surface-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-download"></i> Download .txt
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3 border-t border-slate-800 bg-surface-950 flex justify-end relative z-10">
+        <button onclick="closeAdminRecoveryCodesModal()" class="px-5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-900 hover:bg-surface-850 border border-slate-700 transition cursor-pointer">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Sign In 2FA Security Challenge -->
+  <div id="mfaChallengeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300">
+    <div class="glass-card rounded-2xl w-full max-w-md border border-indigo-500/50 shadow-2xl overflow-hidden flex flex-col relative">
+      <!-- Glow Effects -->
+      <div class="absolute -right-12 -top-12 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="absolute -left-12 -bottom-12 w-36 h-36 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-slate-800 bg-surface-950/90 relative z-10 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-amber-400 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-indigo-600/30 mx-auto mb-3">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 id="mfaChallengeTitle" class="text-base font-bold text-white tracking-tight">Two-Factor Verification Required</h3>
+        <p id="mfaChallengeDesc" class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+          Enter the dynamic 6-digit verification code from your authenticator app.
+        </p>
+      </div>
+
+      <!-- Form Body -->
+      <form onsubmit="submitMfaChallenge(event)" class="p-6 space-y-4 bg-surface-950/95 relative z-10">
+        <div id="mfaChallengeAlert" class="hidden p-3 rounded-xl text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30 font-medium text-center"></div>
+
+        <div class="space-y-2">
+          <input type="text" id="mfaChallengeCodeInput" placeholder="000000" autocomplete="one-time-code" required class="w-full bg-surface-900 border border-slate-700 rounded-xl px-4 py-3.5 text-center text-2xl font-mono font-bold tracking-widest text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 transition" />
+        </div>
+
+        <div class="pt-1 text-center">
+          <button type="button" id="mfaChallengeToggleBtn" onclick="toggleMfaChallengeMode()" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium cursor-pointer transition">
+            <i class="fa-solid fa-key mr-1"></i> Lost device? Use emergency recovery code
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeMfaChallengeModal()" class="w-1/3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-surface-900 hover:bg-surface-850 border border-slate-700 transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="mfaChallengeSubmitBtn" class="w-2/3 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 shadow-lg shadow-indigo-600/30 border border-indigo-400/40 transition flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-shield-check"></i> <span>Verify &amp; Sign In</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </body>
