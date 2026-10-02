@@ -53,15 +53,40 @@ class ExposureScorer:
 
         # Policy Gate Determination
         policy_passed = True
+        policy_reasons = []
+
         if pes > max_pes:
             policy_passed = False
+            policy_reasons.append(f"Exposure Score ({pes}) exceeds max allowable PES threshold ({max_pes})")
 
-        if fail_severity == SeverityLevel.CRITICAL and crit > 0:
+        fail_sev_str = fail_severity.value if hasattr(fail_severity, "value") else str(fail_severity).upper()
+        if fail_sev_str == "CRITICAL" and crit > 0:
             policy_passed = False
-        elif fail_severity == SeverityLevel.HIGH and (crit > 0 or high > 0):
+            policy_reasons.append(f"Found {crit} CRITICAL exposure(s) (gate policy fails on CRITICAL)")
+        elif fail_sev_str == "HIGH" and (crit > 0 or high > 0):
             policy_passed = False
-        elif fail_severity == SeverityLevel.MEDIUM and (crit > 0 or high > 0 or med > 0):
+            violators = []
+            if crit > 0: violators.append(f"{crit} CRITICAL")
+            if high > 0: violators.append(f"{high} HIGH")
+            policy_reasons.append(f"Found {', '.join(violators)} exposure(s) (gate policy fails on HIGH+)")
+        elif fail_sev_str == "MEDIUM" and (crit > 0 or high > 0 or med > 0):
             policy_passed = False
+            violators = []
+            if crit > 0: violators.append(f"{crit} CRITICAL")
+            if high > 0: violators.append(f"{high} HIGH")
+            if med > 0: violators.append(f"{med} MEDIUM")
+            policy_reasons.append(f"Found {', '.join(violators)} exposure(s) (gate policy fails on MEDIUM+)")
+        elif fail_sev_str == "LOW" and (crit > 0 or high > 0 or med > 0 or low > 0):
+            policy_passed = False
+            violators = []
+            if crit > 0: violators.append(f"{crit} CRITICAL")
+            if high > 0: violators.append(f"{high} HIGH")
+            if med > 0: violators.append(f"{med} MEDIUM")
+            if low > 0: violators.append(f"{low} LOW")
+            policy_reasons.append(f"Found {', '.join(violators)} exposure(s) (gate policy fails on ANY LOW+)")
+
+        if policy_passed:
+            policy_reasons.append(f"Passed: Exposure Score ({pes} <= {max_pes}) meets security quality threshold")
 
         return ScanSummary(
             total_findings=len(findings),
@@ -73,6 +98,7 @@ class ExposureScorer:
             pipeline_exposure_score=pes,
             risk_grade=grade,
             policy_passed=policy_passed,
+            policy_reasons=policy_reasons,
             scan_duration_seconds=round(duration, 3),
             scanned_files_count=file_count
         )

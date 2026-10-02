@@ -2454,11 +2454,11 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
               <i class="fa-solid fa-gauge-high text-indigo-400 text-sm"></i>
             </div>
             <div class="flex items-baseline gap-2 my-3">
-              <span id="pesScore" class="text-4xl font-black text-rose-500 font-mono tracking-tight">0</span>
+              <span id="pesScore" class="text-4xl font-black text-emerald-400 font-mono tracking-tight">0</span>
               <span class="text-slate-500 text-sm font-semibold">/ 100</span>
             </div>
             <div class="flex items-center justify-between">
-              <span id="riskGradeBadge" class="text-xs font-black px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30">Grade F</span>
+              <span id="riskGradeBadge" class="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Grade A+</span>
               <span class="text-[11px] text-slate-500">Lower is Safer</span>
             </div>
           </div>
@@ -5067,21 +5067,62 @@ shieldci_audit:
         telemBox.classList.add('hidden');
       }
 
-      // Metrics
-      document.getElementById('pesScore').innerText = s.pipeline_exposure_score;
-      document.getElementById('riskGradeBadge').innerText = s.risk_grade;
+      // Metrics - Dynamic score and grade coloring
+      const pesEl = document.getElementById('pesScore');
+      const gradeBadge = document.getElementById('riskGradeBadge');
+      const pes = s.pipeline_exposure_score;
+
+      let scoreColorClass = 'text-rose-500';
+      let gradeBadgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+
+      if (pes <= 15) {
+        scoreColorClass = 'text-emerald-400';
+        gradeBadgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+      } else if (pes <= 35) {
+        scoreColorClass = 'text-sky-400';
+        gradeBadgeClass = 'bg-sky-500/10 text-sky-400 border border-sky-500/30';
+      } else if (pes <= 60) {
+        scoreColorClass = 'text-amber-400';
+        gradeBadgeClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+      } else if (pes <= 80) {
+        scoreColorClass = 'text-orange-400';
+        gradeBadgeClass = 'bg-orange-500/10 text-orange-400 border border-orange-500/30';
+      }
+
+      if (pesEl) {
+        pesEl.innerText = pes;
+        pesEl.className = `text-4xl font-black font-mono tracking-tight ${scoreColorClass}`;
+      }
+      if (gradeBadge) {
+        gradeBadge.innerText = s.risk_grade;
+        gradeBadge.className = `text-xs font-black px-2.5 py-1 rounded-lg ${gradeBadgeClass}`;
+      }
+
       document.getElementById('totalFindings').innerText = s.total_findings;
       document.getElementById('critCount').innerText = s.critical_count;
       document.getElementById('highCount').innerText = s.high_count;
       document.getElementById('scanStats').innerText = `Audited in ${s.scan_duration_seconds}s`;
 
       const policyElem = document.getElementById('policyStatus');
+      const policySubtext = document.getElementById('policySubtext');
       if (s.policy_passed) {
         policyElem.innerHTML = `<i class="fa-solid fa-circle-check"></i> PASSED`;
         policyElem.className = "text-2xl font-black my-3 text-emerald-400 tracking-tight flex items-center gap-2";
+        if (policySubtext) {
+          const reason = (s.policy_reasons && s.policy_reasons.length > 0)
+            ? s.policy_reasons[0]
+            : "Passed: Meets security quality thresholds";
+          policySubtext.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span class="truncate" title="${escapeHtml(reason)}">${escapeHtml(reason)}</span>`;
+        }
       } else {
         policyElem.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> BLOCKED`;
         policyElem.className = "text-2xl font-black my-3 text-rose-500 tracking-tight flex items-center gap-2";
+        if (policySubtext) {
+          const reason = (s.policy_reasons && s.policy_reasons.length > 0)
+            ? s.policy_reasons.join(" • ")
+            : "Blocked: Security policy threshold exceeded";
+          policySubtext.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span class="text-rose-300 font-medium truncate" title="${escapeHtml(reason)}">${escapeHtml(reason)}</span>`;
+        }
       }
 
       document.getElementById('findingsTabCount').innerText = data.findings.length;

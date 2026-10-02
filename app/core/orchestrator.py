@@ -223,6 +223,8 @@ class ExposureOrchestrator:
             # Quality gate enforcement: auto-fail if toxic attack combinations detected
             if getattr(settings, "AUTO_FAIL_ON_TOXIC_COMBOS", True) and len(toxic_combos) > 0:
                 summary.policy_passed = False
+                summary.policy_reasons = [r for r in (summary.policy_reasons or []) if not r.startswith("Passed:")]
+                summary.policy_reasons.append(f"{len(toxic_combos)} compound toxic attack combination(s) detected in kill chain")
 
             result = ScanResult(
                 scan_id=scan_id,

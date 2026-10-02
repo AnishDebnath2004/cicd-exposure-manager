@@ -107,6 +107,7 @@ class ScanSummary(BaseModel):
     pipeline_exposure_score: float = Field(..., description="PES between 0 (Safe) and 100 (Extremely Exposed)")
     risk_grade: str = Field(..., description="Grade: A (Safe), B, C, D, F (Critical Risk)")
     policy_passed: bool
+    policy_reasons: List[str] = Field(default_factory=list, description="Reasons explaining why the quality gate passed or failed")
     scan_duration_seconds: float
     scanned_files_count: int
 
