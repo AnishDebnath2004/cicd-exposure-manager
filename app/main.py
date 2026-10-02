@@ -179,10 +179,10 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
-    # Content Security Policy (allows UI assets: CDN Tailwind, Chart.js, FontAwesome, Google Fonts)
+    # Content Security Policy (allows UI assets: CDN Tailwind, Chart.js, FontAwesome, Google Fonts, QRCode)
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; "
         "img-src 'self' data: https:; "
@@ -221,6 +221,14 @@ except OSError:
     pass
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/qrcode.min.js")
+async def serve_qrcode_js():
+    js_path = os.path.join(STATIC_DIR, "qrcode.min.js")
+    if os.path.isfile(js_path):
+        return FileResponse(js_path, media_type="application/javascript")
+    return Response(status_code=404)
 
 
 @app.get("/", response_class=HTMLResponse)

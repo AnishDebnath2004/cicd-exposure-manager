@@ -58,7 +58,13 @@
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/static/qrcode.min.js"></script>
+  <script>
+    // Fallback to CDN if local /static/qrcode.min.js fails to load
+    if (typeof QRCode === 'undefined' && (!window.QRCode)) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <style>
@@ -8844,21 +8850,39 @@ shieldci_audit:
 
         if (qrContainer) {
           qrContainer.innerHTML = '';
-          new QRCode(qrContainer, {
-            text: data.totp_uri,
-            width: 170,
-            height: 170,
-            colorDark: "#020617",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-          });
+          const QRClass = (typeof QRCode !== 'undefined') ? QRCode : ((typeof window !== 'undefined' && window.QRCode) ? window.QRCode : null);
+          if (QRClass) {
+            new QRClass(qrContainer, {
+              text: data.totp_uri,
+              width: 170,
+              height: 170,
+              colorDark: "#020617",
+              colorLight: "#ffffff",
+              correctLevel: (QRClass.CorrectLevel && QRClass.CorrectLevel.M) !== undefined ? QRClass.CorrectLevel.M : 0
+            });
+          } else {
+            // Graceful fallback to dynamic QR code image or manual entry instructions
+            const qrImg = document.createElement('img');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(data.totp_uri)}`;
+            qrImg.alt = "MFA TOTP Authenticator QR Code";
+            qrImg.className = "w-[170px] h-[170px] mx-auto rounded shadow-sm";
+            qrImg.onerror = () => {
+              qrContainer.innerHTML = `
+                <div class="py-6 px-4 text-center text-slate-400 text-xs">
+                  <i class="fa-solid fa-key text-amber-400 text-base mb-2 block"></i>
+                  <span>QR code generator offline. Please enter the secret key manually below into your Authenticator app.</span>
+                </div>
+              `;
+            };
+            qrContainer.appendChild(qrImg);
+          }
         }
         setTimeout(() => {
           if (codeInput) codeInput.focus();
         }, 200);
       } catch (err) {
         if (qrContainer) {
-          qrContainer.innerHTML = `<div class="p-4 text-xs text-rose-400 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${err.message}</div>`;
+          qrContainer.innerHTML = `<div class="p-4 text-xs text-rose-400 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${err.message || "Failed to load MFA setup"}</div>`;
         }
       }
     }
