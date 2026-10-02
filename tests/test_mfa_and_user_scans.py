@@ -56,6 +56,7 @@ def test_admin_can_see_user_scan_counts():
         storage.update_user_role(admin_dict["id"], "admin")
         admin_dict = storage.get_user_by_email("debnathanish19@gmail.com")
 
+    assert admin_dict is not None, "Admin user debnathanish19@gmail.com should exist in database"
     admin = UserResponse(**admin_dict)
 
     # 1. Admin lists all users
@@ -98,7 +99,9 @@ def test_admin_mfa_lifecycle():
     else:
         user_obj = storage.get_user_by_id(user_rec["id"])
 
-    admin = UserResponse(**storage.get_user_by_email(test_email))
+    test_admin_dict = storage.get_user_by_email(test_email)
+    assert test_admin_dict is not None, f"Test admin user {test_email} should exist"
+    admin = UserResponse(**test_admin_dict)
 
     # 2. Initially MFA should be disabled
     status_initial = asyncio.run(admin_get_mfa_status(admin_user=admin))
@@ -141,6 +144,7 @@ def test_admin_mfa_lifecycle():
 
     # Verify status reflects enabled MFA
     admin_updated = storage.get_user_by_id(admin.id)
+    assert admin_updated is not None
     assert admin_updated.mfa_enabled is True
     status_enabled = asyncio.run(admin_get_mfa_status(admin_user=admin_updated))
     assert status_enabled.mfa_enabled is True
@@ -197,6 +201,7 @@ def test_admin_mfa_lifecycle():
     reset_res = asyncio.run(admin_reset_user_mfa(user_id=admin.id, admin_user=admin))
     assert reset_res["status"] == "success"
     admin_after_reset = storage.get_user_by_id(admin.id)
+    assert admin_after_reset is not None
     assert admin_after_reset.mfa_enabled is False
 
     # 11. Now login succeeds immediately without MFA challenge
