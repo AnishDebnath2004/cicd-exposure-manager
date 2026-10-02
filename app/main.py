@@ -1089,6 +1089,7 @@ async def admin_setup_mfa(admin_user: UserResponse = Depends(require_admin)):
     return MfaSetupResponse(
         secret=secret,
         otpauth_uri=uri,
+        totp_uri=uri,
         recovery_codes=recovery_codes
     )
 
@@ -1108,7 +1109,8 @@ async def admin_enable_mfa(
             detail="Invalid 6-digit verification code. Please verify the code displayed in your authenticator app."
         )
 
-    hashed_codes = [hash_recovery_code(c) for c in req.recovery_codes]
+    raw_recovery_codes = req.recovery_codes if (req.recovery_codes and len(req.recovery_codes) > 0) else generate_recovery_codes(count=8)
+    hashed_codes = [hash_recovery_code(c) for c in raw_recovery_codes]
     success = storage.enable_user_mfa(
         user_id=admin_user.id,
         mfa_secret=req.secret,
@@ -1124,6 +1126,7 @@ async def admin_enable_mfa(
     return {
         "status": "success",
         "message": "Two-factor authentication has been successfully activated on your administrator account.",
+        "recovery_codes": raw_recovery_codes,
         "recovery_codes_count": len(hashed_codes)
     }
 

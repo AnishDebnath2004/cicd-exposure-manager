@@ -5501,6 +5501,27 @@ shieldci_audit:
       if (!str) return '';
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
+    function formatApiError(data, defaultMsg = "An unexpected error occurred.") {
+      if (!data) return defaultMsg;
+      if (typeof data === "string") return data;
+      if (data.detail) {
+        if (typeof data.detail === "string") return data.detail;
+        if (Array.isArray(data.detail)) {
+          return data.detail.map(item => {
+            if (typeof item === 'string') return item;
+            const loc = Array.isArray(item.loc) ? item.loc.filter(x => x !== 'body').join('.') : '';
+            const msg = item.msg || item.message || JSON.stringify(item);
+            return loc ? `${loc}: ${msg}` : msg;
+          }).join("; ");
+        }
+        if (typeof data.detail === "object") {
+          return data.detail.msg || data.detail.message || JSON.stringify(data.detail);
+        }
+      }
+      if (data.message && typeof data.message === "string") return data.message;
+      if (data.error && typeof data.error === "string") return data.error;
+      return defaultMsg;
+    }
     function showToast(msg, type = "info") {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -6125,7 +6146,7 @@ shieldci_audit:
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.detail || "Authentication failed. Invalid administrator credentials.");
+          throw new Error(formatApiError(data, "Authentication failed. Invalid administrator credentials."));
         }
 
         if (data.mfa_required) {
@@ -7851,7 +7872,7 @@ shieldci_audit:
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Login failed. Please check credentials.");
+        if (!res.ok) throw new Error(formatApiError(data, "Login failed. Please check credentials."));
 
         if (data.mfa_required) {
           openMfaChallengeModal(data.mfa_token, 'user', (verifyData) => {
@@ -8663,6 +8684,7 @@ shieldci_audit:
     // Multi-Factor Authentication (MFA / 2FA) & User Scans Inspector
     // ==============================================================
     let currentMfaSetupSecret = null;
+    let currentMfaRecoveryCodes = [];
     let mfaChallengeCallback = null;
     let mfaChallengeToken = null;
     let activeInspectedUserId = null;
@@ -8807,7 +8829,7 @@ shieldci_audit:
           body: JSON.stringify({ enforce_admin_mfa, enforce_all_users_mfa })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to update MFA policy");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to update MFA policy"));
         showToast("Platform MFA governance policy updated successfully!", "success");
         loadAdminMfa();
       } catch (err) {
@@ -8843,17 +8865,20 @@ shieldci_audit:
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to initiate MFA setup");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to initiate MFA setup"));
 
         currentMfaSetupSecret = data.secret;
+        currentMfaRecoveryCodes = data.recovery_codes || [];
         if (secretDisplay) secretDisplay.textContent = data.secret;
+
+        const totpUri = data.otpauth_uri || data.totp_uri;
 
         if (qrContainer) {
           qrContainer.innerHTML = '';
           const QRClass = (typeof QRCode !== 'undefined') ? QRCode : ((typeof window !== 'undefined' && window.QRCode) ? window.QRCode : null);
           if (QRClass) {
             new QRClass(qrContainer, {
-              text: data.totp_uri,
+              text: totpUri,
               width: 170,
               height: 170,
               colorDark: "#020617",
@@ -8863,7 +8888,7 @@ shieldci_audit:
           } else {
             // Graceful fallback to dynamic QR code image or manual entry instructions
             const qrImg = document.createElement('img');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(data.totp_uri)}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(totpUri)}`;
             qrImg.alt = "MFA TOTP Authenticator QR Code";
             qrImg.className = "w-[170px] h-[170px] mx-auto rounded shadow-sm";
             qrImg.onerror = () => {
@@ -8891,6 +8916,7 @@ shieldci_audit:
       const modal = document.getElementById('adminMfaSetupModal');
       if (modal) modal.classList.add('hidden');
       currentMfaSetupSecret = null;
+      currentMfaRecoveryCodes = [];
     }
 
     function copyMfaSecret() {
@@ -8923,21 +8949,26 @@ shieldci_audit:
       if (alertBox) alertBox.classList.add('hidden');
 
       try {
+        const payload = {
+          secret: currentMfaSetupSecret,
+          code: code
+        };
+        if (currentMfaRecoveryCodes && currentMfaRecoveryCodes.length > 0) {
+          payload.recovery_codes = currentMfaRecoveryCodes;
+        }
+
         const res = await fetch('/api/admin/mfa/enable', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            secret: currentMfaSetupSecret,
-            code: code
-          })
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Verification failed. Invalid code.");
+        if (!res.ok) throw new Error(formatApiError(data, "Verification failed. Invalid code."));
 
-        activeRecoveryCodesList = data.recovery_codes || [];
+        activeRecoveryCodesList = data.recovery_codes || currentMfaRecoveryCodes || [];
         renderRecoveryCodesGrid('mfaSetupRecoveryGrid', activeRecoveryCodesList);
 
         // Switch to Step 3 (Backup Codes)
@@ -8949,7 +8980,7 @@ shieldci_audit:
         if (currentUser) currentUser.mfa_enabled = true;
       } catch (err) {
         if (alertBox) {
-          alertBox.textContent = err.message;
+          alertBox.textContent = err.message || "Failed to activate 2FA.";
           alertBox.classList.remove('hidden');
         }
       } finally {
@@ -9043,7 +9074,7 @@ shieldci_audit:
           body: JSON.stringify({ password })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to disable MFA. Please verify password.");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to disable MFA. Please verify password."));
 
         closeAdminDisableMfaModal();
         showToast("Two-Factor Authentication disabled.", "info");
@@ -9090,7 +9121,7 @@ shieldci_audit:
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to regenerate recovery codes");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to regenerate recovery codes"));
 
         activeRecoveryCodesList = data.recovery_codes || [];
         renderRecoveryCodesGrid('adminRecoveryCodesGrid', activeRecoveryCodesList);
@@ -9134,7 +9165,7 @@ shieldci_audit:
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to fetch user scan activity");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to fetch user scan activity"));
 
         const scans = data.scans || [];
         if (countBadge) countBadge.textContent = `${scans.length} Scans Run`;
@@ -9232,7 +9263,7 @@ shieldci_audit:
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to reset user MFA");
+        if (!res.ok) throw new Error(formatApiError(data, "Failed to reset user MFA"));
         showToast(`MFA has been successfully revoked for ${userEmail}.`, "success");
         loadAdminUsers();
         loadAdminMfa();
@@ -9336,7 +9367,7 @@ shieldci_audit:
           })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Verification failed. Invalid code or token expired.");
+        if (!res.ok) throw new Error(formatApiError(data, "Verification failed. Invalid code or token expired."));
 
         const callback = mfaChallengeCallback;
         closeMfaChallengeModal();

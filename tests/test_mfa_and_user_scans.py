@@ -112,6 +112,7 @@ def test_admin_mfa_lifecycle():
     assert setup_res.secret is not None
     assert len(setup_res.secret) >= 16
     assert "otpauth://" in setup_res.otpauth_uri
+    assert setup_res.totp_uri == setup_res.otpauth_uri
     assert len(setup_res.recovery_codes) == 8
     first_recovery_code = setup_res.recovery_codes[0]
 
@@ -141,6 +142,8 @@ def test_admin_mfa_lifecycle():
         admin_user=admin
     ))
     assert enable_res["status"] == "success"
+    assert "recovery_codes" in enable_res
+    assert len(enable_res["recovery_codes"]) == 8
 
     # Verify status reflects enabled MFA
     admin_updated = storage.get_user_by_id(admin.id)

@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from typing import Optional, List, Literal, Any, Dict
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
@@ -117,16 +117,28 @@ class UserListResponse(BaseModel):
 # ==============================================================
 class MfaSetupResponse(BaseModel):
     """Response returned when initiating TOTP MFA enrollment."""
+    model_config = ConfigDict(extra="ignore")
     secret: str = Field(..., description="Base32 TOTP secret key for manual entry")
     otpauth_uri: str = Field(..., description="Standard otpauth:// URI for authenticator apps")
+    totp_uri: Optional[str] = Field(None, description="Standard otpauth:// URI for authenticator apps (alias for frontend compatibility)")
     recovery_codes: List[str] = Field(..., description="List of single-use emergency recovery codes")
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_uri_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            uri = data.get("otpauth_uri") or data.get("totp_uri")
+            if uri:
+                data["otpauth_uri"] = uri
+                data["totp_uri"] = uri
+        return data
 
 
 class MfaEnableRequest(BaseModel):
     """Payload to confirm TOTP code and enable MFA."""
     secret: str = Field(..., description="The base32 secret provided during setup")
     code: str = Field(..., min_length=6, max_length=6, description="6-digit TOTP verification code from authenticator app")
-    recovery_codes: List[str] = Field(..., description="Recovery codes provided during setup")
+    recovery_codes: Optional[List[str]] = Field(default=None, description="Recovery codes provided during setup")
 
 
 class MfaDisableRequest(BaseModel):
