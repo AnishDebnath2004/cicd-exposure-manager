@@ -14,7 +14,7 @@ import urllib.parse
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from app.models.schemas import ScanResult, ScanRequest, SourceType, TargetCategory, SeverityLevel
+from app.models.schemas import ScanResult, ScanRequest, SourceType, TargetCategory, SeverityLevel, DiscoveredService
 from app.scanners.workflow_scanner import WorkflowScanner
 from app.scanners.secret_scanner import SecretScanner
 from app.scanners.sca_scanner import SCAScanner
@@ -267,6 +267,36 @@ class ExposureOrchestrator:
         scan_id = str(uuid.uuid4())
 
         findings, web_meta = self.web_scanner.scan(target_url)
+
+        # -------------------------------------------------------------
+        # Approach A: Auto-discover database perimeter & endpoints from target URL
+        # -------------------------------------------------------------
+        auto_disc = self.auto_discovery_engine.discover_from_url(target_url)
+
+        # Merge any leaked database connection URIs found by web scanner (.env, etc.)
+        for leaked_uri in web_meta.get("discovered_db_uris", []):
+            if leaked_uri not in auto_disc.discovered_db_targets:
+                auto_disc.discovered_db_targets.append(leaked_uri)
+                auto_disc.discovered_services.append(DiscoveredService(
+                    name="Leaked Database URI (.env)",
+                    service_type="database",
+                    ports=[],
+                    connection_hint=leaked_uri
+                ))
+
+        # Automatically execute DatabaseScanner on all discovered database targets
+        db_audit_metadata = []
+        for db_target in auto_disc.discovered_db_targets:
+            try:
+                db_findings, db_info = self.database_scanner.scan(db_target)
+                findings.extend(db_findings)
+                db_audit_metadata.append(db_info)
+            except Exception:
+                pass
+
+        if db_audit_metadata:
+            web_meta["discovered_databases"] = db_audit_metadata
+
         duration = time.time() - start_time
 
         parsed = urllib.parse.urlparse(web_meta.get("url", target_url))
@@ -275,14 +305,15 @@ class ExposureOrchestrator:
         summary = ExposureScorer.calculate_summary(
             findings=findings,
             duration=duration,
-            file_count=1,
+            file_count=1 + len(auto_disc.discovered_db_targets),
             fail_severity=fail_severity,
             max_pes=max_pes
         )
 
         toxic_combos, attack_graph = self.correlator.correlate(
             findings=findings,
-            target_name=asset_name
+            target_name=asset_name,
+            auto_discovery=auto_disc
         )
 
         missing_headers = [f.title.replace("Missing Security Header: ", "").strip() for f in findings if "Missing Security Header" in f.title]
@@ -303,6 +334,7 @@ class ExposureOrchestrator:
             metadata=web_meta,
             toxic_combinations=toxic_combos,
             attack_graph=attack_graph,
+            auto_discovery=auto_disc,
             unified_patch=patch_str,
             user_email=user_email
         )

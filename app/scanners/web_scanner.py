@@ -7,6 +7,7 @@ Audits TLS certificates, missing security headers, information disclosures, CORS
 import ssl
 import socket
 import urllib.parse
+import re
 from datetime import datetime
 import uuid
 from typing import List, Tuple, Dict, Any, Optional
@@ -90,8 +91,9 @@ class WebsiteScanner:
             findings.extend(fingerprint_findings)
 
             # 4. Sensitive Path Probes
-            path_findings = self._probe_sensitive_paths(url)
+            path_findings, leaked_db_uris = self._probe_sensitive_paths(url)
             findings.extend(path_findings)
+            metadata["discovered_db_uris"] = leaked_db_uris
 
         except requests.exceptions.RequestException as e:
             findings.append(Finding(
@@ -345,10 +347,12 @@ class WebsiteScanner:
 
         return findings
 
-    def _probe_sensitive_paths(self, base_url: str) -> List[Finding]:
+    def _probe_sensitive_paths(self, base_url: str) -> Tuple[List[Finding], List[str]]:
         """Probes common hazardous debug / secret paths non-intrusively."""
         findings = []
+        leaked_db_uris = []
         base = base_url.rstrip("/")
+        db_regex = re.compile(r"(?:postgres|postgresql|mysql|mariadb|redis|mongodb|mongodb\+srv|elasticsearch|mssql)://[^\s'\"<>]+")
 
         probe_targets = [
             ("/.env", SeverityLevel.CRITICAL, "Publicly Exposed Environment Configuration (.env)", "A publicly accessible .env file was discovered. Attackers can extract API keys, database credentials, and secret tokens directly."),
@@ -384,7 +388,10 @@ class WebsiteScanner:
                             remediation_advice=f"Block public HTTP access to '{path}' at web server / reverse proxy layer.",
                             auto_fixable=False
                         ))
+                        if res.text:
+                            found = db_regex.findall(res.text)
+                            leaked_db_uris.extend(found)
             except Exception:
                 pass
 
-        return findings
+        return findings, list(set(leaked_db_uris))

@@ -7,6 +7,9 @@ to automatically discover live websites, database endpoints, and exposed network
 
 import os
 import re
+import socket
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import yaml
 import json
 from typing import List, Dict, Set, Optional, Tuple
@@ -15,7 +18,7 @@ from app.config import settings
 
 
 class AutoDiscoveryEngine:
-    """Discovers live websites, databases, and exposed services directly from repository code."""
+    """Discovers live websites, databases, and exposed services directly from repository code or web perimeters."""
 
     DB_IMAGE_PATTERNS = {
         "postgres": ("postgres", 5432, "postgresql://postgres:postgres@localhost:5432/app"),
@@ -31,6 +34,100 @@ class AutoDiscoveryEngine:
 
     URL_REGEX = re.compile(r"https?://[a-zA-Z0-9.\-_]+(?::\d+)?(?:/[^\s'\"<>]*)?")
     DB_URI_REGEX = re.compile(r"(?:postgres|postgresql|mysql|mariadb|redis|mongodb|mongodb\+srv|elasticsearch|mssql)://[^\s'\"<>]+")
+
+    COMMON_DB_PORTS: List[Tuple[str, int, str]] = [
+        ("postgres", 5432, "postgresql"),
+        ("mysql", 3306, "mysql"),
+        ("redis", 6379, "redis"),
+        ("mongodb", 27017, "mongodb"),
+        ("elasticsearch", 9200, "http"),
+        ("mssql", 1433, "mssql"),
+    ]
+
+    SUBDOMAIN_PREFIXES = [
+        "db", "database", "redis", "postgres", "postgresql", "mysql", "mongo", "mongodb", "elastic", "sql", "data"
+    ]
+
+    def discover_from_url(self, target_url: str, timeout: float = 0.5) -> AutoDiscoveryResult:
+        """
+        Approach A: Live perimeter host & subdomain probing from a Website URL.
+        1. Resolves website hostname to IP via DNS.
+        2. Probes candidate database subdomains.
+        3. Scans standard database ports concurrently.
+        4. Returns discovered database and web targets for automated auditing.
+        """
+        web_targets: Set[str] = {target_url}
+        db_targets: Set[str] = set()
+        services: List[DiscoveredService] = []
+        source_files: List[str] = [target_url]
+
+        parsed = urllib.parse.urlparse(target_url if "://" in target_url else f"https://{target_url}")
+        raw_host = parsed.hostname or target_url
+        clean_host = raw_host.strip().lower()
+
+        # Check if local/IP
+        is_ip = bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", clean_host)) or ":" in clean_host
+        is_local = clean_host in ("localhost", "127.0.0.1", "::1")
+
+        candidate_hosts: List[str] = [clean_host]
+
+        # Only enumerate subdomains for public domain names, not IP addresses or localhost
+        if not is_ip and not is_local and "." in clean_host:
+            parts = clean_host.split(".")
+            if len(parts) > 2 and parts[0] == "www":
+                base_domain = ".".join(parts[1:])
+            elif len(parts) >= 2:
+                base_domain = ".".join(parts[-2:])
+            else:
+                base_domain = clean_host
+
+            for prefix in self.SUBDOMAIN_PREFIXES:
+                sub_host = f"{prefix}.{base_domain}"
+                if sub_host != clean_host and sub_host not in candidate_hosts:
+                    candidate_hosts.append(sub_host)
+
+        def check_port(host: str, engine: str, port: int, scheme: str) -> Optional[Tuple[str, DiscoveredService]]:
+            try:
+                ip_addr = socket.gethostbyname(host)
+                with socket.create_connection((ip_addr, port), timeout=timeout):
+                    uri = f"{scheme}://{host}:{port}"
+                    svc = DiscoveredService(
+                        name=f"{engine.upper()} Perimeter ({host}:{port})",
+                        service_type="database",
+                        image_or_source=f"tcp/{port}",
+                        ports=[str(port)],
+                        connection_hint=uri
+                    )
+                    return uri, svc
+            except Exception:
+                return None
+
+        # Execute concurrent socket checks
+        probe_tasks = []
+        with ThreadPoolExecutor(max_workers=15) as executor:
+            for host in candidate_hosts:
+                is_sub = host != clean_host
+                for engine, port, scheme in self.COMMON_DB_PORTS:
+                    # If this is a specific subdomain (e.g. redis.example.com), prioritize that engine
+                    if is_sub:
+                        is_specialized = any(e in host for e in ("redis", "postgres", "mysql", "mongo", "elastic"))
+                        if is_specialized and engine not in host:
+                            continue
+                    probe_tasks.append(executor.submit(check_port, host, engine, port, scheme))
+
+            for future in as_completed(probe_tasks):
+                res = future.result()
+                if res:
+                    uri, svc = res
+                    db_targets.add(uri)
+                    services.append(svc)
+
+        return AutoDiscoveryResult(
+            discovered_web_targets=sorted(web_targets),
+            discovered_db_targets=sorted(db_targets),
+            discovered_services=services,
+            source_files=source_files
+        )
 
     def discover(self, base_path: str) -> AutoDiscoveryResult:
         """
