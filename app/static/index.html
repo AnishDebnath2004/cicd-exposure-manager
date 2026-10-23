@@ -2084,11 +2084,19 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
                 <input id="userLoginEmail" type="email" required placeholder="you@company.com" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-300">Password</label>
+                  <button type="button" onclick="openForgotPasswordFlow('user', document.getElementById('userLoginEmail')?.value)" class="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 font-sans">
+                    <i class="fa-solid fa-key text-[10px]"></i> Forgot password?
+                  </button>
+                </div>
                 <input id="userLoginPassword" type="password" required placeholder="••••••••" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" />
               </div>
             </div>
-            <div class="flex items-center justify-end">
+            <div class="flex items-center justify-between">
+              <button type="button" onclick="openForgotPasswordFlow('user', document.getElementById('userLoginEmail')?.value)" class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1.5 font-medium">
+                <i class="fa-solid fa-unlock-keyhole text-[11px]"></i> <span>Forgot Password?</span>
+              </button>
               <button id="userLoginBtn" type="submit" class="px-5 py-2 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to ShieldCI
               </button>
@@ -2723,6 +2731,9 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
             <div>
               <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
                 <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber-400"></i> Administrator Password</span>
+                <button type="button" onclick="openForgotPasswordFlow('admin', document.getElementById('adminInlineEmail')?.value)" class="text-[11px] text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 font-sans">
+                  <i class="fa-solid fa-key text-[10px]"></i> Forgot password?
+                </button>
               </label>
               <div class="relative">
                 <input id="adminInlinePassword" type="password" required placeholder="Enter administrator password" autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono" />
@@ -2736,6 +2747,12 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
               <i class="fa-solid fa-crown text-slate-950"></i>
               <span>Sign In to Administrator Console</span>
             </button>
+
+            <div class="pt-1 flex items-center justify-center">
+              <button type="button" onclick="openForgotPasswordFlow('admin', document.getElementById('adminInlineEmail')?.value)" class="text-xs text-amber-400/90 hover:text-amber-300 hover:underline flex items-center gap-1.5 font-medium">
+                <i class="fa-solid fa-unlock-keyhole text-[11px]"></i> <span>Forgot Administrator Password? Reset here</span>
+              </button>
+            </div>
           </form>
 
           <!-- Direct Admin Sign-Up Form inside Section 4 -->
@@ -6488,10 +6505,14 @@ shieldci_audit:
       const signupBtn = document.getElementById('authTabBtn-signup');
       const loginForm = document.getElementById('loginForm');
       const signupForm = document.getElementById('signupForm');
+      const forgotForm = document.getElementById('forgotPasswordForm');
       const title = document.getElementById('authModalTitle');
       const submitBtn = document.getElementById('loginSubmitBtn');
       const emailInput = document.getElementById('loginEmail');
       const adminPrompt = document.getElementById('adminSignupPrompt');
+      const forgotLink = document.getElementById('modalForgotPassLink');
+      const forgotBottomBtn = document.getElementById('modalForgotBottomBtn');
+      const passIcon = document.getElementById('modalLoginPassIcon');
 
       hideAuthAlert();
 
@@ -6509,6 +6530,22 @@ shieldci_audit:
       if (userBtn) userBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
       if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-amber-400 hover:text-amber-300";
       if (signupBtn) signupBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+
+      if (tab === 'forgot') {
+        if (loginForm) loginForm.classList.add('hidden');
+        if (signupForm) signupForm.classList.add('hidden');
+        if (forgotForm) forgotForm.classList.remove('hidden');
+        if (forgotCurrentRole === 'admin') {
+          if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25";
+          if (title) title.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-crown"></i> Reset Administrator Password</span>';
+        } else {
+          if (loginBtn) loginBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/25";
+          if (title) title.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-shield-halved"></i> Reset Account Password</span>';
+        }
+        return;
+      }
+
+      if (forgotForm) forgotForm.classList.add('hidden');
 
       if (tab === 'admin_signup') {
         if (adminBtn) adminBtn.className = "py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/25";
@@ -6531,6 +6568,15 @@ shieldci_audit:
           emailInput.value = '';
         }
         if (emailInput) emailInput.placeholder = "admin@shieldci.io";
+        if (passIcon) passIcon.className = "fa-solid fa-lock text-amber-400";
+        if (forgotLink) {
+          forgotLink.className = "text-[11px] text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 font-sans";
+          forgotLink.innerHTML = '<i class="fa-solid fa-key text-[10px]"></i> Forgot admin password?';
+        }
+        if (forgotBottomBtn) {
+          forgotBottomBtn.className = "text-xs text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 font-medium";
+          forgotBottomBtn.innerHTML = '<i class="fa-solid fa-unlock-keyhole text-[11px]"></i> <span>Forgot Admin Password?</span>';
+        }
         if (submitBtn) {
           submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2";
           submitBtn.innerHTML = '<i class="fa-solid fa-crown text-slate-950"></i> <span>Sign In as Administrator</span>';
@@ -6546,6 +6592,15 @@ shieldci_audit:
         signupForm.classList.add('hidden');
         if (title) title.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-shield-halved"></i> Sign In to ShieldCI</span>';
         if (emailInput) emailInput.placeholder = "you@company.com";
+        if (passIcon) passIcon.className = "fa-solid fa-lock text-indigo-400";
+        if (forgotLink) {
+          forgotLink.className = "text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 font-sans";
+          forgotLink.innerHTML = '<i class="fa-solid fa-key text-[10px]"></i> Forgot password?';
+        }
+        if (forgotBottomBtn) {
+          forgotBottomBtn.className = "text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 font-medium";
+          forgotBottomBtn.innerHTML = '<i class="fa-solid fa-unlock-keyhole text-[11px]"></i> <span>Forgot Password?</span>';
+        }
         if (submitBtn) {
           submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2";
           submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Sign In to ShieldCI</span>';
@@ -6744,6 +6799,272 @@ shieldci_audit:
           showToast(`Welcome, Administrator ${data.user.full_name || data.user.email}! Console unlocked.`, "success");
         } else {
           showToast(`Welcome to ShieldCI, ${data.user.full_name || data.user.email}! Account created.`, "success");
+        }
+      } catch (err) {
+        showAuthAlert(`Network error: ${err.message}`, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ==========================================
+    // FORGOT PASSWORD SUBSYSTEM (Admin & Users)
+    // ==========================================
+    let forgotCurrentRole = 'user';
+    let currentResetToken = null;
+
+    function openForgotPasswordFlow(role = 'user', prefillEmail = '') {
+      forgotCurrentRole = role === 'admin' ? 'admin' : 'user';
+      currentResetToken = null;
+      openAuthModal('forgot');
+      setForgotRole(forgotCurrentRole);
+
+      // Reset steps
+      const step1 = document.getElementById('forgotStep1');
+      const step2 = document.getElementById('forgotStep2');
+      if (step1) step1.classList.remove('hidden');
+      if (step2) step2.classList.add('hidden');
+
+      // Pre-fill email
+      const emailInput = document.getElementById('forgotEmail');
+      let targetEmail = (prefillEmail || '').trim();
+      if (!targetEmail) {
+        if (role === 'admin') {
+          targetEmail = (document.getElementById('adminInlineEmail')?.value || '').trim();
+        } else {
+          targetEmail = (document.getElementById('userLoginEmail')?.value || document.getElementById('loginEmail')?.value || '').trim();
+        }
+      }
+      if (emailInput) {
+        emailInput.value = targetEmail;
+        setTimeout(() => {
+          if (!targetEmail) {
+            emailInput.focus();
+          } else {
+            document.getElementById('forgotRequestBtn')?.focus();
+          }
+        }, 60);
+      }
+    }
+
+    function cancelForgotPasswordFlow() {
+      switchAuthTab(forgotCurrentRole === 'admin' ? 'admin' : 'login');
+    }
+
+    function toggleForgotRole() {
+      setForgotRole(forgotCurrentRole === 'admin' ? 'user' : 'admin');
+    }
+
+    function setForgotRole(role) {
+      forgotCurrentRole = role === 'admin' ? 'admin' : 'user';
+      const badge = document.getElementById('forgotRoleBadge');
+      const toggleText = document.getElementById('forgotToggleRoleText');
+      const emailIcon = document.getElementById('forgotEmailIcon');
+      const emailInput = document.getElementById('forgotEmail');
+      const submitBtn = document.getElementById('forgotRequestBtn');
+      const modalTitle = document.getElementById('authModalTitle');
+
+      if (role === 'admin') {
+        if (badge) {
+          badge.innerHTML = `
+            <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs shadow-sm">
+              <i class="fa-solid fa-crown"></i>
+            </span>
+            <div>
+              <div class="font-bold text-amber-300 flex items-center gap-1.5">Administrator Account <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded uppercase font-mono">Owner</span></div>
+              <div class="text-[10px] text-slate-400">Platform Governance Password Recovery</div>
+            </div>
+          `;
+        }
+        if (toggleText) toggleText.textContent = "Switch to User Reset";
+        if (emailIcon) emailIcon.className = "fa-solid fa-crown text-amber-400";
+        if (emailInput && (!emailInput.value || emailInput.value === 'you@company.com')) {
+          emailInput.placeholder = "admin@shieldci.io";
+        }
+        if (submitBtn) {
+          submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2";
+          submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane text-slate-950"></i> <span>Send Admin Reset Code</span>';
+        }
+        if (modalTitle) modalTitle.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-crown"></i> Reset Administrator Password</span>';
+      } else {
+        if (badge) {
+          badge.innerHTML = `
+            <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shadow-sm">
+              <i class="fa-solid fa-user-shield"></i>
+            </span>
+            <div>
+              <div class="font-bold text-slate-200 flex items-center gap-1.5">User / Developer Account <span class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded uppercase font-mono">Developer</span></div>
+              <div class="text-[10px] text-slate-400">Self-Service Account Password Recovery</div>
+            </div>
+          `;
+        }
+        if (toggleText) toggleText.textContent = "Switch to Admin Reset";
+        if (emailIcon) emailIcon.className = "fa-solid fa-envelope text-indigo-400";
+        if (emailInput && (!emailInput.value || emailInput.value === 'admin@shieldci.io')) {
+          emailInput.placeholder = "you@company.com";
+        }
+        if (submitBtn) {
+          submitBtn.className = "w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2";
+          submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Send Reset Verification Code</span>';
+        }
+        if (modalTitle) modalTitle.innerHTML = '<span class="text-indigo-400"><i class="fa-solid fa-shield-halved"></i> Reset Account Password</span>';
+      }
+    }
+
+    function backToForgotStep1() {
+      const step1 = document.getElementById('forgotStep1');
+      const step2 = document.getElementById('forgotStep2');
+      if (step1) step1.classList.remove('hidden');
+      if (step2) step2.classList.add('hidden');
+      hideAuthAlert();
+      setTimeout(() => document.getElementById('forgotEmail')?.focus(), 50);
+    }
+
+    function autoFillForgotCode() {
+      const disp = document.getElementById('forgotDispCode');
+      const input = document.getElementById('forgotCode');
+      if (disp && input && disp.textContent && disp.textContent !== '------') {
+        input.value = disp.textContent.trim();
+        showToast("Verification code auto-filled!", "info");
+        document.getElementById('forgotNewPassword')?.focus();
+      }
+    }
+
+    async function handleForgotPasswordRequest(event) {
+      event.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const btn = document.getElementById('forgotRequestBtn');
+      const originalText = btn.innerHTML;
+
+      if (!email) {
+        showAuthAlert("Please enter your account email address.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> <span>Requesting Reset Code...</span>`;
+      hideAuthAlert();
+
+      try {
+        const res = await fetch('/api/auth/password/reset-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, role: forgotCurrentRole })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showAuthAlert(data.detail || "Unable to request password reset. Please verify email.", "error");
+          return;
+        }
+
+        currentResetToken = data.reset_token;
+
+        // Switch to Step 2
+        document.getElementById('forgotStep1').classList.add('hidden');
+        document.getElementById('forgotStep2').classList.remove('hidden');
+
+        // Populate step 2 info
+        document.getElementById('forgotConfirmedEmail').textContent = data.email;
+        if (data.reset_code) {
+          document.getElementById('forgotDispCode').textContent = data.reset_code;
+          document.getElementById('forgotCode').value = data.reset_code;
+        }
+
+        // Toggle MFA wrapper if required
+        const mfaWrapper = document.getElementById('forgotMfaWrapper');
+        if (mfaWrapper) {
+          if (data.mfa_required) {
+            mfaWrapper.classList.remove('hidden');
+          } else {
+            mfaWrapper.classList.add('hidden');
+          }
+        }
+
+        showAuthAlert(data.message || "Reset verification code generated! Set your new password below.", "success");
+        setTimeout(() => {
+          if (data.reset_code) {
+            document.getElementById('forgotNewPassword')?.focus();
+          } else {
+            document.getElementById('forgotCode')?.focus();
+          }
+        }, 60);
+      } catch (err) {
+        showAuthAlert(`Network error: ${err.message}`, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function handleForgotPasswordConfirm(event) {
+      event.preventDefault();
+      const code = document.getElementById('forgotCode').value.trim();
+      const newPassword = document.getElementById('forgotNewPassword').value;
+      const confirmPassword = document.getElementById('forgotConfirmPassword').value;
+      const mfaCode = document.getElementById('forgotMfaCode')?.value.trim() || null;
+      const btn = document.getElementById('forgotConfirmBtn');
+      const originalText = btn.innerHTML;
+
+      if (!currentResetToken) {
+        showAuthAlert("Reset session expired. Please start over.", "error");
+        backToForgotStep1();
+        return;
+      }
+      if (!code) {
+        showAuthAlert("Please enter the verification code.", "error");
+        return;
+      }
+      if (newPassword.length < 8) {
+        showAuthAlert("New password must be at least 8 characters long.", "error");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showAuthAlert("Passwords do not match. Please ensure both fields are identical.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> <span>Updating Password...</span>`;
+      hideAuthAlert();
+
+      try {
+        const payload = {
+          reset_token: currentResetToken,
+          code: code,
+          new_password: newPassword,
+          confirm_password: confirmPassword
+        };
+        if (mfaCode) {
+          payload.mfa_code = mfaCode;
+        }
+
+        const res = await fetch('/api/auth/password/reset-confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showAuthAlert(data.detail || "Password reset failed. Please check your verification code.", "error");
+          return;
+        }
+
+        // Success! Set auth state if access token returned
+        if (data.access_token && data.user) {
+          setAuthState(data.access_token, data.user);
+          closeAuthModal();
+          if (data.user.role === 'admin') {
+            switchNavTab('admin');
+            showToast("Administrator password reset successfully! Full control hub unlocked.", "success");
+          } else {
+            showToast(`Password reset successfully! Welcome back, ${data.user.full_name || data.user.email}!`, "success");
+          }
+        } else {
+          showToast("Password reset successfully! Please sign in with your new password.", "success");
+          switchAuthTab(forgotCurrentRole === 'admin' ? 'admin' : 'login');
         }
       } catch (err) {
         showAuthAlert(`Network error: ${err.message}`, "error");
@@ -9525,7 +9846,10 @@ shieldci_audit:
 
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-indigo-400"></i> Password</span>
+              <span class="flex items-center gap-1.5"><i id="modalLoginPassIcon" class="fa-solid fa-lock text-indigo-400"></i> Password</span>
+              <button type="button" id="modalForgotPassLink" onclick="openForgotPasswordFlow(currentAuthTabMode === 'admin' ? 'admin' : 'user', document.getElementById('loginEmail')?.value)" class="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 font-sans">
+                <i class="fa-solid fa-key text-[10px]"></i> Forgot password?
+              </button>
             </label>
             <div class="relative">
               <input id="loginPassword" type="password" required placeholder="••••••••" autocomplete="current-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
@@ -9540,10 +9864,12 @@ shieldci_audit:
             <span>Sign In to ShieldCI</span>
           </button>
 
-          <p class="text-xs text-center text-slate-400 pt-2">
-            Don't have an account? 
-            <button type="button" onclick="switchAuthTab('signup')" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 ml-1">Create Account</button>
-          </p>
+          <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/60 mt-3">
+            <span id="modalAuthBottomPrompt">Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 ml-1">Create Account</button></span>
+            <button type="button" id="modalForgotBottomBtn" onclick="openForgotPasswordFlow(currentAuthTabMode === 'admin' ? 'admin' : 'user', document.getElementById('loginEmail')?.value)" class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 font-medium">
+              <i class="fa-solid fa-unlock-keyhole text-[11px]"></i> <span>Forgot Password?</span>
+            </button>
+          </div>
           <div id="adminSignupPrompt" class="hidden text-xs text-center text-slate-400 pt-1">
             Need a new administrator account?
             <button type="button" onclick="switchAuthTab('admin_signup')" class="text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 ml-1">Sign Up as Administrator</button>
@@ -9625,6 +9951,134 @@ shieldci_audit:
             <button type="button" onclick="switchAuthTab('login')" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 ml-1">Sign In</button>
           </p>
         </form>
+
+        <!-- FORGOT / RESET PASSWORD FORM (Both Admin & Users) -->
+        <div id="forgotPasswordForm" class="hidden space-y-4">
+          <!-- Role Indicator & Toggle -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-900 border border-slate-800">
+            <div id="forgotRoleBadge" class="flex items-center gap-2.5 text-xs">
+              <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shadow-sm">
+                <i class="fa-solid fa-user-shield"></i>
+              </span>
+              <div>
+                <div id="forgotRoleTitle" class="font-bold text-slate-200 flex items-center gap-1.5">User / Developer Account</div>
+                <div class="text-[10px] text-slate-400">Self-Service Account Password Recovery</div>
+              </div>
+            </div>
+            <button type="button" id="forgotToggleRoleBtn" onclick="toggleForgotRole()" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-surface-850 hover:bg-surface-800 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+              <span id="forgotToggleRoleText">Switch to Admin</span>
+            </button>
+          </div>
+
+          <!-- STEP 1: Request Code -->
+          <form id="forgotStep1" onsubmit="handleForgotPasswordRequest(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <i id="forgotEmailIcon" class="fa-solid fa-envelope text-indigo-400"></i>
+                  <span id="forgotEmailLabel">Account Email Address</span>
+                </span>
+                <span class="text-[10px] text-slate-400">Registered with ShieldCI</span>
+              </label>
+              <input id="forgotEmail" type="email" required placeholder="you@company.com" autocomplete="email" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
+            </div>
+
+            <button id="forgotRequestBtn" type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Send Reset Verification Code</span>
+            </button>
+
+            <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/60 mt-3">
+              <span>Remember your password?</span>
+              <button type="button" onclick="cancelForgotPasswordFlow()" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Back to Sign In
+              </button>
+            </div>
+          </form>
+
+          <!-- STEP 2: Verify Code & Set New Password -->
+          <form id="forgotStep2" onsubmit="handleForgotPasswordConfirm(event)" class="hidden space-y-4">
+            <!-- Confirmed Target Info & Verification Box -->
+            <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                  <span class="font-semibold">Reset Code Dispatched</span>
+                </div>
+                <span id="forgotConfirmedEmail" class="font-mono text-[11px] text-slate-300 truncate max-w-[180px]"></span>
+              </div>
+              <div id="forgotCodeAlert" class="bg-surface-950/90 rounded-lg p-2.5 border border-emerald-500/30 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase tracking-wider font-mono">Your Verification Code</div>
+                  <div id="forgotDispCode" class="text-lg font-mono font-bold tracking-widest text-amber-300">------</div>
+                </div>
+                <button type="button" onclick="autoFillForgotCode()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 transition flex items-center gap-1">
+                  <i class="fa-solid fa-copy text-[10px]"></i> Auto-Fill
+                </button>
+              </div>
+            </div>
+
+            <!-- Code Input -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-keyhole text-indigo-400"></i> 6-Digit Verification Code <span class="text-rose-400">*</span></span>
+                <span class="text-[10px] text-slate-400">Check code above</span>
+              </label>
+              <input id="forgotCode" type="text" required maxlength="12" placeholder="123456" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-center text-lg text-amber-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono tracking-widest uppercase transition-all" />
+            </div>
+
+            <!-- New Password -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-indigo-400"></i> New Password <span class="text-rose-400">*</span></span>
+                <span class="text-[10px] text-slate-400">Min 8 characters</span>
+              </label>
+              <div class="relative">
+                <input id="forgotNewPassword" type="password" minlength="8" required placeholder="Create strong new password" autocomplete="new-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
+                <button type="button" onclick="toggleAuthPassword('forgotNewPassword', 'forgotNewEye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 text-xs">
+                  <i id="forgotNewEye" class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirm New Password -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-indigo-400"></i> Confirm New Password <span class="text-rose-400">*</span></span>
+              </label>
+              <div class="relative">
+                <input id="forgotConfirmPassword" type="password" minlength="8" required placeholder="Re-enter new password" autocomplete="new-password" class="w-full bg-surface-900 border border-slate-700/80 rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" />
+                <button type="button" onclick="toggleAuthPassword('forgotConfirmPassword', 'forgotConfirmEye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 text-xs">
+                  <i id="forgotConfirmEye" class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Optional MFA Code (if account has 2FA enabled) -->
+            <div id="forgotMfaWrapper" class="hidden">
+              <label class="block text-xs font-semibold text-amber-300 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button text-amber-400"></i> 2FA Authenticator or Recovery Code</span>
+                <span class="text-[10px] text-amber-400">MFA Required</span>
+              </label>
+              <input id="forgotMfaCode" type="text" placeholder="6-digit code or ABCD-EF23" class="w-full bg-surface-900 border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono tracking-wider" />
+            </div>
+
+            <button id="forgotConfirmBtn" type="submit" class="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 hover:from-emerald-500 hover:to-teal-400 text-white shadow-lg shadow-emerald-600/30 transition-all duration-200 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-key"></i>
+              <span>Reset Password &amp; Sign In</span>
+            </button>
+
+            <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/60 mt-3">
+              <button type="button" onclick="backToForgotStep1()" class="text-slate-400 hover:text-slate-200 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Re-enter Email
+              </button>
+              <button type="button" onclick="cancelForgotPasswordFlow()" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2">
+                Cancel &amp; Sign In
+              </button>
+            </div>
+          </form>
+        </div>
 
       </div>
     </div>

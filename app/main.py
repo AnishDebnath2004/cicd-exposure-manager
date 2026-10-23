@@ -34,12 +34,16 @@ from app.models.auth_schemas import (
     UserProfileUpdateRequest, PasswordChangeRequest, UserRoleUpdateRequest,
     AdminCreateUserRequest, UserListResponse, MfaSetupResponse, MfaEnableRequest,
     MfaDisableRequest, MfaVerifyRequest, MfaStatusResponse, MfaPolicyUpdateRequest,
-    UserScansResponse
+    UserScansResponse,
+    PasswordResetRequest, PasswordResetRequestResponse, PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse
 )
 from app.core.security import (
     hash_password, verify_password, create_access_token, decode_access_token, validate_safe_url,
     generate_totp_secret, get_totp_uri, verify_totp_code, generate_recovery_codes,
-    hash_recovery_code, verify_recovery_code, create_mfa_challenge_token, decode_mfa_challenge_token
+    hash_recovery_code, verify_recovery_code, create_mfa_challenge_token, decode_mfa_challenge_token,
+    generate_numeric_code, create_password_reset_token, decode_password_reset_token,
+    verify_reset_code
 )
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
@@ -929,6 +933,160 @@ async def change_password(
         "token_type": "bearer",
         "user": updated_user
     }
+
+
+# ==============================================================
+# Password Reset / Forgot Password Endpoints (Both Admin & Users)
+# ==============================================================
+@app.post("/api/auth/password/reset-request", response_model=PasswordResetRequestResponse)
+@app.post("/api/auth/forgot-password", response_model=PasswordResetRequestResponse)
+async def request_password_reset(req: PasswordResetRequest):
+    """
+    Initiates password reset process for Admin or User accounts.
+    Generates a secure verification code and time-limited reset token.
+    """
+    clean_email = req.email.strip().lower()
+    user_record = storage.get_user_by_email(clean_email)
+    if not user_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No account found registered with email '{clean_email}'. Please check your email address or sign up."
+        )
+
+    user_role = user_record.get("role", "developer")
+
+    # Strict role validation if password reset was requested specifically from the Admin section
+    if req.role == "admin" and user_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Account '{clean_email}' is registered as a {user_role}. Administrator password reset is strictly reserved for platform administrators."
+        )
+    elif req.role in ("user", "developer") and user_role not in ("user", "developer", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Account '{clean_email}' is not authorized for user access."
+        )
+
+    # Generate 6-digit numeric verification code
+    reset_code = generate_numeric_code(6)
+    token_version = user_record.get("token_version", 1)
+
+    # Generate cryptographically signed reset token valid for 15 minutes
+    reset_token = create_password_reset_token(
+        user_id=user_record["id"],
+        email=clean_email,
+        code=reset_code,
+        token_version=token_version,
+        expires_seconds=900
+    )
+
+    mfa_enabled = bool(user_record.get("mfa_enabled"))
+    account_type_label = "Administrator" if user_role == "admin" else "User / Developer"
+    message = (
+        f"Password reset verification code generated for {account_type_label} account ({clean_email}). "
+        f"Verification Code: {reset_code}"
+    )
+
+    return PasswordResetRequestResponse(
+        status="success",
+        message=message,
+        reset_token=reset_token,
+        reset_code=reset_code,
+        email=clean_email,
+        role=user_role,
+        mfa_required=mfa_enabled
+    )
+
+
+@app.post("/api/auth/password/reset-confirm", response_model=PasswordResetConfirmResponse)
+@app.post("/api/auth/forgot-password/confirm", response_model=PasswordResetConfirmResponse)
+async def confirm_password_reset(req: PasswordResetConfirmRequest):
+    """
+    Verifies the reset code against the signed reset token and updates the account password.
+    Automatically revokes previous sessions by incrementing token_version.
+    """
+    claims = decode_password_reset_token(req.reset_token)
+    if not claims or not claims.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password reset session has expired or is invalid. Please request a new reset verification code."
+        )
+
+    user_id = claims["sub"]
+    user_email = claims.get("email")
+
+    user_record = storage.get_user_by_id(user_id)
+    if not user_record:
+        raw = storage.get_user_by_email(user_email) if user_email else None
+        if not raw:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User account not found.")
+        user_id = raw["id"]
+        user_record = storage.get_user_by_id(user_id)
+
+    # Invalidate if user's token version changed since reset token was issued
+    current_token_ver = getattr(user_record, "token_version", 1)
+    if claims.get("ver", 1) != current_token_ver:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This password reset token has already been used or was invalidated. Please request a new verification code."
+        )
+
+    # Constant-time comparison of reset code
+    if not verify_reset_code(req.code, claims.get("code_hash", "")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code. Please check your 6-digit code and try again."
+        )
+
+    # If MFA is active on account, verify MFA code if provided or required
+    if getattr(user_record, "mfa_enabled", False):
+        if req.mfa_code:
+            mfa_creds = storage.get_user_mfa_credentials(user_id)
+            if mfa_creds:
+                mfa_valid = False
+                mfa_clean = req.mfa_code.strip()
+                digits_only = mfa_clean.replace(" ", "").replace("-", "")
+                if len(digits_only) == 6 and digits_only.isdigit():
+                    if verify_totp_code(mfa_creds["mfa_secret"], digits_only):
+                        mfa_valid = True
+                if not mfa_valid:
+                    matched, matched_hash = verify_recovery_code(mfa_clean, mfa_creds.get("recovery_codes", []))
+                    if matched and matched_hash:
+                        storage.consume_user_recovery_code(user_id, matched_hash)
+                        mfa_valid = True
+                if not mfa_valid:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid Multi-Factor Authentication (MFA) code or recovery code."
+                    )
+
+    # Hash and persist new password
+    pw_hash, salt = hash_password(req.new_password)
+    updated = storage.update_user_password(user_id, pw_hash, salt)
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update password in database.")
+
+    storage.update_last_login(user_id)
+    storage.refresh()
+
+    updated_user = storage.get_user_by_id(user_id)
+    if not updated_user:
+        raise HTTPException(status_code=500, detail="User record retrieval failed after password update.")
+
+    new_token = create_access_token(
+        user_id=updated_user.id,
+        email=updated_user.email,
+        token_version=getattr(updated_user, "token_version", 1)
+    )
+
+    role_label = "Administrator" if updated_user.role == "admin" else "User"
+    return PasswordResetConfirmResponse(
+        status="success",
+        message=f"{role_label} password has been reset successfully. You are now authenticated.",
+        access_token=new_token,
+        token_type="bearer",
+        user=updated_user
+    )
 
 
 # ==============================================================

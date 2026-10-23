@@ -291,7 +291,7 @@ RECOVERY_CODE_ALPHABET = os.getenv(
     "".join(c for c in string.ascii_uppercase + string.digits if c not in "01IO")
 )
 
-
+    
 def generate_recovery_codes(count: int = 8) -> List[str]:
     """
     Generates single-use emergency backup recovery codes (e.g. 'ABCD-EF23').
@@ -358,5 +358,68 @@ def decode_mfa_challenge_token(token: str) -> Optional[Dict[str, Any]]:
     if not claims or claims.get("action") != "mfa_challenge":
         return None
     return claims
+
+
+def generate_numeric_code(length: int = 6) -> str:
+    """
+    Generates a cryptographically secure numeric verification code (e.g. 6-digit PIN).
+    """
+    return "".join(secrets.choice(string.digits) for _ in range(length))
+
+
+def hash_reset_code(code: str) -> str:
+    """
+    Hashes a reset code using SHA-256 for secure verification.
+    """
+    clean = str(code).strip()
+    return hashlib.sha256(clean.encode("utf-8")).hexdigest()
+
+
+def create_password_reset_token(user_id: str, email: str, code: str, token_version: int = 1, expires_seconds: int = 900) -> str:
+    """
+    Issues a short-lived cryptographically signed token (15 minutes) for resetting password.
+    Embeds the SHA-256 hash of the verification code and the current token_version.
+    """
+    now = int(time.time())
+    header = {"alg": "HS256", "typ": "RESET"}
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "action": "password_reset",
+        "code_hash": hash_reset_code(code),
+        "ver": token_version,
+        "iat": now,
+        "exp": now + expires_seconds
+    }
+
+    header_b64 = _b64_url_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+    payload_b64 = _b64_url_encode(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
+    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+
+    signature = hmac.new(SECRET_KEY.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    signature_b64 = _b64_url_encode(signature)
+
+    return f"{header_b64}.{payload_b64}.{signature_b64}"
+
+
+def decode_password_reset_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Decodes and validates a short-lived password reset token.
+    """
+    claims = decode_access_token(token)
+    if not claims or claims.get("action") != "password_reset":
+        return None
+    return claims
+
+
+def verify_reset_code(input_code: str, expected_code_hash: str) -> bool:
+    """
+    Verifies user-provided reset code against the stored/token code hash using constant-time comparison.
+    """
+    if not input_code or not expected_code_hash:
+        return False
+    computed_hash = hash_reset_code(input_code)
+    return hmac.compare_digest(computed_hash, expected_code_hash)
+
 
 

@@ -180,4 +180,61 @@ class UserScansResponse(BaseModel):
     scans: List[Any] = []
 
 
+# ==============================================================
+# Password Reset / Forgot Password Schemas
+# ==============================================================
+class PasswordResetRequest(BaseModel):
+    """Payload to request a password reset code."""
+    email: str = Field(..., description="Registered account email address")
+    role: Optional[Literal["admin", "developer", "user"]] = Field(
+        None, description="Account role ('admin' or 'user'/'developer')"
+    )
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not EMAIL_REGEX.match(v):
+            raise ValueError("Invalid email format")
+        return v
+
+
+class PasswordResetRequestResponse(BaseModel):
+    """Response returned after password reset request."""
+    model_config = ConfigDict(extra="ignore")
+    status: str = "success"
+    message: str
+    reset_token: str
+    reset_code: Optional[str] = None  # Included for immediate UI verification/dev mode
+    email: str
+    role: Optional[str] = None
+    mfa_required: bool = False
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    """Payload to verify reset code and set a new password."""
+    reset_token: str = Field(..., description="Temporary signed reset token")
+    code: str = Field(..., min_length=4, max_length=12, description="Verification code")
+    new_password: str = Field(..., min_length=8, description="New account password (min 8 characters)")
+    confirm_password: Optional[str] = Field(None, description="Password confirmation")
+    mfa_code: Optional[str] = Field(None, description="Optional TOTP or recovery code if MFA enabled")
+
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> PasswordResetConfirmRequest:
+        if self.confirm_password is not None and self.new_password != self.confirm_password:
+            raise ValueError("New password and confirmation password do not match")
+        return self
+
+
+class PasswordResetConfirmResponse(BaseModel):
+    """Response returned upon successful password reset."""
+    model_config = ConfigDict(extra="ignore")
+    status: str = "success"
+    message: str
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
+    user: Optional[UserResponse] = None
+
+
+
 
