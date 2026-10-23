@@ -835,14 +835,21 @@ class PostgresStorageAdapter:
         """Initializes connection pool with sensible limits for cloud/serverless."""
         if _HAS_PSYCOPG_POOL:
             try:
-                # 10s connection timeout, max 10 concurrent connections
+                # Fast failover in serverless environments to prevent Vercel 10s invocation timeout
+                is_serverless = getattr(settings, "IS_SERVERLESS", False)
+                conn_timeout = 3.5 if is_serverless else 10.0
+                open_pool = not is_serverless
+                min_pool = 0 if is_serverless else 1
+                max_pool = 5 if is_serverless else 10
+                connect_timeout_val = 3 if is_serverless else 5
+
                 self._pool = ConnectionPool(
                     conninfo=self.connection_url,
-                    min_size=1,
-                    max_size=10,
-                    timeout=15.0,
-                    open=True,
-                    kwargs={"prepare_threshold": None}
+                    min_size=min_pool,
+                    max_size=max_pool,
+                    timeout=conn_timeout,
+                    open=open_pool,
+                    kwargs={"prepare_threshold": None, "connect_timeout": connect_timeout_val}
                 )
             except Exception as e:
                 logger.warning(f"Failed to open ConnectionPool: {e}. Falling back to on-demand connections.")
@@ -860,17 +867,28 @@ class PostgresStorageAdapter:
     @contextmanager
     def _get_connection(self):
         """Context manager yielding an active database connection."""
+        is_serverless = getattr(settings, "IS_SERVERLESS", False)
+        connect_timeout_val = 3 if is_serverless else 5
+
         if self._pool is not None:
             with self._pool.connection() as conn:
                 yield conn
         elif self._driver == "psycopg":
-            conn = psycopg.connect(self.connection_url, autocommit=False, prepare_threshold=None)
+            conn = psycopg.connect(
+                self.connection_url,
+                autocommit=False,
+                prepare_threshold=None,
+                connect_timeout=connect_timeout_val
+            )
             try:
                 yield conn
             finally:
                 conn.close()
         elif self._driver == "psycopg2":
-            conn = psycopg2.connect(self.connection_url)
+            conn = psycopg2.connect(
+                self.connection_url,
+                connect_timeout=connect_timeout_val
+            )
             try:
                 yield conn
             finally:

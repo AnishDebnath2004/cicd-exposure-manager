@@ -4,6 +4,8 @@ Cryptographic security primitives, password hashing, and token signing for Shiel
 Uses standard Python hashlib & hmac for robust, zero-dependency, cross-platform security.
 """
 
+from __future__ import annotations
+
 import os
 import hmac
 import base64
