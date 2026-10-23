@@ -835,20 +835,18 @@ class PostgresStorageAdapter:
         """Initializes connection pool with sensible limits for cloud/serverless."""
         if _HAS_PSYCOPG_POOL:
             try:
-                # Fast failover in serverless environments to prevent Vercel 10s invocation timeout
                 is_serverless = getattr(settings, "IS_SERVERLESS", False)
-                conn_timeout = 3.5 if is_serverless else 10.0
-                open_pool = not is_serverless
-                min_pool = 0 if is_serverless else 1
+                conn_timeout = 10.0
+                min_pool = 1
                 max_pool = 5 if is_serverless else 10
-                connect_timeout_val = 3 if is_serverless else 5
+                connect_timeout_val = 5
 
                 self._pool = ConnectionPool(
                     conninfo=self.connection_url,
                     min_size=min_pool,
                     max_size=max_pool,
                     timeout=conn_timeout,
-                    open=open_pool,
+                    open=True,
                     kwargs={"prepare_threshold": None, "connect_timeout": connect_timeout_val}
                 )
             except Exception as e:
