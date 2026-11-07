@@ -78,11 +78,42 @@ class ToxicCombination(BaseModel):
     remediation_advice: str
     unified_patch: Optional[str] = None
 
+class MitreTechnique(BaseModel):
+    id: str
+    name: str
+    tactic: str
+    url: Optional[str] = None
+
+class BlastRadius(BaseModel):
+    score: float = Field(0.0, description="0 to 100 blast radius impact score")
+    risk_tier: str = Field("Moderate", description="Low, Moderate, High, Catastrophic Breach")
+    compromised_assets: List[str] = []
+    cloud_impact: List[str] = []
+    stolen_credentials_count: int = 0
+    exposed_datastores_count: int = 0
+    mitre_attack_techniques: List[MitreTechnique] = []
+    compliance_violations: List[str] = []
+    financial_risk_estimate: str = "$0"
+
+class SimulationStep(BaseModel):
+    step_number: int
+    phase: str  # e.g., "Reconnaissance", "Initial Access", "Privilege Escalation", "Lateral Movement", "Exfiltration"
+    source_node_id: str
+    target_node_id: str
+    title: str
+    narrative: str
+    technique_id: Optional[str] = None
+    technique_name: Optional[str] = None
+    impact: str
+    evidence_snippet: Optional[str] = None
+
 class AttackGraph(BaseModel):
     nodes: List[AttackGraphNode] = []
     edges: List[AttackGraphEdge] = []
     toxic_combinations: List[ToxicCombination] = []
     exploitability_index: float = Field(0.0, description="0 to 100 metric of how weaponizable the attack surface is")
+    blast_radius: Optional[BlastRadius] = None
+    simulation_steps: List[SimulationStep] = []
 
 class DiscoveredService(BaseModel):
     name: str
@@ -259,3 +290,55 @@ class WebhookTestResponse(BaseModel):
     message: str
     target_url: str
     response_code: Optional[int] = None
+
+
+class AIRemediationRequest(BaseModel):
+    scan_id: str
+    finding_id: str
+    instructions: Optional[str] = None
+    model: Optional[str] = "gemini-flash"
+
+
+class AIRemediationResponse(BaseModel):
+    finding_id: str
+    title: str
+    file_path: str
+    original_code: str
+    remediated_code: str
+    unified_patch: str
+    explanation: str
+    safety_notes: str
+    test_command: Optional[str] = None
+
+
+class GitHubPROpenRequest(BaseModel):
+    scan_id: Optional[str] = None
+    finding_id: Optional[str] = None
+    repo_url: Optional[str] = None
+    file_path: str
+    remediated_content: str
+    finding_title: str
+    branch_name: Optional[str] = None
+    pr_title: Optional[str] = None
+    pr_body: Optional[str] = None
+    github_token: Optional[str] = None
+
+
+class GitHubPROpenResponse(BaseModel):
+    success: bool
+    pr_url: Optional[str] = None
+    pr_number: Optional[int] = None
+    branch: Optional[str] = None
+    message: str
+
+
+class CopilotChatRequest(BaseModel):
+    scan_id: Optional[str] = None
+    message: str
+    finding_id: Optional[str] = None
+    history: List[Dict[str, str]] = []
+
+
+class CopilotChatResponse(BaseModel):
+    reply: str
+    suggested_actions: List[str] = []

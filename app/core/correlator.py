@@ -9,7 +9,8 @@ import uuid
 from typing import List, Dict, Any, Optional, Tuple
 from app.models.schemas import (
     Finding, FindingCategory, SeverityLevel, ToxicCombination,
-    AttackGraph, AttackGraphNode, AttackGraphEdge, AutoDiscoveryResult
+    AttackGraph, AttackGraphNode, AttackGraphEdge, AutoDiscoveryResult,
+    BlastRadius, SimulationStep, MitreTechnique
 )
 
 
@@ -268,11 +269,192 @@ class AttackCorrelator:
         exploitability += (crit_count * 12.0) + (high_count * 5.0)
         exploitability = min(round(exploitability, 1), 100.0)
 
+        # 7. Generate Step-by-Step Simulation Steps
+        simulation_steps: List[SimulationStep] = []
+        if top_findings:
+            # Step 1: Initial Ingress
+            first_f = top_findings[0]
+            first_node_id = "node-finding-0"
+            t1_name = "Exploit Public-Facing Application" if first_f.category == FindingCategory.WEB_EXPOSURE else "Supply Chain Compromise"
+            t1_id = "T1190" if first_f.category == FindingCategory.WEB_EXPOSURE else "T1195"
+            simulation_steps.append(SimulationStep(
+                step_number=1,
+                phase="Initial Access & Reconnaissance",
+                source_node_id=actor_node.id,
+                target_node_id=first_node_id,
+                title=f"Initial Ingress via {first_f.category.value}",
+                narrative=f"Threat actor scans perimeter or repository and detects '{first_f.title}'. Attacker probes exposure at {first_f.file_path or 'network perimeter'}.",
+                technique_id=t1_id,
+                technique_name=t1_name,
+                impact="Attacker gains initial foothold or extracts configuration metadata.",
+                evidence_snippet=first_f.snippet or first_f.description
+            ))
+
+            # Intermediate steps
+            for idx in range(len(top_findings) - 1):
+                curr_f = top_findings[idx]
+                next_f = top_findings[idx + 1]
+                src_id = f"node-finding-{idx}"
+                dst_id = f"node-finding-{idx + 1}"
+                step_num = idx + 2
+
+                if next_f.category == FindingCategory.SECRET_EXPOSURE:
+                    phase = "Credential Access"
+                    t_id, t_name = "T1552", "Unsecured Credentials"
+                    narrative = f"Attacker harvests leaked secrets from '{next_f.file_path}'. Credentials allow unauthorized authentication without brute-force."
+                elif next_f.category == FindingCategory.PIPELINE_MISCONFIG:
+                    phase = "Privilege Escalation & Runner Hijacking"
+                    t_id, t_name = "T1059.004", "Command and Scripting Interpreter (Unix Shell)"
+                    narrative = f"Attacker weaponizes CI/CD pipeline '{next_f.file_path}' via pull request injection or elevated runner permissions."
+                elif next_f.category == FindingCategory.DB_EXPOSURE:
+                    phase = "Lateral Movement to Datastores"
+                    t_id, t_name = "T1021", "Remote Services: Direct Database Connection"
+                    narrative = f"Attacker pivots from CI/CD runner or harvested credentials to open database port at '{next_f.file_path}'."
+                else:
+                    phase = "Lateral Movement & Container Execution"
+                    t_id, t_name = "T1078", "Valid Accounts / Execution Environment"
+                    narrative = f"Attacker leverages '{next_f.title}' to escalate privileges within the container or execution environment."
+
+                simulation_steps.append(SimulationStep(
+                    step_number=step_num,
+                    phase=phase,
+                    source_node_id=src_id,
+                    target_node_id=dst_id,
+                    title=f"Escalate via {next_f.title[:35]}",
+                    narrative=narrative,
+                    technique_id=t_id,
+                    technique_name=t_name,
+                    impact=next_f.description[:120],
+                    evidence_snippet=next_f.snippet or next_f.remediation_advice
+                ))
+
+            # Final Step: Exfiltration & Crown Jewel Compromise
+            last_finding_idx = len(top_findings) - 1
+            last_node_id = f"node-finding-{last_finding_idx}"
+            final_step_num = len(simulation_steps) + 1
+            simulation_steps.append(SimulationStep(
+                step_number=final_step_num,
+                phase="Impact & Exfiltration",
+                source_node_id=last_node_id,
+                target_node_id=target_asset_node.id,
+                title="Full Crown Jewel Compromise",
+                narrative=f"Threat actor consolidates access to '{target_name}'. Production datastores, CI/CD signing keys, and cloud deployment pipelines are breached.",
+                technique_id="T1567",
+                technique_name="Exfiltration Over Web Service / Cloud Abuse",
+                impact="Catastrophic compromise of core infrastructure, data exfiltration, and supply chain poisoning.",
+                evidence_snippet="Access achieved to Crown Jewels: " + target_name
+            ))
+        else:
+            simulation_steps.append(SimulationStep(
+                step_number=1,
+                phase="Perimeter Defense Verified",
+                source_node_id=actor_node.id,
+                target_node_id=target_asset_node.id,
+                title="Zero Exploitable Vectors Detected",
+                narrative="Continuous posture verification confirms no exploitable attack chains or leaked credentials.",
+                technique_id="T0000",
+                technique_name="Hardened Perimeter Controls",
+                impact="No compromise possible under current posture configuration.",
+                evidence_snippet="Clean security posture"
+            ))
+
+        # 8. Compute Blast Radius Assessment
+        compromised_assets = [target_name]
+        cloud_impact = []
+        if secrets:
+            compromised_assets.append("Cloud & API Secret Stores")
+            for s in secrets:
+                title_lower = s.title.lower()
+                if "aws" in title_lower:
+                    cloud_impact.append("AWS Account IAM & Cloud Infrastructure")
+                elif "github" in title_lower or "token" in title_lower:
+                    cloud_impact.append("GitHub Organization & Repository Write Access")
+                elif "slack" in title_lower or "discord" in title_lower:
+                    cloud_impact.append("Internal Team Communication & Webhook Poisoning")
+                elif any(k in title_lower for k in ("database", "postgres", "mongo", "redis")):
+                    cloud_impact.append("Production Database Credential Exfiltration")
+        if not cloud_impact and secrets:
+            cloud_impact.append("General API & Authentication Tokens Compromise")
+
+        if dbs or (auto_discovery and auto_discovery.discovered_db_targets):
+            compromised_assets.append("Production Relational / NoSQL Datastores")
+            cloud_impact.append("Direct SQL / Database Storage Access")
+
+        if workflows:
+            compromised_assets.append("CI/CD Build Runners & Release Pipelines")
+            cloud_impact.append("Supply Chain Artifact Signing & Release Tampering")
+
+        if webs or (auto_discovery and auto_discovery.discovered_web_targets):
+            compromised_assets.append("Web Perimeter & Public Ingress Endpoints")
+
+        compromised_assets = list(dict.fromkeys(compromised_assets))
+        cloud_impact = list(dict.fromkeys(cloud_impact))
+
+        # MITRE ATT&CK Techniques mapped
+        mitre_list = [
+            MitreTechnique(id="T1190", name="Exploit Public-Facing Application", tactic="Initial Access", url="https://attack.mitre.org/techniques/T1190/"),
+            MitreTechnique(id="T1552", name="Unsecured Credentials", tactic="Credential Access", url="https://attack.mitre.org/techniques/T1552/"),
+            MitreTechnique(id="T1059", name="Command and Scripting Interpreter", tactic="Execution", url="https://attack.mitre.org/techniques/T1059/"),
+            MitreTechnique(id="T1078", name="Valid Accounts", tactic="Defense Evasion", url="https://attack.mitre.org/techniques/T1078/"),
+            MitreTechnique(id="T1021", name="Remote Services", tactic="Lateral Movement", url="https://attack.mitre.org/techniques/T1021/"),
+            MitreTechnique(id="T1530", name="Data from Cloud Storage Object", tactic="Collection", url="https://attack.mitre.org/techniques/T1530/"),
+            MitreTechnique(id="T1567", name="Exfiltration Over Web Service", tactic="Exfiltration", url="https://attack.mitre.org/techniques/T1567/")
+        ]
+
+        # Compliance Violations
+        compliance_violations = []
+        if secrets:
+            compliance_violations.append("SOC 2 Type II: CC6.1 (Logical Access & Credential Protection)")
+            compliance_violations.append("PCI-DSS v4.0: Requirement 8.2 (Strong Authentication & Credential Storage)")
+        if workflows:
+            compliance_violations.append("SLSA Level 3: Hermetic & Isolated Pipeline Build Requirement")
+            compliance_violations.append("NIST SP 800-218: SSDF PO.3.2 (Pipeline Access Controls)")
+        if dbs:
+            compliance_violations.append("CIS Benchmark: Rule 2.1 (Restricted Database Network Listening)")
+            compliance_violations.append("HIPAA Security Rule: 164.312(a)(1) (Access Controls for ePHI)")
+        if not compliance_violations:
+            compliance_violations.append("ISO/IEC 27001: Baseline Security Controls Verified")
+
+        # Blast radius score (0-100)
+        blast_score = 0.0
+        if toxic_combinations:
+            blast_score = 65.0 + min(len(toxic_combinations) * 15.0, 30.0)
+        else:
+            blast_score = min((crit_count * 15.0) + (high_count * 7.0) + (len(secrets) * 8.0), 90.0)
+        blast_score = round(min(blast_score, 100.0), 1)
+
+        if blast_score >= 80:
+            risk_tier = "Catastrophic Breach"
+            fin_risk = "$350,000 - $1,200,000+"
+        elif blast_score >= 50:
+            risk_tier = "High Blast Radius"
+            fin_risk = "$80,000 - $350,000"
+        elif blast_score >= 20:
+            risk_tier = "Moderate Exposure"
+            fin_risk = "$15,000 - $80,000"
+        else:
+            risk_tier = "Low / Contained"
+            fin_risk = "< $10,000"
+
+        blast_radius = BlastRadius(
+            score=blast_score,
+            risk_tier=risk_tier,
+            compromised_assets=compromised_assets,
+            cloud_impact=cloud_impact,
+            stolen_credentials_count=len(secrets),
+            exposed_datastores_count=len(dbs) + len(auto_discovery.discovered_db_targets if auto_discovery else []),
+            mitre_attack_techniques=mitre_list,
+            compliance_violations=compliance_violations,
+            financial_risk_estimate=fin_risk
+        )
+
         attack_graph = AttackGraph(
             nodes=list(nodes.values()),
             edges=edges,
             toxic_combinations=toxic_combinations,
-            exploitability_index=exploitability
+            exploitability_index=exploitability,
+            blast_radius=blast_radius,
+            simulation_steps=simulation_steps
         )
 
         return toxic_combinations, attack_graph

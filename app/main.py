@@ -27,7 +27,9 @@ from app.config import settings
 from app.models.schemas import (
     ScanRequest, ScanResult, ScanHistorySummary, ScheduledScan,
     ScheduleCreateRequest, SeverityLevel, TargetCategory,
-    SettingsSchema, SettingsUpdateRequest, WebhookTestRequest, WebhookTestResponse
+    SettingsSchema, SettingsUpdateRequest, WebhookTestRequest, WebhookTestResponse,
+    AIRemediationRequest, AIRemediationResponse, GitHubPROpenRequest, GitHubPROpenResponse,
+    CopilotChatRequest, CopilotChatResponse
 )
 from app.models.auth_schemas import (
     UserSignupRequest, UserLoginRequest, UserResponse, AuthTokenResponse,
@@ -48,6 +50,9 @@ from app.core.security import (
 from app.core.orchestrator import ExposureOrchestrator
 from app.core.storage import storage
 from app.core.scheduler import scheduler
+from app.core.ai_remediator import AIRemediator
+from app.core.github_service import GitHubService
+from app.core.copilot import SecurityCopilot
 
 
 orchestrator = ExposureOrchestrator()
@@ -562,6 +567,89 @@ async def get_scan_attack_graph(scan_id: str):
         target_name=scan.repo_name
     )
     return graph
+
+
+@app.post("/api/remediation/ai-fix", response_model=AIRemediationResponse)
+async def generate_ai_remediation(req: AIRemediationRequest):
+    """
+    Synthesizes an intelligent, context-aware code fix and unified git diff patch
+    for a specific vulnerability finding.
+    """
+    scan = storage.get_scan(req.scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+
+    target_finding = next((f for f in scan.findings if f.id == req.finding_id), None)
+    if not target_finding:
+        raise HTTPException(status_code=404, detail=f"Finding '{req.finding_id}' not found in scan.")
+
+    # Try reading original file content if path is valid on filesystem
+    original_content = None
+    if scan.target_path and os.path.exists(scan.target_path):
+        candidate_path = os.path.join(scan.target_path, target_finding.file_path.lstrip("/\\"))
+        if os.path.isfile(candidate_path):
+            try:
+                with open(candidate_path, "r", encoding="utf-8", errors="ignore") as f:
+                    original_content = f.read()
+            except Exception:
+                pass
+
+    return AIRemediator.generate_remediation(
+        finding=target_finding,
+        original_content=original_content,
+        instructions=req.instructions,
+        model=req.model
+    )
+
+
+@app.post("/api/remediation/github-pr", response_model=GitHubPROpenResponse)
+async def create_remediation_github_pr(req: GitHubPROpenRequest):
+    """
+    Creates a new branch on GitHub, commits the remediated file content,
+    and opens a complete Pull Request with security advisories.
+    """
+    repo_target = req.repo_url
+    if not repo_target and req.scan_id:
+        scan = storage.get_scan(req.scan_id)
+        if scan:
+            repo_target = scan.repo_url or scan.repo_name
+
+    if not repo_target:
+        raise HTTPException(
+            status_code=400,
+            detail="GitHub repository target URL or owner/repo slug is required."
+        )
+
+    res = GitHubService.open_remediation_pr(
+        repo_target=repo_target,
+        file_path=req.file_path,
+        remediated_content=req.remediated_content,
+        finding_title=req.finding_title,
+        finding_id=req.finding_id or "secfix",
+        github_token=req.github_token,
+        branch_name=req.branch_name,
+        pr_title=req.pr_title,
+        pr_body=req.pr_body
+    )
+    return res
+
+
+@app.post("/api/copilot/chat", response_model=CopilotChatResponse)
+async def copilot_chat_interaction(req: CopilotChatRequest):
+    """
+    Interactive Security Copilot: provides conversational insights regarding findings,
+    attack graph simulations, blast radius, and remediation strategies.
+    """
+    scan = None
+    if req.scan_id:
+        scan = storage.get_scan(req.scan_id)
+
+    return SecurityCopilot.chat(
+        message=req.message,
+        scan=scan,
+        finding_id=req.finding_id,
+        history=req.history
+    )
 
 
 @app.post("/api/scan/triangulate", response_model=ScanResult)
