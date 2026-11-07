@@ -64,9 +64,28 @@ class GitHubService:
 
         parsed = cls.parse_repo_owner_name(repo_target)
         if not parsed:
+            # If the user only provided a repo name (e.g. 'cv-analyser'),
+            # attempt auto-resolving the owner from the authenticated user token
+            if token and "/" not in repo_target.strip():
+                try:
+                    auth_headers = {
+                        "Authorization": f"Bearer {token}",
+                        "Accept": "application/vnd.github+json",
+                        "User-Agent": "ShieldCI-Exposure-Manager/2.0"
+                    }
+                    u_res = requests.get(f"{cls.GITHUB_API_BASE}/user", headers=auth_headers, timeout=6)
+                    if u_res.status_code == 200:
+                        login_name = u_res.json().get("login")
+                        clean_repo = repo_target.strip().rstrip("/")
+                        if login_name and clean_repo:
+                            parsed = (login_name, clean_repo)
+                except Exception:
+                    pass
+
+        if not parsed:
             return GitHubPROpenResponse(
                 success=False,
-                message=f"Invalid GitHub repository identifier '{repo_target}'. Use 'owner/repo' or 'https://github.com/owner/repo'."
+                message=f"Invalid GitHub repository identifier '{repo_target}'. GitHub requires both the owner and repo name: use 'owner/repo' (e.g. 'your-username/{repo_target}') or 'https://github.com/owner/repo'."
             )
 
         owner, repo = parsed

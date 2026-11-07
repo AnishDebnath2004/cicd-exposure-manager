@@ -653,8 +653,8 @@
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- Toast Notification System -->
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+  <!-- Toast Notification System (Positioned above floating Copilot button) -->
+  <div id="toastContainer" class="fixed bottom-24 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-surface-950/85 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2.5">
@@ -5740,7 +5740,7 @@ shieldci_audit:
       if (type === 'success') { border = "border-emerald-500/40 bg-surface-900"; icon = '<i class="fa-solid fa-circle-check text-emerald-400"></i>'; }
       if (type === 'error') { border = "border-rose-500/40 bg-surface-900"; icon = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>'; }
 
-      toast.className = `p-3.5 rounded-xl border text-xs font-semibold text-slate-100 flex items-center gap-2.5 shadow-2xl backdrop-blur transition-all transform duration-300 translate-y-2 ${border}`;
+      toast.className = `p-3.5 rounded-xl border text-xs font-semibold text-slate-100 flex items-center gap-2.5 shadow-2xl backdrop-blur transition-all transform duration-300 translate-y-2 pointer-events-auto ${border}`;
       toast.innerHTML = `${icon} <span>${msg}</span>`;
       container.appendChild(toast);
 
@@ -10791,6 +10791,7 @@ shieldci_audit:
             <div>
               <label class="block text-slate-400 mb-1">Target Repository (owner/repo)</label>
               <input type="text" id="aiFixPrRepo" placeholder="owner/repo or https://github.com/owner/repo" class="w-full px-3 py-2 rounded-lg bg-surface-950 border border-slate-700 text-slate-200 font-mono focus:border-indigo-500 focus:outline-none">
+              <span id="aiFixRepoHelper" class="text-[10px] text-slate-400 font-mono mt-1 block">Specify owner + repo: <span class="text-indigo-300">your-username/repo-name</span></span>
             </div>
             <div>
               <label class="block text-slate-400 mb-1">GitHub Personal Access Token (PAT)</label>
