@@ -6160,7 +6160,17 @@ shieldci_audit:
 
       // Setup Repo and Token fields
       const repoInput = document.getElementById('aiFixPrRepo');
-      repoInput.value = currentScanData.repo_name || currentScanData.repo_url || '';
+      let defaultRepo = '';
+      if (currentScanData.repo_url && (currentScanData.repo_url.includes('/') || currentScanData.repo_url.includes('github.com'))) {
+        defaultRepo = currentScanData.repo_url;
+      } else if (currentScanData.target_path && (currentScanData.target_path.includes('/') || currentScanData.target_path.includes('github.com'))) {
+        defaultRepo = currentScanData.target_path;
+      } else if (currentScanData.repo_name && currentScanData.repo_name.includes('/')) {
+        defaultRepo = currentScanData.repo_name;
+      } else {
+        defaultRepo = currentScanData.repo_name || '';
+      }
+      repoInput.value = defaultRepo;
       const savedToken = localStorage.getItem('shieldci_github_token');
       if (savedToken) {
         document.getElementById('aiFixPrToken').value = savedToken;
@@ -6218,12 +6228,21 @@ shieldci_audit:
         return;
       }
 
-      const repo = document.getElementById('aiFixPrRepo').value.trim();
+      let repo = document.getElementById('aiFixPrRepo').value.trim();
       const token = document.getElementById('aiFixPrToken').value.trim();
       const saveToken = document.getElementById('aiFixSaveToken').checked;
 
+      // Auto-fallback to scan's full repository URL if input only has the bare repo name without owner
+      if (repo && !repo.includes('/') && !repo.startsWith('http')) {
+        if (currentScanData?.repo_url && (currentScanData.repo_url.includes('/') || currentScanData.repo_url.includes('github.com'))) {
+          repo = currentScanData.repo_url;
+        } else if (currentScanData?.target_path && (currentScanData.target_path.includes('/') || currentScanData.target_path.includes('github.com'))) {
+          repo = currentScanData.target_path;
+        }
+      }
+
       if (!repo) {
-        showToast("Please enter target repository (owner/repo)", "error");
+        showToast("Please enter target repository (owner/repo or GitHub URL)", "error");
         return;
       }
       if (!token) {

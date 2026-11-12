@@ -594,6 +594,23 @@ async def generate_ai_remediation(req: AIRemediationRequest):
             except Exception:
                 pass
 
+    # If original_content is None and target is a remote GitHub repo, fetch directly
+    if not original_content and (scan.repo_url or scan.repo_name or scan.target_path):
+        repo_hint = scan.repo_url or scan.target_path or scan.repo_name
+        parsed = GitHubService.parse_repo_owner_name(repo_hint)
+        if parsed:
+            owner, repo = parsed
+            branch = scan.branch or "main"
+            clean_fp = target_finding.file_path.replace("\\", "/").lstrip("/")
+            raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{clean_fp}"
+            try:
+                import requests
+                raw_resp = requests.get(raw_url, timeout=6)
+                if raw_resp.status_code == 200:
+                    original_content = raw_resp.text
+            except Exception:
+                pass
+
     return AIRemediator.generate_remediation(
         finding=target_finding,
         original_content=original_content,
@@ -609,10 +626,18 @@ async def create_remediation_github_pr(req: GitHubPROpenRequest):
     and opens a complete Pull Request with security advisories.
     """
     repo_target = req.repo_url
-    if not repo_target and req.scan_id:
+    if req.scan_id:
         scan = storage.get_scan(req.scan_id)
         if scan:
-            repo_target = scan.repo_url or scan.repo_name
+            # If repo_target is missing or just a bare name like 'cv-analyser',
+            # prefer the full repo_url or target_path from the scan record
+            if not repo_target or ("/" not in repo_target.strip() and not repo_target.strip().startswith("http")):
+                if scan.repo_url and ("/" in scan.repo_url or "github.com" in scan.repo_url):
+                    repo_target = scan.repo_url
+                elif scan.target_path and ("/" in scan.target_path or "github.com" in scan.target_path):
+                    repo_target = scan.target_path
+                elif not repo_target:
+                    repo_target = scan.repo_name
 
     if not repo_target:
         raise HTTPException(

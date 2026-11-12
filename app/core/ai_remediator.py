@@ -101,24 +101,59 @@ class AIRemediator:
                 safety_notes = "Check action execution in test branch before deploying."
 
         elif finding.category == FindingCategory.SECRET_EXPOSURE:
-            # Mask secret and suggest env var
-            secret_line = finding.snippet or "SECRET_KEY = '***'"
             var_name = "APP_SECRET_TOKEN"
-            if "aws" in finding.title.lower():
+            title_lower = finding.title.lower()
+            fp_lower = file_path.lower()
+            if "aws" in title_lower:
                 var_name = "AWS_SECRET_ACCESS_KEY"
-            elif "github" in finding.title.lower():
+            elif "github" in title_lower:
                 var_name = "GITHUB_TOKEN"
-            elif "postgres" in finding.title.lower() or "db" in finding.title.lower():
+            elif any(k in title_lower or k in fp_lower for k in ("postgres", "mysql", "database", "db")):
                 var_name = "DATABASE_URL"
+            elif any(k in title_lower or k in fp_lower for k in ("supabase",)):
+                var_name = "SUPABASE_KEY"
+            elif "stripe" in title_lower:
+                var_name = "STRIPE_SECRET_KEY"
 
-            if file_path.endswith(".py"):
-                remediated_line = f'import os\n{var_name} = os.getenv("{var_name}")  # [ShieldCI Fix] Load via environment variable'
-            elif file_path.endswith((".yml", ".yaml")):
-                remediated_line = f'${{{{ secrets.{var_name} }}}}  # [ShieldCI Fix] Referenced via GitHub Actions Secret'
-            else:
-                remediated_line = f'${{{var_name}}}  # [ShieldCI Fix] Loaded securely from environment'
+            lines = content.splitlines() if content else []
+            modified_line = False
 
-            remediated_content = content.replace(secret_line, remediated_line) if secret_line in content else (content + f"\n# Remediation: Replace hardcoded credential with {var_name}")
+            # If we have the full file and valid line number, surgically replace the vulnerable line
+            if lines and finding.line_number and 1 <= finding.line_number <= len(lines):
+                target_idx = finding.line_number - 1
+                orig_line = lines[target_idx]
+                indent = re.match(r"^\s*", orig_line).group(0)
+
+                dict_match = re.match(r'^(\s*[\'"][a-zA-Z0-9_\-]+[\'"]\s*:\s*)(.*)$', orig_line)
+                var_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
+
+                if dict_match and file_path.endswith(".py"):
+                    prefix = dict_match.group(1)
+                    lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                    modified_line = True
+                elif var_match and file_path.endswith(".py"):
+                    prefix = var_match.group(1)
+                    lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                    modified_line = True
+                elif file_path.endswith(".py"):
+                    lines[target_idx] = f'{indent}{var_name} = os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+                    modified_line = True
+
+                if modified_line and file_path.endswith(".py"):
+                    if not any(re.match(r"^\s*import\s+os\b", l) for l in lines):
+                        lines.insert(0, "import os")
+                    remediated_content = "\n".join(lines)
+
+            if not modified_line:
+                if file_path.endswith(".py"):
+                    remediated_line = f'import os\n{var_name} = os.getenv("{var_name}")  # [ShieldCI Fix] Load via environment variable'
+                elif file_path.endswith((".yml", ".yaml")):
+                    remediated_line = f'${{{{ secrets.{var_name} }}}}  # [ShieldCI Fix] Referenced via GitHub Actions Secret'
+                else:
+                    remediated_line = f'${{{var_name}}}  # [ShieldCI Fix] Loaded securely from environment'
+
+                secret_line = finding.snippet or "SECRET_KEY = '***'"
+                remediated_content = content.replace(secret_line, remediated_line) if (content and secret_line in content) else (content + f"\n# Remediation: Replace hardcoded credential with {var_name}")
             explanation = (
                 f"Extracted hardcoded credential out of source control. Replaced with secure runtime environment lookup `{var_name}`. "
                 "Hardcoded credentials in repositories are vulnerable to history scraping and inadvertent exposure in build logs."

@@ -19,6 +19,12 @@ class SecretScanner:
         "Slack Webhook URL": (re.compile(r"https://hooks\.slack\.com/services/T[a-zA-Z0-9_]+/B[a-zA-Z0-9_]+/[a-zA-Z0-9_]+"), SeverityLevel.HIGH),
     }
 
+    LOCK_FILES = {
+        "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock",
+        "pipfile.lock", "composer.lock", "cargo.lock", "packages.lock.json",
+        "bun.lockb"
+    }
+
     def __init__(self):
         self.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
         self.ignore_dirs = settings.scanner.IGNORED_DIRECTORIES
@@ -46,11 +52,25 @@ class SecretScanner:
             dirs[:] = [d for d in dirs if d not in self.ignore_dirs]
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
+                base_name = file.lower()
+
+                # Bypass non-code binary or asset extensions
                 if ext in self.ignore_extensions:
+                    continue
+
+                # Bypass package lockfiles (contain sha512 integrity hashes, audited by SCA scanner)
+                if base_name in self.LOCK_FILES or base_name.endswith(".lock") or base_name.endswith(".lockb"):
                     continue
 
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, base_path)
+                norm_rel = rel_path.replace("\\", "/").lower()
+
+                # Bypass compiled frontend assets with content hashes (e.g. assets/*.js, dist/*.js)
+                if "/assets/" in norm_rel or norm_rel.startswith("assets/") or "/static/assets/" in norm_rel:
+                    if re.search(r"[-.][a-z0-9]{6,}\.(js|css)$", base_name):
+                        continue
+
                 findings.extend(self._scan_file(full_path, rel_path))
 
         return findings
