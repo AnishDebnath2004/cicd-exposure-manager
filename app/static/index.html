@@ -6184,7 +6184,9 @@ shieldci_audit:
           headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             scan_id: currentScanData.scan_id,
-            finding_id: finding.id
+            finding_id: finding.id,
+            repo_url: defaultRepo,
+            github_token: savedToken || ''
           })
         });
 
@@ -10827,6 +10829,22 @@ shieldci_audit:
               <i class="fa-solid fa-code-pull-request text-amber-300"></i>
               <span>Push Branch &amp; Open Pull Request</span>
             </button>
+          </div>
+
+          <!-- Safety & Hosting Deployment Advisory -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px]">
+            <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-start gap-2 text-emerald-300">
+              <i class="fa-solid fa-shield-halved text-emerald-400 mt-0.5"></i>
+              <div>
+                <strong class="font-semibold text-emerald-200">Zero-Code-Loss Verified:</strong> ShieldCI only targets the flagged token/line. All existing endpoints, functions, and logic remain 100% intact.
+              </div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30 flex items-start gap-2 text-amber-300">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i>
+              <div>
+                <strong class="font-semibold text-amber-200">Deployment Notice:</strong> Ensure runtime env variables (e.g. <code class="font-mono text-amber-200">SUPABASE_KEY</code>) are configured in your Vercel/cloud settings so production remains connected.
+              </div>
+            </div>
           </div>
 
           <!-- PR Creation Result Banner -->

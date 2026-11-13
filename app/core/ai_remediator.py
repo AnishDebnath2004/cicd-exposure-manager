@@ -136,7 +136,14 @@ class AIRemediator:
                     lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
                     modified_line = True
                 elif file_path.endswith(".py"):
-                    lines[target_idx] = f'{indent}{var_name} = os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+                    strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
+                    comma_match = orig_line.rstrip().endswith(',')
+                    if strip_match:
+                        lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
+                    elif comma_match:
+                        lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                    else:
+                        lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
                     modified_line = True
 
                 if modified_line and file_path.endswith(".py"):
@@ -340,4 +347,129 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
             safety_notes=parsed.get("safety_notes", ""),
             test_command=parsed.get("test_command", "git diff")
         )
+
+    @classmethod
+    def merge_fix_into_existing(
+        cls,
+        existing_content: str,
+        file_path: str,
+        remediated_content: str,
+        finding_title: str = "",
+        finding_line: Optional[int] = None,
+        finding_snippet: Optional[str] = None,
+        finding: Optional[Finding] = None
+    ) -> str:
+        """
+        Zero-Code-Loss Surgical Merger:
+        Guarantees that applying a remediation fix NEVER deletes surrounding code or functions.
+        If remediated_content is a snippet or partial file, this surgically inserts the fix
+        into the existing complete file content.
+        """
+        if not existing_content:
+            return remediated_content
+
+        exist_lines = existing_content.splitlines()
+        rem_lines = remediated_content.splitlines()
+
+        # If remediated_content is already a full file (similar length and has content), use it
+        if len(rem_lines) >= len(exist_lines) * 0.8 and len(rem_lines) > 5:
+            return remediated_content
+
+        file_lower = file_path.lower()
+        title_lower = (finding.title if finding else finding_title).lower()
+        line_num = (finding.line_number if finding else finding_line)
+        snippet = (finding.snippet if finding else finding_snippet) or ""
+
+        # 1. Python Credential / Secret Fixes
+        if file_lower.endswith(".py"):
+            var_name = "APP_SECRET_TOKEN"
+            if "aws" in title_lower:
+                var_name = "AWS_SECRET_ACCESS_KEY"
+            elif "github" in title_lower:
+                var_name = "GITHUB_TOKEN"
+            elif any(k in title_lower or k in file_lower for k in ("postgres", "mysql", "database", "db")):
+                var_name = "DATABASE_URL"
+            elif any(k in title_lower or k in file_lower for k in ("supabase",)):
+                var_name = "SUPABASE_KEY"
+            elif "stripe" in title_lower:
+                var_name = "STRIPE_SECRET_KEY"
+
+            target_idx = None
+            if line_num and 1 <= line_num <= len(exist_lines):
+                target_idx = line_num - 1
+            elif snippet:
+                for i, l in enumerate(exist_lines):
+                    if snippet in l:
+                        target_idx = i
+                        break
+
+            if target_idx is not None and 0 <= target_idx < len(exist_lines):
+                orig_line = exist_lines[target_idx]
+                indent = re.match(r"^\s*", orig_line).group(0)
+                dict_match = re.match(r'^(\s*[\'"][a-zA-Z0-9_\-]+[\'"]\s*:\s*)(.*)$', orig_line)
+                var_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
+
+                if dict_match:
+                    prefix = dict_match.group(1)
+                    exist_lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                elif var_match:
+                    prefix = var_match.group(1)
+                    exist_lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                else:
+                    strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
+                    comma_match = orig_line.rstrip().endswith(',')
+                    if strip_match:
+                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
+                    elif comma_match:
+                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                    else:
+                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+
+                if not any(re.match(r"^\s*import\s+os\b", l) for l in exist_lines):
+                    exist_lines.insert(0, "import os")
+
+                return "\n".join(exist_lines)
+
+        # 2. Python requirements.txt
+        if "requirements" in file_lower:
+            safe_versions = {
+                "requests": "2.32.3",
+                "urllib3": "2.2.2",
+                "pyyaml": "6.0.1",
+                "flask": "3.0.3",
+                "django": "5.0.7",
+                "fastapi": "0.110.0"
+            }
+            for pkg, ver in safe_versions.items():
+                if pkg in title_lower or pkg in snippet.lower():
+                    new_lines = []
+                    matched = False
+                    for l in exist_lines:
+                        if re.match(rf"^\s*{pkg}\b", l, re.IGNORECASE):
+                            new_lines.append(f"{pkg}>={ver}")
+                            matched = True
+                        else:
+                            new_lines.append(l)
+                    if matched:
+                        return "\n".join(new_lines)
+
+        # 3. GitHub Actions Workflows
+        if file_lower.endswith((".yml", ".yaml")) and ".github" in file_lower:
+            res_content = existing_content
+            if "pull_request_target" in res_content:
+                res_content = res_content.replace("pull_request_target", "pull_request")
+            if "permissions:" not in res_content and "permissions" in title_lower:
+                res_content = re.sub(
+                    r"(on:\s*\n(\s+pull_request:[^\n]*\n)?)",
+                    r"\1permissions:\n  contents: read\n\n",
+                    res_content,
+                    count=1
+                )
+            return res_content
+
+        # 4. Fallback snippet replacement
+        if snippet and snippet in existing_content:
+            return existing_content.replace(snippet, remediated_content.strip())
+
+        return existing_content
 

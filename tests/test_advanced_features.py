@@ -149,6 +149,90 @@ def test_github_service_repo_parsing():
     assert GitHubService.parse_repo_owner_name("invalid-url-format") is None
 
 
+def test_ai_remediator_zero_code_loss_and_syntax():
+    """Verifies that AI remediation and surgical merge never delete surrounding code and produce valid syntax."""
+    # 1. Test Expression Secret in Python Tuple / Expression
+    full_py_file = """import os
+import sys
+
+DEFAULT_SUPABASE_URL = os.getenv("SUPABASE_URL", "https://example.supabase.co")
+DEFAULT_SUPABASE_KEY = (
+    os.getenv("SUPABASE_KEY") or
+    os.getenv("SUPABASE_ANON_KEY") or
+    base64.b64decode(b'c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==').decode('utf-8')
+).strip()
+
+def important_business_logic():
+    return "critical code preserved"
+
+def another_route():
+    return {"status": "ok"}
+"""
+    finding_py = Finding(
+        id="f-sec-supabase",
+        category=FindingCategory.SECRET_EXPOSURE,
+        severity=SeverityLevel.MEDIUM,
+        title="High-Entropy String / Suspected Token",
+        description="Suspected hardcoded key",
+        file_path="backend/supabase_service.py",
+        line_number=8,
+        snippet="c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==",
+        remediation_advice="Move to environment variable"
+    )
+
+    merged_py = AIRemediator.merge_fix_into_existing(
+        existing_content=full_py_file,
+        file_path="backend/supabase_service.py",
+        remediated_content='SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")',
+        finding=finding_py
+    )
+
+    # Must preserve all surrounding functions
+    assert "important_business_logic" in merged_py
+    assert "another_route" in merged_py
+    assert len(merged_py.splitlines()) >= len(full_py_file.splitlines()) - 1
+    # Must NOT have assignment operator inside the tuple
+    assert "SUPABASE_KEY = os.getenv" not in merged_py
+    # Must have valid Python syntax
+    compile(merged_py, "test.py", "exec")
+
+    # 2. Test requirements.txt zero-code-loss
+    full_reqs = """fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.6.0
+pypdf>=4.0.0
+python-docx>=1.1.0
+httpx>=0.27.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.9
+google-genai>=0.1.0"""
+
+    finding_sca = Finding(
+        id="f-sca-reqs",
+        category=FindingCategory.SCA_VULNERABILITY,
+        severity=SeverityLevel.MEDIUM,
+        title="CVE-2023-32681: Requests Proxy-Authorization Header Leak in requests",
+        description="Vulnerable requests version",
+        file_path="requirements.txt",
+        line_number=7,
+        snippet="requests>=2.31.0",
+        remediation_advice="Upgrade requests"
+    )
+
+    merged_reqs = AIRemediator.merge_fix_into_existing(
+        existing_content=full_reqs,
+        file_path="requirements.txt",
+        remediated_content="requests>=2.32.3",
+        finding=finding_sca
+    )
+
+    assert len(merged_reqs.splitlines()) == len(full_reqs.splitlines())
+    assert "fastapi>=0.110.0" in merged_reqs
+    assert "google-genai>=0.1.0" in merged_reqs
+    assert "requests>=2.32.3" in merged_reqs
+
+
 def test_security_copilot_contextual_qa():
     """Verifies that SecurityCopilot answers questions regarding blast radius, toxic combos, and fixes."""
     finding = Finding(

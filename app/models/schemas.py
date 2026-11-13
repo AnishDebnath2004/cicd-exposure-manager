@@ -297,6 +297,8 @@ class AIRemediationRequest(BaseModel):
     finding_id: str
     instructions: Optional[str] = None
     model: Optional[str] = "gemini-flash"
+    repo_url: Optional[str] = None
+    github_token: Optional[str] = None
 
 
 class AIRemediationResponse(BaseModel):

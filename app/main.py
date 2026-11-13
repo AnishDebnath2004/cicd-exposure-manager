@@ -595,21 +595,40 @@ async def generate_ai_remediation(req: AIRemediationRequest):
                 pass
 
     # If original_content is None and target is a remote GitHub repo, fetch directly
-    if not original_content and (scan.repo_url or scan.repo_name or scan.target_path):
-        repo_hint = scan.repo_url or scan.target_path or scan.repo_name
+    if not original_content:
+        repo_hint = req.repo_url or scan.repo_url or scan.target_path or scan.repo_name
         parsed = GitHubService.parse_repo_owner_name(repo_hint)
         if parsed:
             owner, repo = parsed
             branch = scan.branch or "main"
             clean_fp = target_finding.file_path.replace("\\", "/").lstrip("/")
-            raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{clean_fp}"
+            token = req.github_token or os.getenv("GITHUB_TOKEN")
+            headers = {"User-Agent": "ShieldCI-Exposure-Manager/2.0"}
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+
+            # 1. Fetch via authenticated GitHub Contents API (works for both public and private repos)
             try:
                 import requests
-                raw_resp = requests.get(raw_url, timeout=6)
-                if raw_resp.status_code == 200:
-                    original_content = raw_resp.text
+                api_url = f"{GitHubService.GITHUB_API_BASE}/repos/{owner}/{repo}/contents/{clean_fp}?ref={branch}"
+                r = requests.get(api_url, headers=headers, timeout=8)
+                if r.status_code == 200:
+                    data = r.json()
+                    if data.get("encoding") == "base64" and "content" in data:
+                        original_content = base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
             except Exception:
                 pass
+
+            # 2. Fallback to raw.githubusercontent.com
+            if not original_content:
+                raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{clean_fp}"
+                try:
+                    import requests
+                    raw_resp = requests.get(raw_url, headers=headers, timeout=8)
+                    if raw_resp.status_code == 200:
+                        original_content = raw_resp.text
+                except Exception:
+                    pass
 
     return AIRemediator.generate_remediation(
         finding=target_finding,
@@ -645,6 +664,10 @@ async def create_remediation_github_pr(req: GitHubPROpenRequest):
             detail="GitHub repository target URL or owner/repo slug is required."
         )
 
+    target_finding = None
+    if scan and req.finding_id:
+        target_finding = next((f for f in scan.findings if f.id == req.finding_id), None)
+
     res = GitHubService.open_remediation_pr(
         repo_target=repo_target,
         file_path=req.file_path,
@@ -654,7 +677,8 @@ async def create_remediation_github_pr(req: GitHubPROpenRequest):
         github_token=req.github_token,
         branch_name=req.branch_name,
         pr_title=req.pr_title,
-        pr_body=req.pr_body
+        pr_body=req.pr_body,
+        finding=target_finding
     )
     return res
 
