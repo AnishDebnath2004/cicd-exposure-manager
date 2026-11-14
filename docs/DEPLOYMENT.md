@@ -368,3 +368,5 @@ Before exposing ShieldCI to public traffic, ensure the following checklist is co
 - [ ] **Reverse Proxy**: Place behind Nginx, Cloudflare, or AWS ALB with HTTP $\rightarrow$ HTTPS redirects and TLS 1.3.
 - [ ] **Guest Scans**: Verify guest quota (5 scans/day per IP) is enforced on unauthenticated endpoints.
 - [ ] **Admin Allowlist**: Configure `ALLOWED_ADMIN_EMAILS` to restrict who can self-provision administrative privileges.
+
+# Remediation: Replace hardcoded credential with APP_SECRET_TOKEN
