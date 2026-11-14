@@ -127,29 +127,53 @@ class AIRemediator:
                 dict_match = re.match(r'^(\s*[\'"][a-zA-Z0-9_\-]+[\'"]\s*:\s*)(.*)$', orig_line)
                 var_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
 
-                if dict_match and file_path.endswith(".py"):
-                    prefix = dict_match.group(1)
-                    lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
-                    modified_line = True
-                elif var_match and file_path.endswith(".py"):
-                    prefix = var_match.group(1)
-                    lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
-                    modified_line = True
-                elif file_path.endswith(".py"):
-                    strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
-                    comma_match = orig_line.rstrip().endswith(',')
-                    if strip_match:
-                        lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
-                    elif comma_match:
-                        lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                if file_path.endswith(".py"):
+                    if dict_match:
+                        prefix = dict_match.group(1)
+                        lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                        modified_line = True
+                    elif var_match:
+                        prefix = var_match.group(1)
+                        lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                        modified_line = True
                     else:
-                        lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
-                    modified_line = True
+                        strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
+                        comma_match = orig_line.rstrip().endswith(',')
+                        if strip_match:
+                            lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
+                        elif comma_match:
+                            lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                        else:
+                            lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+                        modified_line = True
 
-                if modified_line and file_path.endswith(".py"):
-                    if not any(re.match(r"^\s*import\s+os\b", l) for l in lines):
-                        lines.insert(0, "import os")
+                    if modified_line:
+                        if not any(re.match(r"^\s*import\s+os\b", l) for l in lines):
+                            lines.insert(0, "import os")
+                        remediated_content = "\n".join(lines)
+                elif file_path.endswith((".yml", ".yaml")):
+                    yaml_match = re.match(r'^(\s*[a-zA-Z0-9_\-]+\s*:\s*)(.*)$', orig_line)
+                    if yaml_match:
+                        lines[target_idx] = f'{yaml_match.group(1)}"${{{{ secrets.{var_name} }}}}"'
+                    else:
+                        lines[target_idx] = re.sub(r"""['"][^'"]{8,}['"]""", f'"${{{{ secrets.{var_name} }}}}"', orig_line)
+                    modified_line = True
                     remediated_content = "\n".join(lines)
+                else:
+                    # Markdown, shell, dockerfile, or config files:
+                    # Replace literal quoted strings with environment variable syntax ${VAR_NAME}
+                    replaced_line = re.sub(r"""(['"])[A-Za-z0-9_\-\+/=@!#%]{12,}\1""", f'"${{{var_name}}}"', orig_line)
+                    if replaced_line != orig_line:
+                        lines[target_idx] = replaced_line
+                        modified_line = True
+                    else:
+                        # Fallback for flag syntax: -e KEY="val" or KEY=val
+                        flag_match = re.match(r'^(\s*(?:-e\s+)?[a-zA-Z0-9_]+\s*[:=]\s*)(.*)$', orig_line)
+                        if flag_match:
+                            lines[target_idx] = f'{flag_match.group(1)}"${{{var_name}}}"'
+                            modified_line = True
+                    if modified_line:
+                        remediated_content = "\n".join(lines)
 
             if not modified_line:
                 if file_path.endswith(".py"):

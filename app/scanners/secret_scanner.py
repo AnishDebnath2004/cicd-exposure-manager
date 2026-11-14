@@ -93,6 +93,17 @@ class SecretScanner:
                 for secret_type, (regex, severity) in self.SECRET_REGEXES.items():
                     match = regex.search(line)
                     if match:
+                        matched_token = match.group(1) if match.groups() else match.group(0)
+                        token_lower = matched_token.lower()
+
+                        # Skip tutorial placeholders, documentation examples, and sequential hex templates
+                        if any(p in token_lower for p in (
+                            "replace_with", "your_", "<your", "example", "placeholder", "dummy",
+                            "change_me", "changeme", "to_be_replaced", "0123456789abcdef",
+                            "my_secret", "sample", "fake_"
+                        )):
+                            continue
+
                         matched_str = match.group(0)
                         masked_secret = matched_str[:4] + "*" * (len(matched_str) - 8) + matched_str[-4:] if len(matched_str) > 8 else "***"
                         findings.append(Finding(
