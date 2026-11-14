@@ -8876,6 +8876,93 @@ shieldci_audit:
       const fullName = document.getElementById('adminNewFullName').value.trim();
       const email = document.getElementById('adminNewEmail').value.trim();
       const org = document.getElementById('adminNewOrg').value.trim() || null;
+      const role = document.querySelector('input[name="adminNewRole"]:checked')?.value || 'admin';
+      const password = document.getElementById('adminNewPassword').value;
+
+      if (!fullName || !email || !password) {
+        if (alertBox) {
+          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
+          alertBox.textContent = "Please fill in all required fields.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (password.length < 8) {
+        if (alertBox) {
+          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
+          alertBox.textContent = "Password must be at least 8 characters long.";
+          alertBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Provisioning...`;
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            organization: org,
+            role: role,
+            password: password
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `HTTP ${res.status}: Failed to provision user`);
+        }
+
+        const newUser = await res.json();
+        showToast(`Successfully created ${role.toUpperCase()} account for ${newUser.email}!`, "success");
+        closeAdminCreateModal();
+        await loadAdminUsers();
+        refreshDatabaseState();
+      } catch (err) {
+        if (alertBox) {
+          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
+          alertBox.textContent = err.message;
+          alertBox.classList.remove('hidden');
+        }
+        showToast(err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Provision Account`;
+      }
+    }
+
+    async function handleUserLoginSubmit(event) {
+      event.preventDefault();
+      const email = document.getElementById('userLoginEmail').value.trim();
+      const password = document.getElementById('userLoginPassword').value;
+      const btn = document.getElementById('userLoginBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing In...`;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Authentication failed. Please check credentials.");
+        }
+
+        if (data.mfa_required) {
+          openMfaChallengeModal(data.mfa_token, 'user', (verifyData) => {
+            setAuthState(verifyData.access_token, verifyData.user);
             if (verifyData.user && verifyData.user.role === 'admin') {
               switchNavTab('admin');
               showToast(`Welcome Administrator ${verifyData.user.full_name || verifyData.user.email}! Console unlocked.`, "success");
