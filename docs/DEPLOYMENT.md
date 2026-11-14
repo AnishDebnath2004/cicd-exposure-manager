@@ -161,7 +161,7 @@ docker run -d \
   -p 8000:8000 \
   -e APP_ENV=production \
   -e DEBUG=false \
-  -e SHIELDCI_SECRET_KEY="${SHIELDCI_SECRET_KEY}" \
+  -e SHIELDCI_SECRET_KEY="replace_with_32_byte_secret_hex" \
   -v $(pwd)/data:/app/data \
   --name shieldci \
   shieldci:latest
@@ -181,7 +181,7 @@ services:
     environment:
       POSTGRES_DB: shieldci
       POSTGRES_USER: shieldci_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: StrongProductionPassword2026!
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -196,10 +196,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: "postgresql://shieldci_user:${POSTGRES_PASSWORD}@postgres:5432/shieldci"
+      DATABASE_URL: "postgresql://shieldci_user:StrongProductionPassword2026!@postgres:5432/shieldci"
       APP_ENV: production
       DEBUG: "false"
-      SHIELDCI_SECRET_KEY: "${SHIELDCI_SECRET_KEY}"
+      SHIELDCI_SECRET_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       ALLOWED_ADMIN_EMAILS: "admin@example.com"
     depends_on:
       postgres:
@@ -368,3 +368,5 @@ Before exposing ShieldCI to public traffic, ensure the following checklist is co
 - [ ] **Reverse Proxy**: Place behind Nginx, Cloudflare, or AWS ALB with HTTP $\rightarrow$ HTTPS redirects and TLS 1.3.
 - [ ] **Guest Scans**: Verify guest quota (5 scans/day per IP) is enforced on unauthenticated endpoints.
 - [ ] **Admin Allowlist**: Configure `ALLOWED_ADMIN_EMAILS` to restrict who can self-provision administrative privileges.
+
+# Remediation: Replace hardcoded credential with APP_SECRET_TOKEN
