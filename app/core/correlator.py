@@ -37,6 +37,7 @@ class AttackCorrelator:
         iacs = [f for f in findings if f.category == FindingCategory.IAC_CONTAINER]
         webs = [f for f in findings if f.category == FindingCategory.WEB_EXPOSURE]
         dbs = [f for f in findings if f.category == FindingCategory.DB_EXPOSURE]
+        sasts = [f for f in findings if f.category == FindingCategory.SAST_VULNERABILITY]
 
         # 2. Check for Toxic Combination 1: Leaked Database Secrets + Open Database Port
         db_secrets = [s for s in secrets if any(k in s.title.lower() or k in s.description.lower() for k in ("database", "postgres", "mysql", "mongo", "redis", "db"))]
@@ -204,6 +205,8 @@ class AttackCorrelator:
                 icon = "fa-box-open"
             elif f.category == FindingCategory.SCA_VULNERABILITY:
                 icon = "fa-cubes"
+            elif f.category == FindingCategory.SAST_VULNERABILITY:
+                icon = "fa-code"
 
             node = AttackGraphNode(
                 id=node_id,

@@ -19,6 +19,7 @@ class FindingCategory(str, Enum):
     IAC_CONTAINER = "Container & IaC Exposure"
     WEB_EXPOSURE = "Web & API Security Exposure"
     DB_EXPOSURE = "Database Posture & Access Exposure"
+    SAST_VULNERABILITY = "Code Security & SAST Flaw"
 
 class TargetCategory(str, Enum):
     REPOSITORY = "repository"

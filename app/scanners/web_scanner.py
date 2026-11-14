@@ -95,6 +95,10 @@ class WebsiteScanner:
             findings.extend(path_findings)
             metadata["discovered_db_uris"] = leaked_db_uris
 
+            # 5. Dynamic Application Security Testing (DAST) Active Probes
+            dast_findings = self._probe_dast_resilience(url)
+            findings.extend(dast_findings)
+
         except requests.exceptions.RequestException as e:
             findings.append(Finding(
                 id=str(uuid.uuid4()),
@@ -395,3 +399,52 @@ class WebsiteScanner:
                 pass
 
         return findings, list(set(leaked_db_uris))
+
+    def _probe_dast_resilience(self, base_url: str) -> List[Finding]:
+        """Performs non-destructive active DAST checks on reverse proxy and headers."""
+        findings = []
+        base = base_url.rstrip("/")
+
+        # Check 1: Open API / Swagger Schema Disclosure
+        for doc_path in ("/openapi.json", "/swagger.json"):
+            try:
+                r = requests.get(f"{base}{doc_path}", headers=self.headers, timeout=3, verify=False, allow_redirects=False)
+                if r.status_code == 200 and ("openapi" in r.text.lower() or "swagger" in r.text.lower()):
+                    findings.append(Finding(
+                        id=str(uuid.uuid4()),
+                        category=FindingCategory.WEB_EXPOSURE,
+                        severity=SeverityLevel.LOW,
+                        title=f"Public API Specification Disclosure ({doc_path})",
+                        description=f"Raw OpenAPI/Swagger schema is publicly accessible at '{doc_path}'. While helpful for developers, exposing full API routes simplifies attacker reconnaissance.",
+                        file_path=f"{base}{doc_path}",
+                        snippet=r.text[:100],
+                        remediation_advice="Restrict OpenAPI schema access to authenticated development environments.",
+                        auto_fixable=False
+                    ))
+                    break
+            except Exception:
+                pass
+
+        # Check 2: Header-based IP Spoofing Reflection Test
+        try:
+            spoof_headers = dict(self.headers)
+            spoof_headers["X-Forwarded-For"] = "127.0.0.1, 10.0.0.1"
+            spoof_headers["X-Real-IP"] = "127.0.0.1"
+            r_spoof = requests.get(f"{base}/", headers=spoof_headers, timeout=3, verify=False, allow_redirects=False)
+            # If server reflects the loopback header into a response header or response body
+            if "127.0.0.1" in r_spoof.text and "127.0.0.1" not in requests.get(f"{base}/", headers=self.headers, timeout=3, verify=False).text:
+                findings.append(Finding(
+                    id=str(uuid.uuid4()),
+                    category=FindingCategory.WEB_EXPOSURE,
+                    severity=SeverityLevel.MEDIUM,
+                    title="Client IP Reflection / X-Forwarded-For Header Echo",
+                    description="The server echoes back client-supplied 'X-Forwarded-For' loopback IP addresses, indicating potential reverse-proxy header trust misconfigurations.",
+                    file_path=base_url,
+                    snippet="X-Forwarded-For: 127.0.0.1",
+                    remediation_advice="Ensure upstream edge proxies overwrite untrusted X-Forwarded-For headers from clients.",
+                    auto_fixable=False
+                ))
+        except Exception:
+            pass
+
+        return findings

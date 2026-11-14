@@ -211,6 +211,26 @@ class DatabaseScanner:
         findings = []
         is_accessible = False
 
+        # SSRF Protection: Ensure target is safe and not an internal cloud metadata or forbidden loopback target
+        try:
+            from app.core.security import validate_safe_host
+            is_safe, msg = validate_safe_host(host, port=port, allow_loopback=True)
+            if not is_safe:
+                findings.append(Finding(
+                    id=str(uuid.uuid4()),
+                    category=FindingCategory.DB_EXPOSURE,
+                    severity=SeverityLevel.HIGH,
+                    title="SSRF Defense: Restricted Database Target Probing Blocked",
+                    description=f"Outbound network socket probe to '{host}:{port}' was intercepted and prevented by SSRF protection: {msg}",
+                    file_path=f"{host}:{port}",
+                    snippet=f"Target: {host}:{port} [BLOCKED]",
+                    remediation_advice="Configure 'SHIELDCI_ALLOW_PRIVATE_TARGETS=true' in isolated development environments if internal testing is required.",
+                    auto_fixable=False
+                ))
+                return False, findings
+        except Exception:
+            pass
+
         # Check if listening on public internet or non-loopback
         is_public = host not in ("127.0.0.1", "localhost", "::1")
 

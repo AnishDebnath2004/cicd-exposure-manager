@@ -6,6 +6,7 @@ Provides REST APIs for on-demand & scheduled scanning across Repositories, Websi
 
 from __future__ import annotations
 
+import base64
 import os
 import shutil
 import tempfile     
@@ -119,12 +120,23 @@ async def require_admin(current_user: UserResponse = Depends(get_current_user)) 
 
 
 def get_client_ip(request: Optional[Request] = None) -> str:
-    """Retrieves client IP address, respecting reverse proxy headers."""
+    """Retrieves client IP address, respecting trusted edge and reverse-proxy platform headers."""
     if not request:
         return "127.0.0.1"
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    vercel_ip = request.headers.get("x-vercel-forwarded-for")
+    if vercel_ip:
+        return vercel_ip.split(",")[0].strip()
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
+        if ips:
+            return ips[0]
     if request.client and request.client.host:
         return request.client.host
     return "127.0.0.1"
@@ -373,6 +385,22 @@ async def scan_database(
     enforce_developer_domain_access(user, TargetCategory.DATABASE)
     if not target or not target.strip():
         raise HTTPException(status_code=400, detail="Database target must be provided.")
+    target_clean = target.strip()
+    try:
+        from app.core.security import validate_safe_host
+        parsed_host = target_clean
+        if "://" in target_clean:
+            import urllib.parse
+            parsed_host = urllib.parse.urlparse(target_clean).hostname or target_clean
+        else:
+            parsed_host = target_clean.split(":")[0]
+        is_safe, msg = validate_safe_host(parsed_host, allow_loopback=True)
+        if not is_safe:
+            raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")
+    except HTTPException:
+        raise
+    except Exception:
+        pass
     actual_fail_sev = fail_on_severity.default if hasattr(fail_on_severity, "default") else fail_on_severity
     actual_max_pes = max_allowed_pes.default if hasattr(max_allowed_pes, "default") else max_allowed_pes
     actual_engine = engine.default if hasattr(engine, "default") else engine

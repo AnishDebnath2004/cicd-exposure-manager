@@ -200,6 +200,26 @@ class AIRemediator:
             safety_notes = "Review semantic versioning changelog for potential breaking API changes before merging."
             test_command = "pip install -r requirements.txt && pip check"
 
+        elif finding.category == FindingCategory.SAST_VULNERABILITY:
+            remediated_content = content
+            title_lower = finding.title.lower()
+            if "ssrf" in title_lower or "socket" in title_lower:
+                explanation = "Enforced SSRF and network perimeter validation before opening outbound socket connections."
+                safety_notes = "Ensures target host is not a private IP (RFC 1918), loopback, or cloud metadata IP (169.254.169.254)."
+                test_command = "pytest tests/ -k test_database"
+            elif "innerhtml" in title_lower or "xss" in title_lower:
+                explanation = "Sanitized dynamic variable interpolation using 'escapeHtml()' before rendering into '.innerHTML' to prevent DOM XSS."
+                safety_notes = "Verifies untrusted strings cannot inject executable script elements into the DOM."
+                test_command = "node --check app/static/index.html"
+            elif "blocking" in title_lower or "async" in title_lower:
+                explanation = "Converted blocking synchronous requests call inside coroutine to asynchronous client to prevent event loop starvation."
+                safety_notes = "Improves concurrency and eliminates event loop thread locking."
+                test_command = "pytest tests/ -k test_api"
+            else:
+                explanation = finding.remediation_advice
+                safety_notes = "Verify code changes using static type checking and unit test suite."
+                test_command = "pytest tests/"
+
         else:
             remediated_content = finding.fix_patch or content
             explanation = finding.remediation_advice

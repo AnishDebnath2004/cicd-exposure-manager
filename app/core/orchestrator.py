@@ -19,6 +19,7 @@ from app.scanners.workflow_scanner import WorkflowScanner
 from app.scanners.secret_scanner import SecretScanner
 from app.scanners.sca_scanner import SCAScanner
 from app.scanners.iac_scanner import IaCScanner
+from app.scanners.sast_scanner import SASTScanner
 from app.scanners.web_scanner import WebsiteScanner
 from app.scanners.database_scanner import DatabaseScanner
 from app.core.scoring import ExposureScorer
@@ -39,6 +40,7 @@ class ExposureOrchestrator:
         self.secret_scanner = SecretScanner()
         self.sca_scanner = SCAScanner()
         self.iac_scanner = IaCScanner()
+        self.sast_scanner = SASTScanner()
 
         # Web & Database scanners
         self.web_scanner = WebsiteScanner()
@@ -57,6 +59,8 @@ class ExposureOrchestrator:
         self.secret_scanner.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
         self.iac_scanner.ignore_dirs = settings.scanner.IGNORED_DIRECTORIES
         self.iac_scanner.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
+        self.sast_scanner.ignore_dirs = settings.scanner.IGNORED_DIRECTORIES
+        self.sast_scanner.ignore_extensions = settings.scanner.IGNORED_EXTENSIONS
 
     def _dispatch_webhook_alert(self, scan: ScanResult):
         """Dispatches an outbound HTTP POST webhook alert if configured."""
@@ -194,6 +198,7 @@ class ExposureOrchestrator:
             all_findings.extend(sca_findings)
 
             all_findings.extend(self.iac_scanner.scan(target_dir))
+            all_findings.extend(self.sast_scanner.scan(target_dir))
 
             duration = time.time() - start_time
             summary = ExposureScorer.calculate_summary(

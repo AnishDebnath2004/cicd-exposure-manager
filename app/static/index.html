@@ -653,8 +653,8 @@
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- Toast Notification System (Positioned above floating Copilot button) -->
-  <div id="toastContainer" class="fixed bottom-24 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+  <!-- Toast Notification System (Positioned cleanly at top right below header, avoiding floating Copilot) -->
+  <div id="toastContainer" class="fixed top-20 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-surface-950/85 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2.5">
@@ -5522,7 +5522,7 @@ shieldci_audit:
           tbody.appendChild(tr);
         });
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400 font-medium">Failed to load history: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400 font-medium">Failed to load history: ${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -5609,7 +5609,7 @@ shieldci_audit:
           tbody.appendChild(tr);
         });
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-rose-400">Failed to load schedules: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-rose-400">Failed to load schedules: ${escapeHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -5741,7 +5741,7 @@ shieldci_audit:
       if (type === 'error') { border = "border-rose-500/40 bg-surface-900"; icon = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>'; }
 
       toast.className = `p-3.5 rounded-xl border text-xs font-semibold text-slate-100 flex items-center gap-2.5 shadow-2xl backdrop-blur transition-all transform duration-300 translate-y-2 pointer-events-auto ${border}`;
-      toast.innerHTML = `${icon} <span>${msg}</span>`;
+      toast.innerHTML = `${icon} <span>${escapeHtml(String(msg || ''))}</span>`;
       container.appendChild(toast);
 
       setTimeout(() => { toast.classList.remove('translate-y-2'); }, 10);
@@ -8173,7 +8173,7 @@ shieldci_audit:
       } catch (err) {
         resultBox.classList.remove('hidden');
         resultBox.className = "text-xs mt-2 p-2.5 rounded-lg border bg-rose-950/40 border-rose-500/40 text-rose-300 font-mono";
-        resultBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1.5"></i> Network error: ${err.message}`;
+        resultBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1.5"></i> Network error: ${escapeHtml(err.message)}`;
       } finally {
         testBtn.disabled = false;
         testBtn.innerHTML = origText;
@@ -8425,7 +8425,7 @@ shieldci_audit:
       } catch (err) {
         console.error("Failed to load admin users:", err);
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> Failed to load directory: ${err.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> Failed to load directory: ${escapeHtml(err.message)}</td></tr>`;
         }
       }
     }
@@ -8690,7 +8690,7 @@ shieldci_audit:
       } catch (err) {
         if (alertBox) {
           alertBox.className = "p-3 rounded-xl text-xs bg-rose-500/10 border border-rose-500/30 text-rose-300 font-medium flex items-start gap-2.5";
-          alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation mt-0.5"></i> <span>${err.message}</span>`;
+          alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation mt-0.5"></i> <span>${escapeHtml(err.message)}</span>`;
           alertBox.classList.remove('hidden');
         } else {
           showToast(err.message, "error");
@@ -8874,8 +8874,7 @@ shieldci_audit:
 
         if (data.mfa_required) {
           openMfaChallengeModal(data.mfa_token, 'user', (verifyData) => {
-            setAuthState(verifyData.access_token, verifyData.user);
-            if (verifyData.user.role === 'admin') {
+            if (verifyData.user && verifyData.user.role === 'admin') {
               switchNavTab('admin');
               showToast(`Welcome Administrator ${verifyData.user.full_name || verifyData.user.email}! Console unlocked.`, "success");
             } else {
@@ -9905,7 +9904,7 @@ shieldci_audit:
         }, 200);
       } catch (err) {
         if (qrContainer) {
-          qrContainer.innerHTML = `<div class="p-4 text-xs text-rose-400 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${err.message || "Failed to load MFA setup"}</div>`;
+          qrContainer.innerHTML = `<div class="p-4 text-xs text-rose-400 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${escapeHtml(err.message || "Failed to load MFA setup")}</div>`;
         }
       }
     }
@@ -10232,7 +10231,7 @@ shieldci_audit:
 
       } catch (err) {
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> ${err.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-8 text-center text-rose-400"><i class="fa-solid fa-circle-exclamation mr-2"></i> ${escapeHtml(err.message)}</td></tr>`;
         }
       }
     }

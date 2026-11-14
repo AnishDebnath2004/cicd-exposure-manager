@@ -31,7 +31,7 @@ def _resolve_secret_key() -> str:
     if env_secret and env_secret.strip():
         return env_secret.strip()
 
-    # In production without explicit secret key, read persistent key from data dir if available
+    # In production or local development without explicit secret key, generate and persist a secure key
     data_dir = os.getenv(
         "SHIELDCI_DATA_DIR",
         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
@@ -43,11 +43,17 @@ def _resolve_secret_key() -> str:
                 saved = f.read().strip()
                 if saved:
                     return saved
+        os.makedirs(data_dir, exist_ok=True)
+        gen_secret = secrets.token_hex(32)
+        with open(secret_file, "w", encoding="utf-8") as f:
+            f.write(gen_secret)
+        return gen_secret
     except Exception:
         pass
 
-    # Use a stable platform key so container redeploys and restarts do not invalidate active user sessions
-    return "shieldci_persistent_jwt_hmac_signing_key_2026_devsecops_platform"
+    # Dynamic fallback derived from instance path and host context, preventing forged JWTs from public repo secrets
+    host_context = f"{os.path.abspath(__file__)}_{os.name}_{os.getenv('COMPUTERNAME', os.getenv('HOSTNAME', 'shieldci_host'))}"
+    return hashlib.sha256(host_context.encode("utf-8")).hexdigest()
 
 
 SECRET_KEY = _resolve_secret_key()
@@ -184,46 +190,65 @@ def validate_safe_url(url: str, allow_private: Optional[bool] = None) -> Tuple[b
     if not hostname:
         return False, "URL missing valid hostname."
 
-    hostname_lower = hostname.lower()
-
-    # Immediate check for known metadata & loopback hostnames
-    if not allow_private:
-        restricted_hosts = (
-            "localhost", "127.0.0.1", "::1", "0.0.0.0",
-            "169.254.169.254", "metadata.google.internal",
-            "instance-data", "metadata"
-        )
-        if hostname_lower in restricted_hosts or hostname_lower.endswith(".internal"):
-            return False, f"Target '{hostname}' is a restricted host (SSRF Protection)."
-
-    if allow_private:
-        return True, "Target URL allowed (private testing enabled)."
-
-    # Resolve IP addresses for hostname
     port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+    return validate_safe_host(hostname, allow_private=allow_private, port=port)
+
+
+def validate_safe_host(
+    hostname: str,
+    allow_private: Optional[bool] = None,
+    allow_loopback: bool = False,
+    port: int = 80
+) -> Tuple[bool, str]:
+    """
+    Validates a target host or IP against Server-Side Request Forgery (SSRF) and intranet scanning.
+    Guarantees outbound connections cannot target cloud metadata, unroutable IPs, or forbidden private subnets.
+    """
+    if allow_private is None:
+        allow_private = os.getenv("SHIELDCI_ALLOW_PRIVATE_TARGETS", "").lower() in ("true", "1", "yes")
+
+    if not hostname or not isinstance(hostname, str):
+        return False, "Target host cannot be empty."
+
+    hostname_clean = hostname.strip().lower().split(":")[0].strip("[]")
+    if not hostname_clean:
+        return False, "Invalid host format."
+
+    # Cloud metadata is ALWAYS rejected unconditionally
+    metadata_hosts = (
+        "169.254.169.254", "metadata.google.internal",
+        "instance-data", "metadata", "fd00:ec2::254"
+    )
+    if hostname_clean in metadata_hosts or hostname_clean.endswith(".internal"):
+        return False, f"Target '{hostname_clean}' is a restricted cloud metadata host (SSRF Protection)."
+
+    if not allow_private and not allow_loopback:
+        if hostname_clean in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+            return False, f"Target '{hostname_clean}' is a restricted host (SSRF Protection)."
+
     try:
-        addr_info = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        addr_info = socket.getaddrinfo(hostname_clean, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
     except socket.gaierror as e:
-        return False, f"Unable to resolve hostname '{hostname}': {str(e)}"
+        return False, f"Unable to resolve hostname '{hostname_clean}': {str(e)}"
     except Exception as e:
-        return False, f"DNS resolution error for '{hostname}': {str(e)}"
+        return False, f"DNS resolution error for '{hostname_clean}': {str(e)}"
 
     for entry in addr_info:
         ip_str = entry[4][0]
         try:
             ip_obj = ipaddress.ip_address(ip_str)
-            if ip_obj.is_loopback:
-                return False, f"Target resolves to loopback IP {ip_str} (SSRF Protection)."
-            if ip_obj.is_private:
-                return False, f"Target resolves to private network IP {ip_str} (SSRF Protection)."
             if ip_obj.is_link_local:
                 return False, f"Target resolves to link-local/cloud metadata IP {ip_str} (SSRF Protection)."
+            if not allow_private and not allow_loopback and ip_obj.is_loopback:
+                return False, f"Target resolves to loopback IP {ip_str} (SSRF Protection)."
+            if not allow_private and ip_obj.is_private and not (allow_loopback and ip_obj.is_loopback):
+                return False, f"Target resolves to private network IP {ip_str} (SSRF Protection)."
             if ip_obj.is_multicast or ip_obj.is_reserved or ip_obj.is_unspecified:
                 return False, f"Target resolves to non-routable IP {ip_str} (SSRF Protection)."
         except ValueError:
             return False, f"Invalid IP address resolved: {ip_str}"
 
-    return True, "Target URL validated successfully."
+    return True, "Target host validated successfully."
 
 
 # ==============================================================

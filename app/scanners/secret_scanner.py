@@ -17,6 +17,9 @@ class SecretScanner:
         "Generic High-Risk API Key": (re.compile(r"(?i)(api[_-]?key|secret[_-]?token|auth[_-]?token)\s*[:=]\s*['\"]([a-zA-Z0-9_\-]{24,})['\"]"), SeverityLevel.HIGH),
         "Private RSA/SSH Key": (re.compile(r"-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY-----"), SeverityLevel.CRITICAL),
         "Slack Webhook URL": (re.compile(r"https://hooks\.slack\.com/services/T[a-zA-Z0-9_]+/B[a-zA-Z0-9_]+/[a-zA-Z0-9_]+"), SeverityLevel.HIGH),
+        "Hardcoded JWT Secret / Signing Key": (re.compile(r"(?i)(?:jwt_secret|jwt_key|signing_key|secret_key|master_key)\s*[:=]\s*['\"]([A-Za-z0-9_\-\+/=@!#%]{16,})['\"]"), SeverityLevel.HIGH),
+        "Hardcoded Database Password": (re.compile(r"(?i)(?:db_password|database_password|db_pass)\s*[:=]\s*['\"]([^'\"\s]{8,})['\"]"), SeverityLevel.HIGH),
+        "Hardcoded Cloud / API Secret Token": (re.compile(r"\b(?:sk_live_[0-9a-zA-Z]{24}|sq0atp-[0-9A-Za-z\-_]{22}|key-[0-9a-zA-Z]{32})\b"), SeverityLevel.CRITICAL),
     }
 
     LOCK_FILES = {
