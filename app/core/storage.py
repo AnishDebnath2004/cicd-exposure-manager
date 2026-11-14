@@ -461,9 +461,10 @@ class SQLiteStorageAdapter:
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
         role: str = "developer",
-        preferred_domain: str = "domain_01"
+        preferred_domain: str = "domain_01",
+        user_id: Optional[str] = None
     ) -> UserResponse:
-        user_id = str(uuid.uuid4())
+        uid = user_id or str(uuid.uuid4())
         created_at_dt = datetime.utcnow()
         created_at = created_at_dt.isoformat()
         with self._get_connection() as conn:
@@ -473,7 +474,7 @@ class SQLiteStorageAdapter:
                     id, email, password_hash, salt, full_name, organization, role, token_version, preferred_domain, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                user_id, email.lower().strip(), password_hash, salt,
+                uid, email.lower().strip(), password_hash, salt,
                 full_name.strip() if full_name else None,
                 organization.strip() if organization else None,
                 role, 1, preferred_domain, created_at
@@ -481,7 +482,7 @@ class SQLiteStorageAdapter:
             conn.commit()
 
         return UserResponse(
-            id=user_id,
+            id=uid,
             email=email.lower().strip(),
             full_name=full_name.strip() if full_name else None,
             organization=organization.strip() if organization else None,
@@ -1362,9 +1363,10 @@ class PostgresStorageAdapter:
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
         role: str = "developer",
-        preferred_domain: str = "domain_01"
+        preferred_domain: str = "domain_01",
+        user_id: Optional[str] = None
     ) -> UserResponse:
-        user_id = str(uuid.uuid4())
+        uid = user_id or str(uuid.uuid4())
         created_at_dt = datetime.utcnow()
         created_at = created_at_dt.isoformat()
         with self._get_connection() as conn:
@@ -1374,7 +1376,7 @@ class PostgresStorageAdapter:
                         id, email, password_hash, salt, full_name, organization, role, token_version, preferred_domain, created_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    user_id, email.lower().strip(), password_hash, salt,
+                    uid, email.lower().strip(), password_hash, salt,
                     full_name.strip() if full_name else None,
                     organization.strip() if organization else None,
                     role, 1, preferred_domain, created_at
@@ -1382,7 +1384,7 @@ class PostgresStorageAdapter:
             conn.commit()
 
         return UserResponse(
-            id=user_id,
+            id=uid,
             email=email.lower().strip(),
             full_name=full_name.strip() if full_name else None,
             organization=organization.strip() if organization else None,
@@ -1751,27 +1753,31 @@ class StorageEngine:
 
     def _auto_seed_owner_admin(self):
         """
-        Seeds the platform owner admin account if not already present.
-        Prevents admin lockout in ephemeral hosting environments (Render free tier, containers)
-        when local SQLite is recreated from scratch on redeploy.
+        Seeds the platform owner admin accounts if not already present.
+        Uses deterministic UUIDs to prevent admin lockout in ephemeral hosting environments
+        (Vercel, Render free tier, containers) across worker redeploys and cold starts.
         """
         try:
-            admin_email = "debnathanish19@gmail.com"
-            existing = self.get_user_by_email(admin_email)
-            if not existing:
-                from app.core.security import hash_password
-                seed_pw = os.getenv("SHIELDCI_ADMIN_PASSWORD", "ShieldCI@Admin2026!")
-                pw_hash, salt = hash_password(seed_pw)
-                self.create_user(
-                    email=admin_email,
-                    password_hash=pw_hash,
-                    salt=salt,
-                    full_name="Anish Debnath",
-                    organization="ShieldCI Admin",
-                    role="admin",
-                    preferred_domain="domain_01"
-                )
-                logger.info(f"Auto-seeded platform owner admin account ({admin_email}).")
+            from app.core.security import hash_password
+            for admin_email in ["debnathanish19@gmail.com", "anish2004bmg@gmail.com"]:
+                existing = self.get_user_by_email(admin_email)
+                if not existing:
+                    seed_pw = os.getenv("SHIELDCI_ADMIN_PASSWORD", "ShieldCI@Admin2026!")
+                    pw_hash, salt = hash_password(seed_pw)
+                    det_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, admin_email))
+                    self.create_user(
+                        email=admin_email,
+                        password_hash=pw_hash,
+                        salt=salt,
+                        full_name="Anish Debnath",
+                        organization="ShieldCI Platform Owner",
+                        role="admin",
+                        preferred_domain="domain_01",
+                        user_id=det_id
+                    )
+                    logger.info(f"Auto-seeded platform owner admin account ({admin_email}) with ID {det_id}.")
+                elif existing.get("role") != "admin":
+                    self.update_user_role(existing["id"], "admin")
         except Exception as e:
             logger.warning(f"Could not auto-seed platform owner admin: {e}")
 
@@ -1916,7 +1922,8 @@ class StorageEngine:
         full_name: Optional[str] = None,
         organization: Optional[str] = None,
         role: str = "developer",
-        preferred_domain: str = "domain_01"
+        preferred_domain: str = "domain_01",
+        user_id: Optional[str] = None
     ) -> UserResponse:
         return self.adapter.create_user(
             email=email,
@@ -1925,7 +1932,8 @@ class StorageEngine:
             full_name=full_name,
             organization=organization,
             role=role,
-            preferred_domain=preferred_domain
+            preferred_domain=preferred_domain,
+            user_id=user_id
         )
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:

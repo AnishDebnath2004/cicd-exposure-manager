@@ -8392,7 +8392,14 @@ shieldci_audit:
           }
         });
 
-        if (res.status === 403 || res.status === 401) {
+        if (res.status === 401) {
+          showToast("Session expired or authentication required. Please sign in again.", "error");
+          clearAuthState();
+          openAuthModal('login');
+          return;
+        }
+
+        if (res.status === 403) {
           showToast("Access forbidden: Administrator privileges required.", "error");
           switchNavTab('domain1');
           return;

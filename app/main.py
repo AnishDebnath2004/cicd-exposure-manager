@@ -67,6 +67,13 @@ async def get_current_user_optional(authorization: Optional[str] = Header(None))
     if not claims or not claims.get("sub"):
         return None
     user = storage.get_user_by_id(claims["sub"])
+    # If ID lookup fails (e.g. serverless instance restart or ephemeral DB UUID shift),
+    # fallback to lookup by email from the cryptographically verified JWT
+    if not user and claims.get("email"):
+        user_rec = storage.get_user_by_email(claims["email"])
+        if user_rec:
+            user = storage.get_user_by_id(user_rec["id"])
+
     if not user:
         return None
 
@@ -92,7 +99,18 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> UserR
 
 async def require_admin(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     """Dependency that mandates administrator privileges."""
-    if getattr(current_user, "role", "developer") != "admin":
+    user_email = (current_user.email or "").strip().lower()
+    is_owner_email = user_email in settings.ALLOWED_ADMIN_EMAILS
+
+    # If account belongs to the whitelisted platform owner, ensure admin role is honored
+    if is_owner_email and getattr(current_user, "role", "developer") != "admin":
+        try:
+            storage.update_user_role(current_user.id, "admin")
+            current_user.role = "admin"
+        except Exception:
+            pass
+
+    if getattr(current_user, "role", "developer") != "admin" and not is_owner_email:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Administrator privileges are required to perform this action."
@@ -865,7 +883,7 @@ async def signup(req: UserSignupRequest):
         role=req.role if req.role in ("developer", "user", "admin") else "developer",
         preferred_domain=req.preferred_domain or "domain_01"
     )
-    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1), role=user.role)
     storage.refresh()
     return AuthTokenResponse(
         access_token=token,
@@ -923,7 +941,7 @@ async def login(req: UserLoginRequest):
     if not user:
         raise HTTPException(status_code=500, detail="User lookup failed.")
 
-    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1), role=user.role)
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -976,7 +994,7 @@ async def verify_mfa_challenge(req: MfaVerifyRequest):
     if not user:
         raise HTTPException(status_code=500, detail="User lookup failed.")
 
-    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1))
+    token = create_access_token(user_id=user.id, email=user.email, token_version=getattr(user, "token_version", 1), role=user.role)
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -1060,7 +1078,8 @@ async def change_password(
     new_token = create_access_token(
         user_id=current_user.id,
         email=current_user.email,
-        token_version=getattr(updated_user, "token_version", 1)
+        token_version=getattr(updated_user, "token_version", 1),
+        role=getattr(updated_user, "role", "developer")
     )
 
     return {
@@ -1213,7 +1232,8 @@ async def confirm_password_reset(req: PasswordResetConfirmRequest):
     new_token = create_access_token(
         user_id=updated_user.id,
         email=updated_user.email,
-        token_version=getattr(updated_user, "token_version", 1)
+        token_version=getattr(updated_user, "token_version", 1),
+        role=getattr(updated_user, "role", "developer")
     )
 
     role_label = "Administrator" if updated_user.role == "admin" else "User"

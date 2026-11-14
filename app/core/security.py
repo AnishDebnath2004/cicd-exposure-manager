@@ -92,9 +92,9 @@ def _b64_url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode((data + padding).encode('utf-8'))
 
 
-def create_access_token(user_id: str, email: str, token_version: int = 1, expires_seconds: int = 7 * 86400) -> str:
+def create_access_token(user_id: str, email: str, token_version: int = 1, expires_seconds: int = 7 * 86400, role: Optional[str] = None) -> str:
     """
-    Generates a cryptographically signed Bearer token containing user claims, token_version, and expiration.
+    Generates a cryptographically signed Bearer token containing user claims, role, token_version, and expiration.
     Format: header_b64.payload_b64.signature_b64
     """
     now = int(time.time())
@@ -102,6 +102,7 @@ def create_access_token(user_id: str, email: str, token_version: int = 1, expire
     payload = {
         "sub": user_id,
         "email": email,
+        "role": role,
         "ver": token_version,
         "iat": now,
         "exp": now + expires_seconds
