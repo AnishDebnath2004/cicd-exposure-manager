@@ -2776,6 +2776,9 @@ python -m app.cli db postgresql://readonly:pass@db.internal:5432/app</code></pre
                 <option value="MEDIUM">Medium</option>
                 <option value="LOW">Low</option>
               </select>
+              <button id="btnFixAllExposures" onclick="openBatchFixModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center gap-1.5 shadow-lg shadow-emerald-950/40 transition cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> Remediate All Exposures (1-Click PR)
+              </button>
             </div>
           </div>
 
@@ -6283,6 +6286,22 @@ shieldci_audit:
           document.getElementById('aiFixPrResult').classList.remove('hidden');
           document.getElementById('aiFixPrResultMsg').innerText = `Pull Request #${data.pr_number} created on branch ${data.branch}!`;
           document.getElementById('aiFixPrLink').href = data.pr_url;
+
+          const auditBtn = document.getElementById('aiFixAuditBranchBtn');
+          if (auditBtn) {
+            auditBtn.onclick = () => {
+              closeAIFixModal();
+              triggerScanWithBranch(data.branch);
+            };
+          }
+          const rescanBtn = document.getElementById('aiFixRescanMainBtn');
+          if (rescanBtn) {
+            rescanBtn.onclick = () => {
+              closeAIFixModal();
+              startScan();
+            };
+          }
+
           showToast(`Pull Request opened on GitHub: #${data.pr_number}`, "success");
         } else {
           showToast(data.message || "Failed to create Pull Request.", "error");
@@ -6292,6 +6311,113 @@ shieldci_audit:
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalBtnHtml;
+      }
+    }
+
+    function triggerScanWithBranch(branchName) {
+      const gitBranchEl = document.getElementById('gitBranch');
+      if (gitBranchEl) {
+        gitBranchEl.value = branchName;
+      }
+      showToast(`Auditing PR branch '${branchName}' to verify zero exposures...`, "info");
+      startScan();
+    }
+
+    function openBatchFixModal() {
+      if (!currentScanData || !currentScanData.findings || currentScanData.findings.length === 0) {
+        showToast("No active scan findings available to remediate.", "error");
+        return;
+      }
+      let defaultRepo = '';
+      if (currentScanData.repo_url && (currentScanData.repo_url.includes('/') || currentScanData.repo_url.includes('github.com'))) {
+        defaultRepo = currentScanData.repo_url;
+      } else if (currentScanData.target_path && (currentScanData.target_path.includes('/') || currentScanData.target_path.includes('github.com'))) {
+        defaultRepo = currentScanData.target_path;
+      } else {
+        defaultRepo = currentScanData.repo_name || '';
+      }
+      document.getElementById('batchFixPrRepo').value = defaultRepo;
+      document.getElementById('batchFixCount').innerText = `${currentScanData.findings.length} findings across repository`;
+      const savedToken = localStorage.getItem('shieldci_github_token');
+      if (savedToken) {
+        document.getElementById('batchFixPrToken').value = savedToken;
+        document.getElementById('batchFixSaveToken').checked = true;
+      }
+      document.getElementById('batchFixPrResult').classList.add('hidden');
+      document.getElementById('batchFixModal').classList.remove('hidden');
+    }
+
+    function closeBatchFixModal() {
+      document.getElementById('batchFixModal').classList.add('hidden');
+    }
+
+    async function submitBatchAIFixGitHubPR() {
+      if (!currentScanData || !currentScanData.findings || currentScanData.findings.length === 0) {
+        showToast("No active scan findings available to remediate.", "error");
+        return;
+      }
+      let repo = document.getElementById('batchFixPrRepo').value.trim();
+      const token = document.getElementById('batchFixPrToken').value.trim();
+      const saveToken = document.getElementById('batchFixSaveToken').checked;
+
+      if (!repo) {
+        showToast("Please enter target repository (owner/repo)", "error");
+        return;
+      }
+      if (!token) {
+        showToast("GitHub Personal Access Token is required to open a consolidated PR.", "error");
+        return;
+      }
+      if (saveToken) {
+        localStorage.setItem('shieldci_github_token', token);
+      }
+
+      const btn = document.getElementById('btnSubmitBatchPR');
+      const origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Remediating All Files &amp; Opening PR...</span>';
+
+      try {
+        const res = await fetch('/api/remediation/batch-pr', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            scan_id: currentScanData.scan_id,
+            repo_url: repo,
+            github_token: token
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.pr_url) {
+          document.getElementById('batchFixPrResult').classList.remove('hidden');
+          document.getElementById('batchFixPrResultMsg').innerText = `Consolidated PR #${data.pr_number} created on branch ${data.branch}!`;
+          document.getElementById('batchFixPrLink').href = data.pr_url;
+
+          const auditBtn = document.getElementById('batchFixAuditBranchBtn');
+          if (auditBtn) {
+            auditBtn.onclick = () => {
+              closeBatchFixModal();
+              triggerScanWithBranch(data.branch);
+            };
+          }
+          const rescanBtn = document.getElementById('batchFixRescanMainBtn');
+          if (rescanBtn) {
+            rescanBtn.onclick = () => {
+              closeBatchFixModal();
+              startScan();
+            };
+          }
+
+          showToast(`Consolidated PR opened on GitHub: #${data.pr_number}`, "success");
+        } else {
+          showToast(data.message || "Failed to create consolidated PR.", "error");
+        }
+      } catch (err) {
+        showToast(`GitHub Error: ${err.message}`, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
       }
     }
 
@@ -8750,130 +8876,6 @@ shieldci_audit:
       const fullName = document.getElementById('adminNewFullName').value.trim();
       const email = document.getElementById('adminNewEmail').value.trim();
       const org = document.getElementById('adminNewOrg').value.trim() || null;
-      const role = document.querySelector('input[name="adminNewRole"]:checked')?.value || 'admin';
-      const preferred_domain = document.getElementById('adminNewPreferredDomain')?.value || 'domain_01';
-      const password = document.getElementById('adminNewPassword').value;
-
-      if (!fullName || !email || !password) {
-        if (alertBox) {
-          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
-          alertBox.textContent = "Please fill in all required fields.";
-          alertBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      if (password.length < 8) {
-        if (alertBox) {
-          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
-          alertBox.textContent = "Password must be at least 8 characters long.";
-          alertBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Provisioning...`;
-
-      try {
-        const token = getAuthToken();
-        const res = await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            full_name: fullName,
-            email: email,
-            organization: org,
-            role: role,
-            preferred_domain: preferred_domain,
-            password: password
-          })
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || `HTTP ${res.status}: Failed to provision user`);
-        }
-
-        const newUser = await res.json();
-        showToast(`Successfully created ${role.toUpperCase()} account for ${newUser.email}!`, "success");
-        closeAdminCreateModal();
-        await loadAdminUsers();
-        refreshDatabaseState();
-      } catch (err) {
-        if (alertBox) {
-          alertBox.className = "p-3 rounded-xl text-xs flex items-start gap-2.5 bg-rose-500/10 text-rose-300 border border-rose-500/30";
-          alertBox.textContent = err.message;
-          alertBox.classList.remove('hidden');
-        }
-        showToast(err.message, "error");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Provision Account`;
-      }
-    }
-
-
-    // ==============================================================
-    // SECTION 5: USER PORTAL LOGIC (SELF-SERVICE SCANNER)
-    // ==============================================================
-    let currentUserTargetType = 'repository';
-    let currentUserScanData = null;
-
-    function switchUserAuthMode(mode) {
-      const loginBtn = document.getElementById('userAuthTabBtn-login');
-      const signupBtn = document.getElementById('userAuthTabBtn-signup');
-      const loginForm = document.getElementById('userLoginForm');
-      const signupForm = document.getElementById('userSignupForm');
-      hideUserAuthAlert();
-      if (mode === 'login') {
-        if (loginBtn) loginBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm";
-        if (signupBtn) signupBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-        if (loginForm) loginForm.classList.remove('hidden');
-        if (signupForm) signupForm.classList.add('hidden');
-      } else {
-        if (signupBtn) signupBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm";
-        if (loginBtn) loginBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-        if (signupForm) signupForm.classList.remove('hidden');
-        if (loginForm) loginForm.classList.add('hidden');
-      }
-    }
-
-    function showUserAuthAlert(msg) {
-      const box = document.getElementById('userAuthAlert');
-      const text = document.getElementById('userAuthAlertMsg');
-      if (box && text) {
-        text.textContent = msg;
-        box.classList.remove('hidden');
-      }
-    }
-
-    function hideUserAuthAlert() {
-      const box = document.getElementById('userAuthAlert');
-      if (box) box.classList.add('hidden');
-    }
-
-    async function handleUserLoginSubmit(event) {
-      event.preventDefault();
-      const email = document.getElementById('userLoginEmail').value.trim();
-      const password = document.getElementById('userLoginPassword').value;
-      const btn = document.getElementById('userLoginBtn');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing In...`;
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(formatApiError(data, "Login failed. Please check credentials."));
-
-        if (data.mfa_required) {
-          openMfaChallengeModal(data.mfa_token, 'user', (verifyData) => {
             if (verifyData.user && verifyData.user.role === 'admin') {
               switchNavTab('admin');
               showToast(`Welcome Administrator ${verifyData.user.full_name || verifyData.user.email}! Console unlocked.`, "success");
@@ -10854,14 +10856,109 @@ shieldci_audit:
           </div>
 
           <!-- PR Creation Result Banner -->
-          <div id="aiFixPrResult" class="hidden p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs flex items-center justify-between">
-            <div class="flex items-center gap-2 text-emerald-300 font-medium">
-              <i class="fa-solid fa-circle-check text-emerald-400"></i>
-              <span id="aiFixPrResultMsg">Pull Request opened successfully!</span>
+          <div id="aiFixPrResult" class="hidden p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-emerald-300 font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                <span id="aiFixPrResultMsg">Pull Request opened successfully!</span>
+              </div>
+              <a id="aiFixPrLink" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+                Open PR on GitHub <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </a>
             </div>
-            <a id="aiFixPrLink" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+            <div class="pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <span class="text-slate-300">Next Steps: Verify posture before or after merging</span>
+              <div class="flex items-center gap-2">
+                <button type="button" id="aiFixAuditBranchBtn" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-medium transition cursor-pointer flex items-center gap-1">
+                  <i class="fa-solid fa-shield-halved"></i> Audit PR Branch
+                </button>
+                <button type="button" id="aiFixRescanMainBtn" class="px-2.5 py-1 rounded bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 font-medium transition cursor-pointer flex items-center gap-1">
+                  <i class="fa-solid fa-rotate-right"></i> Re-scan Main (After Merge)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 1-CLICK CONSOLIDATED REPOSITORY REMEDIATION MODAL               -->
+  <!-- ============================================================== -->
+  <div id="batchFixModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all">
+    <div class="glass-card rounded-2xl w-full max-w-2xl border border-emerald-500/50 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/90">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-600/30">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">⚡ Remediate All Exposures (Consolidated PR)</h3>
+            <p id="batchFixModalSubtitle" class="text-xs text-slate-400 font-mono mt-0.5">Surgically resolves all detected findings across the codebase in 1 PR</p>
+          </div>
+        </div>
+        <button onclick="closeBatchFixModal()" class="text-slate-400 hover:text-white text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 overflow-y-auto space-y-4 bg-surface-950 flex-1">
+        <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 space-y-2 text-xs">
+          <div class="flex items-center gap-2 font-bold text-emerald-300">
+            <i class="fa-solid fa-bolt text-amber-300"></i>
+            <span>All-In-One Autonomous Vulnerability Elimination</span>
+          </div>
+          <p class="text-slate-300 leading-relaxed">
+            Instead of opening and merging individual fixes file-by-file, ShieldCI will bundle secure refactorings for
+            <b id="batchFixCount" class="text-emerald-400 font-mono">all detected findings</b> into a single consolidated branch and Pull Request.
+          </p>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Target Repository (owner/repo)</label>
+            <input type="text" id="batchFixPrRepo" placeholder="owner/repo or https://github.com/owner/repo" class="w-full px-3 py-2 rounded-lg bg-surface-950 border border-slate-700 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">GitHub Personal Access Token (PAT with repo scope)</label>
+            <input type="password" id="batchFixPrToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full px-3 py-2 rounded-lg bg-surface-950 border border-slate-700 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <label class="inline-flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input type="checkbox" id="batchFixSaveToken" class="rounded bg-surface-950 border-slate-700 text-emerald-600 focus:ring-0">
+              <span>Save token in browser</span>
+            </label>
+            <button id="btnSubmitBatchPR" onclick="submitBatchAIFixGitHubPR()" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/30 border border-emerald-400/40 transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-code-pull-request text-amber-300"></i>
+              <span>Create Branch &amp; Open Consolidated PR</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div id="batchFixPrResult" class="hidden p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-emerald-300 font-semibold">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i>
+              <span id="batchFixPrResultMsg">Consolidated Pull Request opened successfully!</span>
+            </div>
+            <a id="batchFixPrLink" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
               Open PR on GitHub <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
+          </div>
+          <div class="pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span class="text-slate-300">Next Steps: Audit the PR branch or re-scan main once merged</span>
+            <div class="flex items-center gap-2">
+              <button type="button" id="batchFixAuditBranchBtn" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-medium transition cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-shield-halved"></i> Audit PR Branch
+              </button>
+              <button type="button" id="batchFixRescanMainBtn" class="px-2.5 py-1 rounded bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 font-medium transition cursor-pointer flex items-center gap-1">
+                <i class="fa-solid fa-rotate-right"></i> Re-scan Main (After Merge)
+              </button>
+            </div>
           </div>
         </div>
       </div>

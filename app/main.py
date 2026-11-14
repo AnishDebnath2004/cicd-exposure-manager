@@ -29,7 +29,7 @@ from app.models.schemas import (
     ScanRequest, ScanResult, ScanHistorySummary, ScheduledScan,
     ScheduleCreateRequest, SeverityLevel, TargetCategory,
     SettingsSchema, SettingsUpdateRequest, WebhookTestRequest, WebhookTestResponse,
-    AIRemediationRequest, AIRemediationResponse, GitHubPROpenRequest, GitHubPROpenResponse,
+    AIRemediationRequest, AIRemediationResponse, GitHubPROpenRequest, GitHubBatchPROpenRequest, GitHubPROpenResponse,
     CopilotChatRequest, CopilotChatResponse
 )
 from app.models.auth_schemas import (
@@ -643,6 +643,12 @@ async def generate_ai_remediation(req: AIRemediationRequest):
     # If original_content is None and target is a remote GitHub repo, fetch directly
     if not original_content:
         repo_hint = req.repo_url or scan.repo_url or scan.target_path or scan.repo_name
+        if not repo_hint or ("/" not in str(repo_hint).strip() and not str(repo_hint).strip().startswith("http")):
+            if scan.repo_url and ("/" in scan.repo_url or "github.com" in scan.repo_url):
+                repo_hint = scan.repo_url
+            elif scan.target_path and ("/" in scan.target_path or "github.com" in scan.target_path):
+                repo_hint = scan.target_path
+
         parsed = GitHubService.parse_repo_owner_name(repo_hint)
         if parsed:
             owner, repo = parsed
@@ -725,6 +731,45 @@ async def create_remediation_github_pr(req: GitHubPROpenRequest):
         pr_title=req.pr_title,
         pr_body=req.pr_body,
         finding=target_finding
+    )
+    return res
+
+
+@app.post("/api/remediation/batch-pr", response_model=GitHubPROpenResponse)
+async def create_batch_remediation_github_pr(req: GitHubBatchPROpenRequest):
+    """
+    Consolidated 1-Click Remediation:
+    Surgically applies fixes for ALL findings across multiple files in a repository,
+    commits them all into a single Git branch, and opens ONE unified Pull Request.
+    """
+    scan = storage.get_scan(req.scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail=f"Scan record '{req.scan_id}' not found.")
+
+    repo_target = req.repo_url
+    if not repo_target or ("/" not in str(repo_target).strip() and not str(repo_target).strip().startswith("http")):
+        if scan.repo_url and ("/" in scan.repo_url or "github.com" in scan.repo_url):
+            repo_target = scan.repo_url
+        elif scan.target_path and ("/" in scan.target_path or "github.com" in scan.target_path):
+            repo_target = scan.target_path
+        elif not repo_target:
+            repo_target = scan.repo_name
+
+    if not repo_target:
+        raise HTTPException(
+            status_code=400,
+            detail="GitHub repository target URL or owner/repo slug is required."
+        )
+
+    if not scan.findings:
+        raise HTTPException(status_code=400, detail="No findings found to remediate in this scan.")
+
+    res = GitHubService.open_batch_remediation_pr(
+        repo_target=repo_target,
+        findings=scan.findings,
+        github_token=req.github_token,
+        branch_name=req.branch_name,
+        pr_title=req.pr_title
     )
     return res
 

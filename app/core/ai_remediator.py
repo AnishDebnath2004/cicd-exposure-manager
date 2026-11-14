@@ -406,8 +406,9 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
         """
         Zero-Code-Loss Surgical Merger:
         Guarantees that applying a remediation fix NEVER deletes surrounding code or functions.
-        If remediated_content is a snippet or partial file, this surgically inserts the fix
-        into the existing complete file content.
+        Surgically replaces only the vulnerable statement or secret in place across ANY file type
+        (Python, Markdown, YAML, .env, Dockerfile, JS/TS, requirements.txt, shell scripts, etc.).
+        Guarantees that final_content != existing_content so empty PRs are never opened.
         """
         if not existing_content:
             return remediated_content
@@ -415,7 +416,7 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
         exist_lines = existing_content.splitlines()
         rem_lines = remediated_content.splitlines()
 
-        # If remediated_content is already a full file (similar length and has content), use it
+        # If remediated_content is already a complete file (similar length and has content), use it
         if len(rem_lines) >= len(exist_lines) * 0.8 and len(rem_lines) > 5:
             return remediated_content
 
@@ -423,33 +424,132 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
         title_lower = (finding.title if finding else finding_title).lower()
         line_num = (finding.line_number if finding else finding_line)
         snippet = (finding.snippet if finding else finding_snippet) or ""
+        category = finding.category if finding else FindingCategory.SECRET_EXPOSURE
 
-        # 1. Python Credential / Secret Fixes
-        if file_lower.endswith(".py"):
-            var_name = "APP_SECRET_TOKEN"
-            if "aws" in title_lower:
-                var_name = "AWS_SECRET_ACCESS_KEY"
-            elif "github" in title_lower:
-                var_name = "GITHUB_TOKEN"
-            elif any(k in title_lower or k in file_lower for k in ("postgres", "mysql", "database", "db")):
-                var_name = "DATABASE_URL"
-            elif any(k in title_lower or k in file_lower for k in ("supabase",)):
-                var_name = "SUPABASE_KEY"
-            elif "stripe" in title_lower:
-                var_name = "STRIPE_SECRET_KEY"
+        # 1. Determine environment variable / secret name
+        var_name = "APP_SECRET_TOKEN"
+        if "aws" in title_lower or "aws" in file_lower:
+            var_name = "AWS_SECRET_ACCESS_KEY"
+        elif "github" in title_lower or "ghp_" in title_lower:
+            var_name = "GITHUB_TOKEN"
+        elif any(k in title_lower or k in file_lower for k in ("postgres", "mysql", "database", "db")):
+            var_name = "DATABASE_URL"
+        elif any(k in title_lower or k in file_lower for k in ("supabase",)):
+            var_name = "SUPABASE_KEY"
+        elif any(k in title_lower or k in file_lower for k in ("jwt", "signing", "shieldci")):
+            var_name = "SHIELDCI_SECRET_KEY"
+        elif "stripe" in title_lower:
+            var_name = "STRIPE_SECRET_KEY"
+        elif "slack" in title_lower:
+            var_name = "SLACK_WEBHOOK_URL"
 
-            target_idx = None
-            if line_num and 1 <= line_num <= len(exist_lines):
-                target_idx = line_num - 1
-            elif snippet:
-                for i, l in enumerate(exist_lines):
-                    if snippet in l:
-                        target_idx = i
+        # 2. Locate target line index
+        target_idx = None
+        if line_num and 1 <= line_num <= len(exist_lines):
+            target_idx = line_num - 1
+        elif snippet:
+            # Check literal unmasked match first
+            for i, l in enumerate(exist_lines):
+                if snippet in l:
+                    target_idx = i
+                    break
+            # If snippet was masked (e.g. "... SECR****hex ..."), match by prefix and suffix
+            if target_idx is None and "*" in snippet:
+                clean_snip = snippet.strip().strip('"\'').strip(".").strip()
+                asterisk_parts = [p.strip() for p in clean_snip.split("*") if len(p.strip()) >= 3]
+                if asterisk_parts:
+                    p_start = asterisk_parts[0]
+                    p_end = asterisk_parts[-1]
+                    for i, l in enumerate(exist_lines):
+                        if p_start in l and (p_end in l or len(asterisk_parts) == 1):
+                            target_idx = i
+                            break
+
+        # 3. Comprehensive SCA Dependency Remediation (requirements.txt, package.json, pyproject.toml)
+        if any(f in file_lower for f in ("requirements", "pipfile", "pyproject")):
+            safe_versions = {
+                "requests": "2.32.3",
+                "urllib3": "2.2.2",
+                "pyyaml": "6.0.1",
+                "flask": "3.0.3",
+                "django": "5.0.7",
+                "fastapi": "0.110.0",
+                "cryptography": "42.0.8",
+                "jinja2": "3.1.4",
+                "aiohttp": "3.9.5",
+                "certifi": "2024.7.4",
+                "pillow": "10.3.0",
+                "tornado": "6.4.1",
+                "gunicorn": "22.0.0",
+                "pydantic": "2.7.4",
+                "idna": "3.7",
+                "werkzeug": "3.0.3"
+            }
+            # Also extract recommended version from remediation advice if present
+            if finding and finding.remediation_advice:
+                adv_match = re.search(r"upgrade\s+to\s+(?:version\s+)?([0-9\.]+)", finding.remediation_advice, re.IGNORECASE)
+                pkg_match = re.search(r"in\s+([a-zA-Z0-9_\-]+)", finding.title, re.IGNORECASE)
+                if adv_match and pkg_match:
+                    safe_versions[pkg_match.group(1).lower()] = adv_match.group(1)
+
+            new_lines = []
+            matched = False
+            for l in exist_lines:
+                line_modified = False
+                for pkg, ver in safe_versions.items():
+                    if re.match(rf"^\s*{pkg}\b", l, re.IGNORECASE):
+                        new_lines.append(f"{pkg}>={ver}")
+                        matched = True
+                        line_modified = True
                         break
+                if not line_modified:
+                    new_lines.append(l)
+            if matched:
+                return "\n".join(new_lines)
 
-            if target_idx is not None and 0 <= target_idx < len(exist_lines):
-                orig_line = exist_lines[target_idx]
-                indent = re.match(r"^\s*", orig_line).group(0)
+        # 4. CI/CD Workflow Remediation (.github/workflows/*.yml)
+        if file_lower.endswith((".yml", ".yaml")) and (".github" in file_lower or "workflow" in file_lower):
+            res_content = existing_content
+            if "pull_request_target" in res_content:
+                res_content = res_content.replace("pull_request_target", "pull_request")
+            if "permissions: write-all" in res_content:
+                res_content = res_content.replace(
+                    "permissions: write-all",
+                    "permissions:\n  contents: read\n  pull-requests: read\n  issues: none"
+                )
+            elif "permissions:" not in res_content and "permissions" in title_lower:
+                res_content = re.sub(
+                    r"(on:\s*\n(\s+pull_request:[^\n]*\n)?)",
+                    r"\1permissions:\n  contents: read\n\n",
+                    res_content,
+                    count=1
+                )
+            if res_content != existing_content:
+                return res_content
+
+        # 5. Containerfile / Dockerfile Hardening
+        if "dockerfile" in file_lower or file_lower.endswith(".dockerfile"):
+            new_lines = []
+            for l in exist_lines:
+                if re.match(r"^\s*FROM\s+[^\s:]+:latest", l, re.IGNORECASE):
+                    new_lines.append(re.sub(r":latest", ":3.12-slim  # [ShieldCI Fix] Pinned immutable base tag", l))
+                else:
+                    new_lines.append(l)
+            if not any(re.match(r"^\s*USER\s+", l, re.IGNORECASE) for l in new_lines):
+                new_lines.append("\n# [ShieldCI Security] Run container as unprivileged user (UID 10001)")
+                new_lines.append("RUN addgroup -S appgroup && adduser -S appuser -G appgroup 2>/dev/null || true")
+                new_lines.append("USER 10001")
+            res_content = "\n".join(new_lines)
+            if res_content != existing_content:
+                return res_content
+
+        # 6. Surgical Single-Line Replacement at target_idx
+        if target_idx is not None and 0 <= target_idx < len(exist_lines):
+            orig_line = exist_lines[target_idx]
+            indent = re.match(r"^\s*", orig_line).group(0)
+
+            # Python (.py)
+            if file_lower.endswith(".py"):
                 dict_match = re.match(r'^(\s*[\'"][a-zA-Z0-9_\-]+[\'"]\s*:\s*)(.*)$', orig_line)
                 var_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
 
@@ -460,58 +560,102 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
                     prefix = var_match.group(1)
                     exist_lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
                 else:
-                    strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
-                    comma_match = orig_line.rstrip().endswith(',')
-                    if strip_match:
-                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
-                    elif comma_match:
-                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                    # In-expression replacement (e.g. inside function calls or return statements)
+                    replaced = re.sub(r"""['"][A-Za-z0-9_\-\+/=@!#%]{10,}['"]""", f'os.getenv("{var_name}", "")', orig_line)
+                    if replaced != orig_line:
+                        exist_lines[target_idx] = replaced
                     else:
-                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+                        strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
+                        comma_match = orig_line.rstrip().endswith(',')
+                        if strip_match:
+                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
+                        elif comma_match:
+                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
+                        else:
+                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
 
                 if not any(re.match(r"^\s*import\s+os\b", l) for l in exist_lines):
                     exist_lines.insert(0, "import os")
 
                 return "\n".join(exist_lines)
 
-        # 2. Python requirements.txt
-        if "requirements" in file_lower:
-            safe_versions = {
-                "requests": "2.32.3",
-                "urllib3": "2.2.2",
-                "pyyaml": "6.0.1",
-                "flask": "3.0.3",
-                "django": "5.0.7",
-                "fastapi": "0.110.0"
-            }
-            for pkg, ver in safe_versions.items():
-                if pkg in title_lower or pkg in snippet.lower():
-                    new_lines = []
-                    matched = False
-                    for l in exist_lines:
-                        if re.match(rf"^\s*{pkg}\b", l, re.IGNORECASE):
-                            new_lines.append(f"{pkg}>={ver}")
-                            matched = True
-                        else:
-                            new_lines.append(l)
-                    if matched:
-                        return "\n".join(new_lines)
+            # Markdown (.md, .markdown) - e.g. docs/DEPLOYMENT.md
+            elif file_lower.endswith((".md", ".markdown")):
+                # Replace quoted secret strings or flags like -e SHIELDCI_SECRET_KEY="SECR...hex"
+                replaced = re.sub(r"""(['"])[A-Za-z0-9_\-\+/=@!#%]{12,}\1""", f'"${{{var_name}}}"', orig_line)
+                if replaced != orig_line:
+                    exist_lines[target_idx] = replaced
+                else:
+                    flag_match = re.match(r'^(\s*(?:-e\s+)?[a-zA-Z0-9_]+\s*[:=]\s*)(.*)$', orig_line)
+                    trailing = " \\" if orig_line.rstrip().endswith("\\") else ""
+                    if flag_match:
+                        exist_lines[target_idx] = f'{flag_match.group(1)}"${{{var_name}}}"{trailing}'
+                    else:
+                        exist_lines[target_idx] = re.sub(r"""[A-Za-z0-9_\-\+/=@!#%]{16,}""", f"${{{var_name}}}", orig_line)
+                return "\n".join(exist_lines)
 
-        # 3. GitHub Actions Workflows
-        if file_lower.endswith((".yml", ".yaml")) and ".github" in file_lower:
-            res_content = existing_content
-            if "pull_request_target" in res_content:
-                res_content = res_content.replace("pull_request_target", "pull_request")
-            if "permissions:" not in res_content and "permissions" in title_lower:
-                res_content = re.sub(
-                    r"(on:\s*\n(\s+pull_request:[^\n]*\n)?)",
-                    r"\1permissions:\n  contents: read\n\n",
-                    res_content,
-                    count=1
-                )
-            return res_content
+            # Environment files (.env, .env.*)
+            elif ".env" in file_lower:
+                env_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
+                if env_match:
+                    exist_lines[target_idx] = f'{env_match.group(1)}replace_with_{var_name.lower()}'
+                else:
+                    exist_lines[target_idx] = f'{var_name}=replace_with_{var_name.lower()}'
+                return "\n".join(exist_lines)
 
-        # 4. Fallback snippet replacement
+            # YAML files (.yml, .yaml)
+            elif file_lower.endswith((".yml", ".yaml")):
+                yaml_match = re.match(r'^(\s*[a-zA-Z0-9_\-]+\s*:\s*)(.*)$', orig_line)
+                if yaml_match:
+                    exist_lines[target_idx] = f'{yaml_match.group(1)}"${{{{ secrets.{var_name} }}}}"'
+                else:
+                    exist_lines[target_idx] = re.sub(r"""['"][^'"]{8,}['"]""", f'"${{{{ secrets.{var_name} }}}}"', orig_line)
+                return "\n".join(exist_lines)
+
+            # JavaScript / TypeScript (.js, .jsx, .ts, .tsx, .mjs, .cjs)
+            elif file_lower.endswith((".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs")):
+                var_match = re.match(r'^(\s*(?:const|let|var)\s+[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
+                dict_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*:\s*)(.*)$', orig_line)
+                semicolon = ";" if orig_line.rstrip().endswith(";") else ""
+                comma = "," if orig_line.rstrip().endswith(",") else ""
+                if var_match:
+                    exist_lines[target_idx] = f'{var_match.group(1)}process.env.{var_name} || ""{semicolon}'
+                elif dict_match:
+                    exist_lines[target_idx] = f'{dict_match.group(1)}process.env.{var_name} || ""{comma}'
+                else:
+                    exist_lines[target_idx] = re.sub(
+                        r"""['"][A-Za-z0-9_\-\+/=@!#%]{10,}['"]""",
+                        f'process.env.{var_name}',
+                        orig_line
+                    )
+                return "\n".join(exist_lines)
+
+            # JSON files (.json)
+            elif file_lower.endswith(".json"):
+                json_match = re.match(r'^(\s*"[a-zA-Z0-9_\-]+"\s*:\s*)"([^"]+)"(.*)$', orig_line)
+                if json_match:
+                    exist_lines[target_idx] = f'{json_match.group(1)}"${{{var_name}}}"{json_match.group(3)}'
+                return "\n".join(exist_lines)
+
+            # Shell scripts (.sh, .bash)
+            elif file_lower.endswith((".sh", ".bash")):
+                sh_match = re.match(r'^(\s*(?:export\s+)?[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
+                if sh_match:
+                    exist_lines[target_idx] = f'{sh_match.group(1)}"${{{var_name}}}"'
+                else:
+                    exist_lines[target_idx] = re.sub(r"""['"][A-Za-z0-9_\-\+/=@!#%]{10,}['"]""", f'"${{{var_name}}}"', orig_line)
+                return "\n".join(exist_lines)
+
+            # Universal fallback for any other file type on target_idx
+            else:
+                replaced = re.sub(r"""(['"])[A-Za-z0-9_\-\+/=@!#%]{10,}\1""", f'"${{{var_name}}}"', orig_line)
+                if replaced != orig_line:
+                    exist_lines[target_idx] = replaced
+                else:
+                    exist_lines[target_idx] = f'{indent}# [ShieldCI Fix] {var_name} loaded from environment'
+                return "\n".join(exist_lines)
+
+        # 7. Fallback unmasked snippet replacement
         if snippet and snippet in existing_content:
             return existing_content.replace(snippet, remediated_content.strip())
 

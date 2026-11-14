@@ -327,6 +327,14 @@ class GitHubPROpenRequest(BaseModel):
     github_token: Optional[str] = None
 
 
+class GitHubBatchPROpenRequest(BaseModel):
+    scan_id: str
+    repo_url: Optional[str] = None
+    github_token: Optional[str] = None
+    branch_name: Optional[str] = None
+    pr_title: Optional[str] = None
+
+
 class GitHubPROpenResponse(BaseModel):
     success: bool
     pr_url: Optional[str] = None

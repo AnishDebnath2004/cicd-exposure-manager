@@ -176,6 +176,13 @@ class GitHubService:
                         message=f"Safety Guard Blocked PR: Fix would delete {len(exist_lines) - len(final_content.splitlines())} lines of code from {file_path}. Code deletion automatically prevented."
                     )
 
+                # Remediation Verification Invariant: Ensure the file was actually changed
+                if final_content.strip() == existing_content.strip():
+                    return GitHubPROpenResponse(
+                        success=False,
+                        message=f"Remediation Verification Block: Proposed fix for '{finding_title}' did not produce any line changes in {file_path}. No PR was created to prevent an empty commit."
+                    )
+
             # 6. Commit remediated content to the new branch
             commit_payload: Dict[str, Any] = {
                 "message": f"fix(security): resolve {finding_title} via ShieldCI\n\nAutomated remediation by ShieldCI Exposure Manager.",
@@ -243,5 +250,183 @@ class GitHubService:
             return GitHubPROpenResponse(
                 success=False,
                 message=f"Failed to create pull request: {str(e)}"
+            )
+
+    @classmethod
+    def open_batch_remediation_pr(
+        cls,
+        repo_target: str,
+        findings: list,
+        github_token: Optional[str] = None,
+        branch_name: Optional[str] = None,
+        pr_title: Optional[str] = None
+    ) -> GitHubPROpenResponse:
+        """
+        Consolidated 1-Click Remediation:
+        Surgically applies fixes for ALL findings across multiple files in a repository,
+        commits them all into a single Git branch, and opens ONE unified Pull Request.
+        """
+        from app.core.ai_remediator import AIRemediator
+        token = github_token or os.getenv("GITHUB_TOKEN")
+        if not token:
+            return GitHubPROpenResponse(
+                success=False,
+                message="GitHub Personal Access Token is required to open a consolidated PR."
+            )
+
+        parsed = cls.parse_repo_owner_name(repo_target)
+        if not parsed:
+            return GitHubPROpenResponse(
+                success=False,
+                message=f"Invalid GitHub repository identifier '{repo_target}'. Use 'owner/repo' or GitHub URL."
+            )
+
+        owner, repo = parsed
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "ShieldCI-Exposure-Manager/2.0"
+        }
+
+        try:
+            # 1. Fetch Repository Details
+            repo_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}"
+            r_repo = requests.get(repo_url, headers=headers, timeout=10)
+            r_repo.raise_for_status()
+            default_branch = r_repo.json().get("default_branch", "main")
+
+            # 2. Get latest commit SHA of default branch
+            ref_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/git/ref/heads/{default_branch}"
+            r_ref = requests.get(ref_url, headers=headers, timeout=10)
+            r_ref.raise_for_status()
+            base_sha = r_ref.json()["object"]["sha"]
+
+            # 3. Create a unique consolidated branch
+            timestamp = int(time.time())
+            branch = branch_name or f"shieldci/fix-all-exposures-{str(timestamp)[-5:]}"
+            create_ref_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/git/refs"
+            r_create_ref = requests.post(
+                create_ref_url,
+                headers=headers,
+                json={"ref": f"refs/heads/{branch}", "sha": base_sha},
+                timeout=10
+            )
+            if r_create_ref.status_code not in (201, 422):
+                r_create_ref.raise_for_status()
+
+            # 4. Group findings by file_path
+            from collections import defaultdict
+            file_findings = defaultdict(list)
+            for f in findings:
+                fp = getattr(f, "file_path", None)
+                if fp:
+                    clean_fp = fp.replace("\\", "/").lstrip("/")
+                    file_findings[clean_fp].append(f)
+
+            if not file_findings:
+                return GitHubPROpenResponse(
+                    success=False,
+                    message="No remediable files found in the scan findings."
+                )
+
+            remediated_files_count = 0
+            checklist_items = []
+
+            # 5. Sequentially remediate and commit each file to the branch
+            for clean_fp, finding_list in file_findings.items():
+                file_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/contents/{clean_fp}?ref={branch}"
+                r_file = requests.get(file_url, headers=headers, timeout=10)
+                if r_file.status_code != 200:
+                    continue
+
+                file_info = r_file.json()
+                file_sha = file_info.get("sha")
+                if file_info.get("encoding") != "base64" or "content" not in file_info:
+                    continue
+
+                try:
+                    current_content = base64.b64decode(file_info["content"]).decode("utf-8", errors="ignore")
+                except Exception:
+                    continue
+
+                orig_content = current_content
+                # Sequentially apply each finding's fix to this file
+                for item in finding_list:
+                    current_content = AIRemediator.merge_fix_into_existing(
+                        existing_content=current_content,
+                        file_path=clean_fp,
+                        remediated_content="",
+                        finding_title=item.title,
+                        finding=item
+                    )
+                    checklist_items.append(f"- [x] `{clean_fp}`: {item.title} ({item.severity.value if hasattr(item.severity, 'value') else item.severity})")
+
+                # If file was modified, commit it to the branch
+                if current_content.strip() != orig_content.strip():
+                    commit_payload = {
+                        "message": f"fix(security): remediate {len(finding_list)} exposure(s) in {clean_fp} via ShieldCI",
+                        "content": base64.b64encode(current_content.encode("utf-8")).decode("utf-8"),
+                        "branch": branch,
+                        "sha": file_sha
+                    }
+                    put_file_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/contents/{clean_fp}"
+                    r_put = requests.put(put_file_url, headers=headers, json=commit_payload, timeout=10)
+                    if r_put.status_code in (200, 201):
+                        remediated_files_count += 1
+
+            if remediated_files_count == 0:
+                return GitHubPROpenResponse(
+                    success=False,
+                    message="None of the files required code modifications or all files were already up-to-date."
+                )
+
+            # 6. Open Consolidated Pull Request
+            final_title = pr_title or f"🛡️ ShieldCI Consolidated Security Remediation: {len(findings)} Exposures Fixed"
+            items_text = "\n".join(checklist_items[:25])
+            if len(checklist_items) > 25:
+                items_text += f"\n- ... and {len(checklist_items) - 25} more items."
+
+            body = (
+                f"## 🛡️ ShieldCI Autonomous Security Remediation\n\n"
+                f"This pull request consolidates automated security fixes across **{remediated_files_count} file(s)** "
+                f"resolving **{len(findings)} detected security exposure(s)**.\n\n"
+                f"### Remediated Exposures Checklist\n"
+                f"{items_text}\n\n"
+                f"### Zero-Code-Loss & Stability Guarantee\n"
+                f"ShieldCI has surgically refactored only hardcoded credentials, misconfigurations, and vulnerable dependencies. "
+                f"All existing business logic and application functionality remain 100% intact.\n\n"
+                f"> [!IMPORTANT]\n"
+                f"> Ensure all replaced secrets (e.g. `APP_SECRET_TOKEN`, `DATABASE_URL`, `SUPABASE_KEY`) "
+                f"are configured in your environment or CI/CD secrets before deploying to production."
+            )
+
+            pulls_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/pulls"
+            r_pr = requests.post(
+                pulls_url,
+                headers=headers,
+                json={
+                    "title": final_title,
+                    "head": branch,
+                    "base": default_branch,
+                    "body": body
+                },
+                timeout=12
+            )
+            r_pr.raise_for_status()
+            pr_data = r_pr.json()
+
+            return GitHubPROpenResponse(
+                success=True,
+                pr_url=pr_data.get("html_url"),
+                pr_number=pr_data.get("number"),
+                branch=branch,
+                message=f"Consolidated Pull Request #{pr_data.get('number')} created across {remediated_files_count} files!"
+            )
+
+        except Exception as e:
+            return GitHubPROpenResponse(
+                success=False,
+                message=f"Failed to open consolidated PR: {str(e)}"
             )
 

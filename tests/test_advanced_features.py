@@ -343,3 +343,144 @@ def test_remediation_and_copilot_rest_api_endpoints():
     copilot_res = asyncio.run(copilot_chat_interaction(req_copilot))
     assert copilot_res.reply is not None
     assert "Blast Radius" in copilot_res.reply
+
+
+def test_markdown_and_dockerfile_remediation_zero_code_loss():
+    """Verifies that non-Python files (.md, Dockerfile, .env) are surgically refactored with zero code loss."""
+    # 1. Test Markdown file with masked snippet
+    md_content = """# Deployment Guide
+Follow these steps to deploy ShieldCI:
+```bash
+docker run -d \\
+  -p 8000:8000 \\
+  -e APP_ENV=production \\
+  -e SHIELDCI_SECRET_KEY="SECR98765432101234567890hex" \\
+  shieldci:latest
+```
+Documentation notes remain intact."""
+
+    finding_md = Finding(
+        id="f-md-secret",
+        category=FindingCategory.SECRET_EXPOSURE,
+        severity=SeverityLevel.HIGH,
+        title="Exposed Hardcoded JWT Secret / Signing Key",
+        description="Found in deployment guide",
+        file_path="docs/DEPLOYMENT.md",
+        line_number=7,
+        snippet='... SECR************************************hex" ...',
+        remediation_advice="Replace hardcoded credential with environment variable"
+    )
+
+    merged_md = AIRemediator.merge_fix_into_existing(
+        existing_content=md_content,
+        file_path="docs/DEPLOYMENT.md",
+        remediated_content="",
+        finding=finding_md
+    )
+
+    assert "SECR98765432101234567890hex" not in merged_md
+    assert "${SHIELDCI_SECRET_KEY}" in merged_md
+    assert "# Deployment Guide" in merged_md
+    assert "Documentation notes remain intact." in merged_md
+    assert len(merged_md.splitlines()) == len(md_content.splitlines())
+
+    # 2. Test Dockerfile hardening
+    dockerfile_content = """FROM python:latest
+WORKDIR /app
+COPY . /app
+CMD ["python", "main.py"]"""
+
+    finding_docker = Finding(
+        id="f-docker-latest",
+        category=FindingCategory.IAC_CONTAINER,
+        severity=SeverityLevel.MEDIUM,
+        title="Unpinned Latest Tag Base Image in Dockerfile",
+        description="Base image uses unpinned :latest tag",
+        file_path="Dockerfile",
+        line_number=1,
+        snippet="FROM python:latest",
+        remediation_advice="Pin base image"
+    )
+
+    merged_docker = AIRemediator.merge_fix_into_existing(
+        existing_content=dockerfile_content,
+        file_path="Dockerfile",
+        remediated_content="",
+        finding=finding_docker
+    )
+
+    assert "python:latest" not in merged_docker
+    assert "python:3.12-slim" in merged_docker
+    assert "USER 10001" in merged_docker
+    assert "WORKDIR /app" in merged_docker
+
+
+def test_batch_remediation_github_pr_endpoint(monkeypatch):
+    """Verifies that POST /api/remediation/batch-pr successfully initiates consolidated repository PR."""
+    from app.main import create_batch_remediation_github_pr
+    from app.models.schemas import GitHubBatchPROpenRequest, GitHubPROpenResponse
+
+    # Mock GitHubService.open_batch_remediation_pr
+    def mock_batch_pr(*args, **kwargs):
+        return GitHubPROpenResponse(
+            success=True,
+            pr_url="https://github.com/octocat/demo/pull/42",
+            pr_number=42,
+            branch="shieldci/fix-all-exposures-12345",
+            message="Consolidated Pull Request #42 created across 2 files!"
+        )
+
+    monkeypatch.setattr(GitHubService, "open_batch_remediation_pr", mock_batch_pr)
+
+    f1 = Finding(
+        id="f1",
+        category=FindingCategory.SECRET_EXPOSURE,
+        severity=SeverityLevel.CRITICAL,
+        title="Exposed Stripe Secret Key",
+        description="Found Stripe secret key in main.py",
+        remediation_advice="Move to environment variable",
+        file_path="backend/main.py",
+        line_number=10
+    )
+    f2 = Finding(
+        id="f2",
+        category=FindingCategory.SCA_VULNERABILITY,
+        severity=SeverityLevel.HIGH,
+        title="CVE in requests",
+        description="Vulnerable requests library",
+        remediation_advice="Upgrade requests package",
+        file_path="requirements.txt",
+        line_number=5
+    )
+
+    scan = ScanResult(
+        scan_id="scan-batch-test-1",
+        target_path="https://github.com/octocat/demo",
+        repo_name="demo",
+        summary=ScanSummary(
+            total_findings=2,
+            critical_count=1,
+            high_count=1,
+            medium_count=0,
+            low_count=0,
+            info_count=0,
+            pipeline_exposure_score=85.0,
+            risk_grade="F",
+            policy_passed=False,
+            scan_duration_seconds=1.2,
+            scanned_files_count=5
+        ),
+        findings=[f1, f2]
+    )
+    storage.save_scan(scan)
+
+    req = GitHubBatchPROpenRequest(
+        scan_id=scan.scan_id,
+        repo_url="https://github.com/octocat/demo",
+        github_token="ghp_mock_token_for_test"
+    )
+
+    res = asyncio.run(create_batch_remediation_github_pr(req))
+    assert res.success is True
+    assert res.pr_number == 42
+    assert "Consolidated Pull Request" in res.message

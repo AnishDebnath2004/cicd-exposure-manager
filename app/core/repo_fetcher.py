@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import subprocess
 import zipfile
+import time
 import requests
 from contextlib import contextmanager
 from typing import Generator, Tuple, Optional
@@ -141,28 +142,29 @@ class RepoFetcher:
             owner, repo = None, None
 
         download_urls = []
+        nocache_param = f"_nocache={int(time.time())}"
         if owner and repo:
             if branch:
-                download_urls.append(f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip")
-                download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/{branch}")
+                download_urls.append(f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip?{nocache_param}")
+                download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/{branch}?{nocache_param}")
             # Default branch fallbacks (HEAD, main, master)
-            download_urls.append(f"https://github.com/{owner}/{repo}/archive/HEAD.zip")
-            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/main")
-            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/master")
+            download_urls.append(f"https://github.com/{owner}/{repo}/archive/HEAD.zip?{nocache_param}")
+            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/main?{nocache_param}")
+            download_urls.append(f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/master?{nocache_param}")
         elif "gitlab.com" in cleaned:
             gl_match = re.search(r"gitlab\.com[/:]([^/]+)/([^/\?#]+)", cleaned)
             if gl_match:
                 gl_owner, gl_repo = gl_match.group(1), gl_match.group(2)
                 target_branch = branch or "main"
-                download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/{target_branch}/{gl_repo}-{target_branch}.zip")
+                download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/{target_branch}/{gl_repo}-{target_branch}.zip?{nocache_param}")
                 if not branch:
-                    download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/master/{gl_repo}-master.zip")
+                    download_urls.append(f"https://gitlab.com/{gl_owner}/{gl_repo}/-/archive/master/{gl_repo}-master.zip?{nocache_param}")
         elif "bitbucket.org" in cleaned:
             bb_match = re.search(r"bitbucket\.org[/:]([^/]+)/([^/\?#]+)", cleaned)
             if bb_match:
                 bb_owner, bb_repo = bb_match.group(1), bb_match.group(2)
                 target_branch = branch or "HEAD"
-                download_urls.append(f"https://bitbucket.org/{bb_owner}/{bb_repo}/get/{target_branch}.zip")
+                download_urls.append(f"https://bitbucket.org/{bb_owner}/{bb_repo}/get/{target_branch}.zip?{nocache_param}")
 
         if not download_urls:
             cls.safe_cleanup(dest_dir)
@@ -174,7 +176,10 @@ class RepoFetcher:
 
         headers = {
             "User-Agent": "ShieldCI-Security-Auditor/1.0",
-            "Accept": "application/zip, application/octet-stream, */*"
+            "Accept": "application/zip, application/octet-stream, */*",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
         }
 
         temp_zip_fd, temp_zip_file = tempfile.mkstemp(suffix=".zip", dir=settings.TEMP_SCAN_DIR)
