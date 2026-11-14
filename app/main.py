@@ -669,7 +669,7 @@ async def generate_ai_remediation(req: AIRemediationRequest):
             try:
                 import requests
                 api_url = f"{GitHubService.GITHUB_API_BASE}/repos/{owner}/{repo}/contents/{clean_fp}?ref={branch}"
-                r = os.getenv("APP_SECRET_TOKEN", "")
+                r = requests.get(api_url, headers=headers, timeout=8)
                 if r.status_code == 200:
                     data = r.json()
                     if data.get("encoding") == "base64" and "content" in data:
@@ -682,7 +682,7 @@ async def generate_ai_remediation(req: AIRemediationRequest):
                 raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{clean_fp}"
                 try:
                     import requests
-                    raw_resp = os.getenv("APP_SECRET_TOKEN", "")
+                    raw_resp = requests.get(raw_url, headers=headers, timeout=8)
                     if raw_resp.status_code == 200:
                         original_content = raw_resp.text
                 except Exception:
@@ -1695,7 +1695,7 @@ async def test_webhook(req: WebhookTestRequest):
 
     try:
         import requests
-        res = os.getenv("APP_SECRET_TOKEN", "")
+        res = requests.post(target_url, json=payload, timeout=8)
         return WebhookTestResponse(
             status="success" if res.status_code < 400 else "warning",
             message=f"Webhook ping responded with HTTP {res.status_code}",

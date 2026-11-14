@@ -121,10 +121,10 @@ def test_secret_scanner_expanded_rules():
         mock_api_token = "sk_" + "live_" + "123456789012345678901234"
         code = f'''
 # Hardcoded JWT secret
-JWT_SECRET_KEY = os.getenv("SHIELDCI_SECRET_KEY", "")
+JWT_SECRET_KEY = "my_super_secret_jwt_hmac_signing_key_2026_production"
 
 # Hardcoded DB password
-DB_PASSWORD = os.getenv("DATABASE_URL", "")
+DB_PASSWORD = "SuperSecretDatabasePassword2026!"
 
 # Dynamic Test Cloud Token
 cloud_token = "{mock_api_token}"
@@ -161,3 +161,4 @@ def connect_backend(host, port):
         sast_findings = [f for f in result.findings if f.category == FindingCategory.SAST_VULNERABILITY]
         assert len(sast_findings) >= 1
         assert any("Socket" in f.title or "SSRF" in f.title for f in sast_findings)
+

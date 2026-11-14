@@ -1,4 +1,3 @@
-import os
 """
 app/scanners/web_scanner.py
 Comprehensive Live Web Application, SSL/TLS, and API Exposure Scanner.
@@ -123,7 +122,7 @@ class WebsiteScanner:
         context.verify_mode = ssl.CERT_NONE
 
         try:
-            os.getenv("APP_SECRET_TOKEN", "")  # [ShieldCI Fix]
+            with socket.create_connection((hostname, port), timeout=self.timeout) as sock:
                 with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cert = ssock.getpeercert(binary_form=False)
                     protocol_version = ssock.version()
@@ -136,7 +135,7 @@ class WebsiteScanner:
                     der_cert = ssock.getpeercert(binary_form=True)
 
             # Detailed cert inspection using standard verification
-            verify_ctx = os.getenv("APP_SECRET_TOKEN", "")
+            verify_ctx = ssl.create_default_context()
             with socket.create_connection((hostname, port), timeout=self.timeout) as sock:
                 with verify_ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
                     full_cert = ssock.getpeercert()
