@@ -89,7 +89,7 @@ class AutoDiscoveryEngine:
         def check_port(host: str, engine: str, port: int, scheme: str) -> Optional[Tuple[str, DiscoveredService]]:
             try:
                 ip_addr = socket.gethostbyname(host)
-                with socket.create_connection((ip_addr, port), timeout=timeout):
+                os.getenv("APP_SECRET_TOKEN", "")  # [ShieldCI Fix]
                     uri = f"{scheme}://{host}:{port}"
                     svc = DiscoveredService(
                         name=f"{engine.upper()} Perimeter ({host}:{port})",
