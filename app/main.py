@@ -313,6 +313,10 @@ async def trigger_scan(
     target_type = request.target_type or orchestrator.detect_target_type(target)
     request.target_type = target_type
 
+    if target_type == TargetCategory.WEBSITE and not target.startswith(("http://", "https://")):
+        target = f"https://{target}"
+        request.target = target
+
     # Strict single-domain isolation check for developers
     enforce_developer_domain_access(user, target_type)
 
@@ -350,6 +354,8 @@ async def scan_website(
         raise HTTPException(status_code=400, detail="URL must be provided.")
 
     clean_url = url.strip()
+    if not clean_url.startswith(("http://", "https://")):
+        clean_url = f"https://{clean_url}"
     is_safe, msg = validate_safe_url(clean_url)
     if not is_safe:
         raise HTTPException(status_code=400, detail=f"SSRF Protection: {msg}")

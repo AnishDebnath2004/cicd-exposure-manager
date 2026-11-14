@@ -5016,6 +5016,44 @@ shieldci_audit:
       }
     }
 
+    // Helper to extract clear, readable error messages from backend responses
+    async function extractErrorMessage(response, defaultMsg = "Scan request failed") {
+      let msg = "";
+      try {
+        const data = await response.clone().json();
+        if (typeof data.detail === 'string') {
+          msg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          msg = data.detail.map(d => `${d.loc ? d.loc.slice(-1) + ': ' : ''}${d.msg}`).join(', ');
+        } else if (data.message) {
+          msg = data.message;
+        } else if (data.error) {
+          msg = data.error;
+        }
+      } catch (_) {
+        try {
+          const text = await response.text();
+          if (text && text.length < 250 && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            msg = text.trim();
+          }
+        } catch (_) {}
+      }
+
+      if (response.status === 429) {
+        return msg || "Guest daily scan quota exceeded (5 scans/day). Please sign in or create an account for unlimited scans.";
+      }
+      if (response.status === 504) {
+        return "Scan timed out (HTTP 504). The target repository is large or the host serverless timeout was reached. Try specifying a branch or uploading a ZIP.";
+      }
+      if (response.status === 502) {
+        return "Server Bad Gateway (HTTP 502). The backend scanner service is restarting or temporarily unavailable.";
+      }
+      if (response.status === 404) {
+        return msg || "Target repository or endpoint not found (HTTP 404). Please verify the Git URL or branch name.";
+      }
+      return msg || `${defaultMsg} (HTTP ${response.status}).`;
+    }
+
     // Universal Scan Execution
     async function executeScan(category) {
       if (category) {
@@ -5151,13 +5189,12 @@ shieldci_audit:
         setProgress('85%', `<i class="fa-solid fa-shield-halved fa-fade"></i> Computing exposure score and risk grades...`);
 
         if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
           if (response.status === 429) {
             fetchQuota();
             openAuthModal('signup');
-            throw new Error(errData.detail || "Guest daily scan quota exceeded. Please sign in or create an account.");
           }
-          throw new Error(errData.detail || "Scan request failed.");
+          const errorMsg = await extractErrorMessage(response, "Scan request failed");
+          throw new Error(errorMsg);
         }
 
         const data = await response.json();
@@ -6315,6 +6352,14 @@ shieldci_audit:
     }
 
     function triggerScanWithBranch(branchName) {
+      if (currentScanData) {
+        const repoHint = currentScanData.repo_url || currentScanData.target_path || currentScanData.repo_name;
+        const gitUrlEl = document.getElementById('gitRepoUrl');
+        if (gitUrlEl && repoHint && (repoHint.includes('/') || repoHint.includes('http'))) {
+          gitUrlEl.value = repoHint;
+        }
+      }
+      setAssetCategory('repository');
       const gitBranchEl = document.getElementById('gitBranch');
       if (gitBranchEl) {
         gitBranchEl.value = branchName;
@@ -8827,55 +8872,6 @@ shieldci_audit:
       }
     }
 
-    async function deleteAdminUser(userId, userEmail) {
-      if (!confirm(`Are you sure you want to permanently delete user "${userEmail}"?\n\nThis will permanently remove their credentials and associated schedules. This action cannot be undone.`)) {
-        return;
-      }
-
-      try {
-        const token = getAuthToken();
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(data.detail || `Failed to delete user (HTTP ${res.status})`);
-        }
-
-        showToast(`User "${userEmail}" has been permanently deleted.`, "success");
-        await loadAdminUsers();
-        refreshDatabaseState();
-      } catch (err) {
-        console.error("Failed to delete user:", err);
-        showToast(err.message, "error");
-      }
-    }
-
-    function openAdminCreateModal() {
-      const modal = document.getElementById('adminCreateModal');
-      const alertBox = document.getElementById('adminCreateAlert');
-      if (alertBox) alertBox.classList.add('hidden');
-      document.getElementById('adminCreateUserForm')?.reset();
-      if (modal) modal.classList.remove('hidden');
-    }
-
-    function closeAdminCreateModal() {
-      const modal = document.getElementById('adminCreateModal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    async function handleAdminCreateUser(event) {
-      event.preventDefault();
-      const submitBtn = document.getElementById('adminCreateSubmitBtn');
-      const alertBox = document.getElementById('adminCreateAlert');
-
-      const fullName = document.getElementById('adminNewFullName').value.trim();
-      const email = document.getElementById('adminNewEmail').value.trim();
-      const org = document.getElementById('adminNewOrg').value.trim() || null;
       const role = document.querySelector('input[name="adminNewRole"]:checked')?.value || 'admin';
       const password = document.getElementById('adminNewPassword').value;
 
@@ -9312,8 +9308,8 @@ shieldci_audit:
         });
 
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || "Scan request failed");
+          const errorMsg = await extractErrorMessage(res, "Scan request failed");
+          throw new Error(errorMsg);
         }
 
         progressBar.style.width = '100%';
