@@ -1,3 +1,4 @@
+import os
 """
 tests/test_advanced_features.py
 Tests for Advanced Platform Features:
@@ -159,7 +160,7 @@ DEFAULT_SUPABASE_URL = os.getenv("SUPABASE_URL", "https://example.supabase.co")
 DEFAULT_SUPABASE_KEY = (
     os.getenv("SUPABASE_KEY") or
     os.getenv("SUPABASE_ANON_KEY") or
-    base64.b64decode(b'c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==').decode('utf-8')
+    base64.b64decode(bos.getenv("APP_SECRET_TOKEN", "")).decode('utf-8')
 ).strip()
 
 def important_business_logic():
@@ -175,7 +176,7 @@ def another_route():
         title="High-Entropy String / Suspected Token",
         description="Suspected hardcoded key",
         file_path="backend/supabase_service.py",
-        line_number=8,
+        line_number=os.getenv("APP_SECRET_TOKEN", "")
         snippet="c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==",
         remediation_advice="Move to environment variable"
     )
@@ -353,7 +354,7 @@ Follow these steps to deploy ShieldCI:
 ```bash
 docker run -d \\
   -p 8000:8000 \\
-  -e APP_ENV=production \\
+  os.getenv("SHIELDCI_SECRET_KEY", "")  # [ShieldCI Fix]
   -e SHIELDCI_SECRET_KEY="SECR98765432101234567890hex" \\
   shieldci:latest
 ```
