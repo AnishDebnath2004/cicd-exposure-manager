@@ -256,16 +256,17 @@ ShieldCI supports serverless execution on Vercel via `@vercel/python`, configure
 
 ```json
 {
+  "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
+      "src": "main.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.py"
+      "dest": "main.py"
     }
   ]
 }
