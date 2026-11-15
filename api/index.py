@@ -27,15 +27,20 @@ try:
 
         async def __call__(self, scope, receive, send):
             if scope.get("type") == "http":
-                path = scope.get("path", "")
-
-                # 1. Normalize if Vercel passed the serverless filename as path
-                if path in ("/api/index.py", "/api/index.py/", "/api/index", "/api/index/"):
-                    scope["path"] = "/"
-                elif path.startswith("/api/index.py/"):
-                    scope["path"] = path[len("/api/index.py"):]
-                elif path.startswith("/api/index/"):
-                    scope["path"] = path[len("/api/index"):]
+                # Check if Vercel passed original matched path in headers
+                headers = dict(scope.get("headers", []))
+                raw_matched = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
+                if raw_matched and not raw_matched.startswith(("/api/index", "/api/index.py")):
+                    scope["path"] = raw_matched.split("?")[0]
+                else:
+                    path = scope.get("path", "")
+                    # 1. Normalize if Vercel passed the serverless filename as path
+                    if path in ("/api/index.py", "/api/index.py/", "/api/index", "/api/index/"):
+                        scope["path"] = "/"
+                    elif path.startswith("/api/index.py/"):
+                        scope["path"] = path[len("/api/index.py"):]
+                    elif path.startswith("/api/index/"):
+                        scope["path"] = path[len("/api/index"):]
 
                 # 2. Normalize if Vercel stripped the /api prefix for API routes
                 cur_path = scope.get("path", "")
