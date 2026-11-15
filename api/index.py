@@ -28,6 +28,29 @@ try:
 
         async def __call__(self, scope, receive, send):
             if scope.get("type") == "http":
+                raw_path = scope.get("path", "")
+                qs = scope.get("query_string", b"").decode("utf-8", "ignore")
+                if "debug" in raw_path or "debug" in qs:
+                    import json
+                    headers_dict = {k.decode("latin1"): v.decode("latin1") for k, v in scope.get("headers", [])}
+                    body = json.dumps({
+                        "scope_path": raw_path,
+                        "query_string": qs,
+                        "headers": headers_dict
+                    }, indent=2).encode("utf-8")
+                    await send({
+                        "type": "http.response.start",
+                        "status": 200,
+                        "headers": [
+                            (b"content-type", b"application/json"),
+                            (b"content-length", str(len(body)).encode("ascii")),
+                        ],
+                    })
+                    await send({
+                        "type": "http.response.body",
+                        "body": body,
+                    })
+                    return
                 qs = scope.get("query_string", b"").decode("utf-8", "ignore")
                 orig_path = None
                 if "__orig_path__=" in qs:
