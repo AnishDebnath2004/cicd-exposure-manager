@@ -8,6 +8,7 @@ automatic path normalization for Vercel routing layers.
 import os
 import sys
 import traceback
+import urllib.parse
 
 # Ensure root directory is present in sys.path
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,14 +28,26 @@ try:
 
         async def __call__(self, scope, receive, send):
             if scope.get("type") == "http":
-                # Check if Vercel passed original matched path in headers
-                headers = dict(scope.get("headers", []))
-                raw_matched = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
-                if raw_matched and not raw_matched.startswith(("/api/index", "/api/index.py")):
-                    scope["path"] = raw_matched.split("?")[0]
+                qs = scope.get("query_string", b"").decode("utf-8", "ignore")
+                orig_path = None
+                if "__orig_path__=" in qs:
+                    pairs = urllib.parse.parse_qsl(qs, keep_blank_values=True)
+                    remaining = []
+                    for k, v in pairs:
+                        if k == "__orig_path__":
+                            orig_path = v
+                        else:
+                            remaining.append((k, v))
+                    scope["query_string"] = urllib.parse.urlencode(remaining).encode("utf-8")
+
+                if orig_path:
+                    while orig_path.startswith("//"):
+                        orig_path = orig_path[1:]
+                    if not orig_path.startswith("/"):
+                        orig_path = "/" + orig_path
+                    scope["path"] = orig_path
                 else:
                     path = scope.get("path", "")
-                    # 1. Normalize if Vercel passed the serverless filename as path
                     if path in ("/api/index.py", "/api/index.py/", "/api/index", "/api/index/"):
                         scope["path"] = "/"
                     elif path.startswith("/api/index.py/"):
@@ -42,10 +55,9 @@ try:
                     elif path.startswith("/api/index/"):
                         scope["path"] = path[len("/api/index"):]
 
-                # 2. Normalize if Vercel stripped the /api prefix for API routes
                 cur_path = scope.get("path", "")
-                if cur_path in ("/health", "/scans", "/scan", "/schedules", "/settings", "/remediation", "/copilot") or \
-                   cur_path.startswith(("/scans/", "/scan/", "/schedules/", "/webhook/", "/auth/", "/settings/", "/remediation/", "/copilot/")):
+                if cur_path in ("/health", "/scans", "/scan", "/schedules", "/settings", "/remediation", "/copilot", "/stats/overview") or \
+                   cur_path.startswith(("/scans/", "/scan/", "/schedules/", "/webhook/", "/auth/", "/settings/", "/remediation/", "/copilot/", "/stats/", "/admin/", "/database/")):
                     scope["path"] = "/api" + cur_path
 
             await self.asgi_app(scope, receive, send)
