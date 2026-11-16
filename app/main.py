@@ -271,12 +271,7 @@ async def serve_qrcode_js():
 
 
 @app.get("/", response_class=HTMLResponse)
-@app.get("/api", response_class=HTMLResponse)
-@app.get("/api/", response_class=HTMLResponse)
-@app.get("/api/index", response_class=HTMLResponse)
-@app.get("/api/index.py", response_class=HTMLResponse)
 @app.get("/index.html", response_class=HTMLResponse)
-@app.get("/api/index.html", response_class=HTMLResponse)
 async def serve_dashboard():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
