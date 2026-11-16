@@ -16,75 +16,7 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 try:
-    from app.main import app as fastapi_app
-
-    class VercelPathNormalizer:
-        """
-        ASGI middleware ensuring robust routing under Vercel Serverless Functions.
-        Resolves rewritten request paths and cleans up query strings.
-        """
-        def __init__(self, asgi_app):
-            self.asgi_app = asgi_app
-
-        async def __call__(self, scope, receive, send):
-            debug_headers = []
-            if scope.get("type") == "http":
-                headers = dict(scope.get("headers", []))
-                raw_matched = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
-                qs = scope.get("query_string", b"").decode("utf-8", "ignore")
-                orig_path = None
-
-                # 1. Check if Vercel passed path via query string rewrite parameter
-                if "__path__=" in qs:
-                    pairs = urllib.parse.parse_qsl(qs, keep_blank_values=True)
-                    remaining = []
-                    for k, v in pairs:
-                        if k == "__path__":
-                            orig_path = v
-                        else:
-                            remaining.append((k, v))
-                    scope["query_string"] = urllib.parse.urlencode(remaining).encode("utf-8")
-                # 2. Check if Vercel passed original matched path in x-matched-path header
-                elif raw_matched and not raw_matched.startswith(("/api/index", "/api/index.py")):
-                    orig_path = raw_matched.split("?")[0]
-
-                if orig_path:
-                    while orig_path.startswith("//"):
-                        orig_path = orig_path[1:]
-                    if not orig_path.startswith("/"):
-                        orig_path = "/" + orig_path
-                    scope["path"] = orig_path
-                else:
-                    path = scope.get("path", "")
-                    if path in ("/api/index.py", "/api/index.py/", "/api/index", "/api/index/", "/api", "/api/"):
-                        scope["path"] = "/"
-                    elif path.startswith("/api/index.py/"):
-                        scope["path"] = path[len("/api/index.py"):]
-                    elif path.startswith("/api/index/"):
-                        scope["path"] = path[len("/api/index"):]
-
-                cur_path = scope.get("path", "")
-                # 3. If path is an API endpoint without /api prefix, prefix it
-                if not cur_path.startswith(("/api", "/static")) and cur_path not in ("/", "/index.html", "/qrcode.min.js"):
-                    scope["path"] = "/api" + (cur_path if cur_path.startswith("/") else "/" + cur_path)
-
-                debug_headers = [
-                    (b"x-dbg-path", str(scope.get("path", "")).encode()),
-                    (b"x-dbg-matched", str(raw_matched).encode()),
-                    (b"x-dbg-orig", str(orig_path).encode()),
-                    (b"x-dbg-qs", str(qs).encode()),
-                ]
-
-            async def debug_send(message):
-                if message.get("type") == "http.response.start":
-                    hdrs = list(message.get("headers", []))
-                    hdrs.extend(debug_headers)
-                    message["headers"] = hdrs
-                await send(message)
-
-            await self.asgi_app(scope, receive, debug_send)
-
-    app = VercelPathNormalizer(fastapi_app)
+    from app.main import app
 
 except Exception:
     err_tb = traceback.format_exc()

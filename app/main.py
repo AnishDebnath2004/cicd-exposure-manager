@@ -9,7 +9,8 @@ from __future__ import annotations
 import base64
 import os
 import shutil
-import tempfile     
+import tempfile
+import urllib.parse
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, List, Optional, Union
@@ -207,6 +208,48 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+class VercelPathNormalizerMiddleware:
+    """
+    ASGI middleware ensuring robust routing under Vercel Serverless Functions.
+    Normalizes rewritten paths, extracts __path__ query parameters, and resolves
+    root/dashboard and API routes.
+    """
+    def __init__(self, asgi_app):
+        self.asgi_app = asgi_app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            qs = scope.get("query_string", b"").decode("utf-8", "ignore")
+            orig_path = None
+            if "__path__=" in qs:
+                pairs = urllib.parse.parse_qsl(qs, keep_blank_values=True)
+                remaining = []
+                for k, v in pairs:
+                    if k == "__path__":
+                        orig_path = v
+                    else:
+                        remaining.append((k, v))
+                scope["query_string"] = urllib.parse.urlencode(remaining).encode("utf-8")
+
+            if orig_path:
+                while orig_path.startswith("//"):
+                    orig_path = orig_path[1:]
+                if not orig_path.startswith("/"):
+                    orig_path = "/" + orig_path
+                scope["path"] = orig_path
+            else:
+                path = scope.get("path", "")
+                if path in ("/api/index.py", "/api/index.py/", "/api/index", "/api/index/", "/api", "/api/"):
+                    scope["path"] = "/"
+                elif path.startswith("/api/index.py/"):
+                    scope["path"] = path[len("/api/index.py"):]
+                elif path.startswith("/api/index/"):
+                    scope["path"] = path[len("/api/index"):]
+
+        await self.asgi_app(scope, receive, send)
+
+app.add_middleware(VercelPathNormalizerMiddleware)
+
 # HTTP Security Response Headers Middleware
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -233,11 +276,6 @@ async def add_security_headers(request: Request, call_next):
     # Strict-Transport-Security when HTTPS
     if request.url.scheme == "https" or request.headers.get("X-Forwarded-Proto") == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-
-    response.headers["X-Dbg-Req-Path"] = str(request.url.path)
-    response.headers["X-Dbg-Scope-Path"] = str(request.scope.get("path", ""))
-    response.headers["X-Dbg-Matched"] = str(request.headers.get("x-matched-path", ""))
-    response.headers["X-Dbg-Forwarded-Uri"] = str(request.headers.get("x-forwarded-uri", ""))
 
     return response
 
