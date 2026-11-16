@@ -262,7 +262,11 @@ ShieldCI supports serverless execution on Vercel via `@vercel/python`, configure
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "maxDuration": 60
+        "maxDuration": 60,
+        "includeFiles": [
+          "app/**",
+          "data/**"
+        ]
       }
     }
   ],
