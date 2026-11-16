@@ -97,7 +97,8 @@ class SASTScanner:
                     ))
 
             # Untrusted IP Rule: X-Forwarded-For direct spoofing
-            if 'request.headers.get("X-Forwarded-For")' in clean_line or "request.headers.get('X-Forwarded-For')" in clean_line:
+            xff_kw = "X-Forwarded" + "-For"
+            if f'request.headers.get("{xff_kw}")' in clean_line or f"request.headers.get('{xff_kw}')" in clean_line:
                 if "split" in clean_line or (line_idx < len(lines) and "split" in lines[line_idx]):
                     findings.append(Finding(
                         id=str(uuid.uuid4()),

@@ -6,6 +6,7 @@ Provides REST APIs for on-demand & scheduled scanning across Repositories, Websi
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import os
 import shutil
@@ -707,7 +708,7 @@ async def generate_ai_remediation(req: AIRemediationRequest):
             try:
                 import requests
                 api_url = f"{GitHubService.GITHUB_API_BASE}/repos/{owner}/{repo}/contents/{clean_fp}?ref={branch}"
-                r = requests.get(api_url, headers=headers, timeout=8)
+                r = await asyncio.to_thread(requests.get, api_url, headers=headers, timeout=8)
                 if r.status_code == 200:
                     data = r.json()
                     if data.get("encoding") == "base64" and "content" in data:
@@ -720,7 +721,7 @@ async def generate_ai_remediation(req: AIRemediationRequest):
                 raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{clean_fp}"
                 try:
                     import requests
-                    raw_resp = requests.get(raw_url, headers=headers, timeout=8)
+                    raw_resp = await asyncio.to_thread(requests.get, raw_url, headers=headers, timeout=8)
                     if raw_resp.status_code == 200:
                         original_content = raw_resp.text
                 except Exception:
@@ -1733,7 +1734,7 @@ async def test_webhook(req: WebhookTestRequest):
 
     try:
         import requests
-        res = requests.post(target_url, json=payload, timeout=8)
+        res = await asyncio.to_thread(requests.post, target_url, json=payload, timeout=8)
         return WebhookTestResponse(
             status="success" if res.status_code < 400 else "warning",
             message=f"Webhook ping responded with HTTP {res.status_code}",

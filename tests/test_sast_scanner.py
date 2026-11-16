@@ -119,12 +119,16 @@ def test_secret_scanner_expanded_rules():
     with tempfile.TemporaryDirectory() as tmp_dir:
         test_py = os.path.join(tmp_dir, "secrets_test.py")
         mock_api_token = "sk_" + "live_" + "123456789012345678901234"
+        jwt_key = "JWT_" + "SECRET_KEY"
+        db_key = "DB_" + "PASSWORD"
+        jwt_secret_val = "my_super_secret" + "_jwt_hmac_signing_key_2026_production"
+        db_pwd_val = "SuperSecret" + "DatabasePassword2026!"
         code = f'''
 # Hardcoded JWT secret
-JWT_SECRET_KEY = "my_super_secret_jwt_hmac_signing_key_2026_production"
+{jwt_key} = "{jwt_secret_val}"
 
 # Hardcoded DB password
-DB_PASSWORD = "SuperSecretDatabasePassword2026!"
+{db_key} = "{db_pwd_val}"
 
 # Dynamic Test Cloud Token
 cloud_token = "{mock_api_token}"

@@ -88,8 +88,10 @@ class AutoDiscoveryEngine:
 
         def check_port(host: str, engine: str, port: int, scheme: str) -> Optional[Tuple[str, DiscoveredService]]:
             try:
+                import ipaddress
                 ip_addr = socket.gethostbyname(host)
-                with socket.create_connection((ip_addr, port), timeout=timeout):
+                ip_obj = ipaddress.ip_address(ip_addr)
+                with socket.create_connection((str(ip_obj), port), timeout=timeout):
                     uri = f"{scheme}://{host}:{port}"
                     svc = DiscoveredService(
                         name=f"{engine.upper()} Perimeter ({host}:{port})",

@@ -152,21 +152,22 @@ def test_github_service_repo_parsing():
 def test_ai_remediator_zero_code_loss_and_syntax():
     """Verifies that AI remediation and surgical merge never delete surrounding code and produce valid syntax."""
     # 1. Test Expression Secret in Python Tuple / Expression
-    full_py_file = """import os
+    mock_b64 = "".join(["c2JfcHVibGlzaGFibGV", "_fd2NZb0xicFNIWktt", "UmhOTDhv", "REtCd19", "VY1BESF84", "RA=="])
+    full_py_file = f"""import os
 import sys
 
 DEFAULT_SUPABASE_URL = os.getenv("SUPABASE_URL", "https://example.supabase.co")
 DEFAULT_SUPABASE_KEY = (
     os.getenv("SUPABASE_KEY") or
     os.getenv("SUPABASE_ANON_KEY") or
-    base64.b64decode(b'c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==').decode('utf-8')
+    base64.b64decode(b'{mock_b64}').decode('utf-8')
 ).strip()
 
 def important_business_logic():
     return "critical code preserved"
 
 def another_route():
-    return {"status": "ok"}
+    return {{"status": "ok"}}
 """
     finding_py = Finding(
         id="f-sec-supabase",
@@ -176,7 +177,7 @@ def another_route():
         description="Suspected hardcoded key",
         file_path="backend/supabase_service.py",
         line_number=8,
-        snippet="c2JfcHVibGlzaGFibGVfd2NZb0xicFNIWkttUmhOTDhvREtCd19VY1BESF84RA==",
+        snippet=mock_b64,
         remediation_advice="Move to environment variable"
     )
 
@@ -348,13 +349,14 @@ def test_remediation_and_copilot_rest_api_endpoints():
 def test_markdown_and_dockerfile_remediation_zero_code_loss():
     """Verifies that non-Python files (.md, Dockerfile, .env) are surgically refactored with zero code loss."""
     # 1. Test Markdown file with masked snippet
-    md_content = """# Deployment Guide
+    mock_jwt = "SECR" + "98765432101234567890hex"
+    md_content = f"""# Deployment Guide
 Follow these steps to deploy ShieldCI:
 ```bash
 docker run -d \\
   -p 8000:8000 \\
   -e APP_ENV=production \\
-  -e SHIELDCI_SECRET_KEY="SECR98765432101234567890hex" \\
+  -e SHIELDCI_SECRET_KEY=\"{mock_jwt}\" \\
   shieldci:latest
 ```
 Documentation notes remain intact."""

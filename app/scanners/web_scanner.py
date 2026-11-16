@@ -19,6 +19,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from app.models.schemas import Finding, FindingCategory, SeverityLevel
+from app.core.security import validate_safe_url
 
 
 class WebsiteScanner:

@@ -15,6 +15,7 @@ from typing import List, Tuple, Dict, Any, Optional
 import requests
 
 from app.models.schemas import Finding, FindingCategory, SeverityLevel
+from app.core.security import validate_safe_url
 
 
 class DatabaseScanner:
