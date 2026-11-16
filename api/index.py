@@ -27,6 +27,22 @@ try:
 
         async def __call__(self, scope, receive, send):
             if scope.get("type") == "http":
+                headers_dict = {k.decode("latin1").lower(): v.decode("latin1") for k, v in scope.get("headers", [])}
+                if scope.get("path") == "/debug-headers" or headers_dict.get("x-debug") == "1":
+                    import json
+                    info = {
+                        "scope_path": scope.get("path"),
+                        "headers": headers_dict
+                    }
+                    body = json.dumps(info, indent=2).encode("utf-8")
+                    await send({
+                        "type": "http.response.start",
+                        "status": 200,
+                        "headers": [(b"content-type", b"application/json")],
+                    })
+                    await send({"type": "http.response.body", "body": body})
+                    return
+
                 path = scope.get("path", "") or "/"
 
                 # 1. Normalize if Vercel passed the serverless filename as path
