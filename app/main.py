@@ -234,6 +234,11 @@ async def add_security_headers(request: Request, call_next):
     if request.url.scheme == "https" or request.headers.get("X-Forwarded-Proto") == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
+    response.headers["X-Dbg-Req-Path"] = str(request.url.path)
+    response.headers["X-Dbg-Scope-Path"] = str(request.scope.get("path", ""))
+    response.headers["X-Dbg-Matched"] = str(request.headers.get("x-matched-path", ""))
+    response.headers["X-Dbg-Forwarded-Uri"] = str(request.headers.get("x-forwarded-uri", ""))
+
     return response
 
 # Hardened CORS policy
