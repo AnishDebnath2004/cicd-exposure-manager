@@ -550,6 +550,13 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
 
             # Python (.py)
             if file_lower.endswith(".py"):
+                # Safety Guard 1: Never overwrite control flow, function signatures, or imports
+                stripped_line = orig_line.strip()
+                if any(stripped_line.startswith(kw) for kw in (
+                    "with ", "if ", "elif ", "while ", "for ", "def ", "class ", "try:", "except", "finally:", "import ", "from ", "@"
+                )):
+                    return existing_content
+
                 dict_match = re.match(r'^(\s*[\'"][a-zA-Z0-9_\-]+[\'"]\s*:\s*)(.*)$', orig_line)
                 var_match = re.match(r'^(\s*[a-zA-Z0-9_]+\s*=\s*)(.*)$', orig_line)
 
@@ -559,25 +566,30 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
                 elif var_match:
                     prefix = var_match.group(1)
                     exist_lines[target_idx] = f'{prefix}os.getenv("{var_name}", "")'
+                elif snippet and snippet in orig_line:
+                    # Only replace the exact unmasked snippet, never arbitrary substrings
+                    exist_lines[target_idx] = orig_line.replace(snippet, f'os.getenv("{var_name}", "")')
                 else:
-                    # In-expression replacement (e.g. inside function calls or return statements)
-                    replaced = re.sub(r"""['"][A-Za-z0-9_\-\+/=@!#%]{10,}['"]""", f'os.getenv("{var_name}", "")', orig_line)
-                    if replaced != orig_line:
-                        exist_lines[target_idx] = replaced
+                    strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
+                    comma_match = orig_line.rstrip().endswith(',')
+                    if strip_match and any(q in orig_line for q in ('"', "'")):
+                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
+                    elif comma_match and any(q in orig_line for q in ('"', "'")):
+                        exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
                     else:
-                        strip_match = re.search(r'(\)\.strip\(\)\s*,?\s*)$', orig_line)
-                        comma_match = orig_line.rstrip().endswith(',')
-                        if strip_match:
-                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""){strip_match.group(1)}'
-                        elif comma_match:
-                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", ""),'
-                        else:
-                            exist_lines[target_idx] = f'{indent}os.getenv("{var_name}", "")  # [ShieldCI Fix]'
+                        # Safety Guard 2: If line is not a recognizable assignment, do NOT overwrite it
+                        return existing_content
 
                 if not any(re.match(r"^\s*import\s+os\b", l) for l in exist_lines):
                     exist_lines.insert(0, "import os")
 
-                return "\n".join(exist_lines)
+                result_py = "\n".join(exist_lines)
+                # Safety Guard 3: Compiler verification — reject any edit that causes a SyntaxError
+                try:
+                    compile(result_py, file_path, "exec")
+                    return result_py
+                except Exception:
+                    return existing_content
 
             # Markdown (.md, .markdown) - e.g. docs/DEPLOYMENT.md
             elif file_lower.endswith((".md", ".markdown")):
@@ -622,13 +634,18 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
                     exist_lines[target_idx] = f'{var_match.group(1)}process.env.{var_name} || ""{semicolon}'
                 elif dict_match:
                     exist_lines[target_idx] = f'{dict_match.group(1)}process.env.{var_name} || ""{comma}'
+                elif snippet and snippet in orig_line:
+                    exist_lines[target_idx] = orig_line.replace(snippet, f'process.env.{var_name}')
                 else:
-                    exist_lines[target_idx] = re.sub(
-                        r"""['"][A-Za-z0-9_\-\+/=@!#%]{10,}['"]""",
-                        f'process.env.{var_name}',
-                        orig_line
-                    )
+                    return existing_content
                 return "\n".join(exist_lines)
+
+            # HTML files (.html, .htm) - Never insert python # comments into HTML/JS!
+            elif file_lower.endswith((".html", ".htm")):
+                if snippet and snippet in orig_line:
+                    exist_lines[target_idx] = orig_line.replace(snippet, f"{{{{ {var_name} }}}}")
+                    return "\n".join(exist_lines)
+                return existing_content
 
             # JSON files (.json)
             elif file_lower.endswith(".json"):
@@ -648,12 +665,10 @@ Return JSON with keys: 'remediated_code', 'explanation', 'safety_notes', 'test_c
 
             # Universal fallback for any other file type on target_idx
             else:
-                replaced = re.sub(r"""(['"])[A-Za-z0-9_\-\+/=@!#%]{10,}\1""", f'"${{{var_name}}}"', orig_line)
-                if replaced != orig_line:
-                    exist_lines[target_idx] = replaced
-                else:
-                    exist_lines[target_idx] = f'{indent}# [ShieldCI Fix] {var_name} loaded from environment'
-                return "\n".join(exist_lines)
+                if snippet and snippet in orig_line:
+                    exist_lines[target_idx] = orig_line.replace(snippet, f"${{{var_name}}}")
+                    return "\n".join(exist_lines)
+                return existing_content
 
         # 7. Fallback unmasked snippet replacement
         if snippet and snippet in existing_content:
