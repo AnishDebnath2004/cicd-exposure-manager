@@ -27,6 +27,7 @@ try:
             self.asgi_app = asgi_app
 
         async def __call__(self, scope, receive, send):
+            debug_headers = []
             if scope.get("type") == "http":
                 headers = dict(scope.get("headers", []))
                 raw_matched = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
@@ -67,7 +68,21 @@ try:
                 if not cur_path.startswith(("/api", "/static")) and cur_path not in ("/", "/index.html", "/qrcode.min.js"):
                     scope["path"] = "/api" + (cur_path if cur_path.startswith("/") else "/" + cur_path)
 
-            await self.asgi_app(scope, receive, send)
+                debug_headers = [
+                    (b"x-dbg-path", str(scope.get("path", "")).encode()),
+                    (b"x-dbg-matched", str(raw_matched).encode()),
+                    (b"x-dbg-orig", str(orig_path).encode()),
+                    (b"x-dbg-qs", str(qs).encode()),
+                ]
+
+            async def debug_send(message):
+                if message.get("type") == "http.response.start":
+                    hdrs = list(message.get("headers", []))
+                    hdrs.extend(debug_headers)
+                    message["headers"] = hdrs
+                await send(message)
+
+            await self.asgi_app(scope, receive, debug_send)
 
     app = VercelPathNormalizer(fastapi_app)
 
