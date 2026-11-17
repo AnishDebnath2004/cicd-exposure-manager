@@ -17,7 +17,12 @@ class IaCScanner:
         findings = []
 
         for root, dirs, files in os.walk(base_path):
-            dirs[:] = [d for d in dirs if d not in self.ignore_dirs]
+            dirs[:] = [
+                d for d in dirs
+                if d not in self.ignore_dirs
+                and not d.endswith(".dist-info")
+                and not d.endswith(".egg-info")
+            ]
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
                 if ext in self.ignore_extensions:
@@ -25,6 +30,10 @@ class IaCScanner:
 
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, base_path)
+                norm_rel = rel_path.replace("\\", "/").lower()
+
+                if any(part in self.ignore_dirs or part.endswith(".dist-info") or part.endswith(".egg-info") for part in norm_rel.split("/")):
+                    continue
 
                 if file == "Dockerfile" or file.endswith(".dockerfile"):
                     findings.extend(self._scan_dockerfile(full_path, rel_path))

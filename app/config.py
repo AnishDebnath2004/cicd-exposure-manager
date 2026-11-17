@@ -67,7 +67,14 @@ class ScannerSettings(BaseModel):
         "dist",
         "build",
         ".pytest_cache",
-        ".mypy_cache"
+        ".mypy_cache",
+        "_vendor",
+        ".vercel",
+        ".next",
+        ".serverless",
+        "site-packages",
+        "eggs",
+        ".eggs",
     }
     
     # Non-code binary or asset file extensions to bypass

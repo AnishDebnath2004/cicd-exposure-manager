@@ -52,7 +52,12 @@ class SecretScanner:
         findings = []
 
         for root, dirs, files in os.walk(base_path):
-            dirs[:] = [d for d in dirs if d not in self.ignore_dirs]
+            dirs[:] = [
+                d for d in dirs
+                if d not in self.ignore_dirs
+                and not d.endswith(".dist-info")
+                and not d.endswith(".egg-info")
+            ]
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
                 base_name = file.lower()
@@ -61,13 +66,17 @@ class SecretScanner:
                 if ext in self.ignore_extensions:
                     continue
 
-                # Bypass package lockfiles (contain sha512 integrity hashes, audited by SCA scanner)
-                if base_name in self.LOCK_FILES or base_name.endswith(".lock") or base_name.endswith(".lockb"):
-                    continue
-
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, base_path)
                 norm_rel = rel_path.replace("\\", "/").lower()
+
+                # Bypass files residing inside ignored directories
+                if any(part in self.ignore_dirs or part.endswith(".dist-info") or part.endswith(".egg-info") for part in norm_rel.split("/")):
+                    continue
+
+                # Bypass package lockfiles (contain sha512 integrity hashes, audited by SCA scanner)
+                if base_name in self.LOCK_FILES or base_name.endswith(".lock") or base_name.endswith(".lockb"):
+                    continue
 
                 # Bypass compiled frontend assets with content hashes (e.g. assets/*.js, dist/*.js)
                 if "/assets/" in norm_rel or norm_rel.startswith("assets/") or "/static/assets/" in norm_rel:

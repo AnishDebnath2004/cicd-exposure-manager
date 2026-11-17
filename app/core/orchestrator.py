@@ -184,11 +184,19 @@ class ExposureOrchestrator:
 
             file_count = 0
             for root, dirs, files in os.walk(target_dir):
-                dirs[:] = [d for d in dirs if d not in settings.scanner.IGNORED_DIRECTORIES]
+                dirs[:] = [
+                    d for d in dirs
+                    if d not in settings.scanner.IGNORED_DIRECTORIES
+                    and not d.endswith(".dist-info")
+                    and not d.endswith(".egg-info")
+                ]
                 for f in files:
                     ext = os.path.splitext(f)[1].lower()
                     if ext not in settings.scanner.IGNORED_EXTENSIONS:
-                        file_count += 1
+                        full_f = os.path.join(root, f)
+                        rel_f = os.path.relpath(full_f, target_dir).replace("\\", "/").lower()
+                        if not any(part in settings.scanner.IGNORED_DIRECTORIES or part.endswith(".dist-info") or part.endswith(".egg-info") for part in rel_f.split("/")):
+                            file_count += 1
 
             all_findings = []
             all_findings.extend(self.workflow_scanner.scan(target_dir))

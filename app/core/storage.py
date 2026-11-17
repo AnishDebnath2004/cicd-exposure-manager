@@ -2056,7 +2056,8 @@ class StorageEngine:
             "min_token_length_for_entropy": 24,
             "ignored_directories": [
                 ".git", "node_modules", "venv", ".venv", "env", "__pycache__",
-                ".idea", ".vscode", "dist", "build", ".pytest_cache", ".mypy_cache"
+                ".idea", ".vscode", "dist", "build", ".pytest_cache", ".mypy_cache",
+                "_vendor", ".vercel", ".next", ".serverless", "site-packages", "eggs", ".eggs"
             ],
             "ignored_extensions": [
                 ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",

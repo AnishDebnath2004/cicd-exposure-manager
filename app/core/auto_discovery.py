@@ -158,11 +158,18 @@ class AutoDiscoveryEngine:
 
         # 2. Parse Environment files (.env, .env.example, .env.local, .env.staging)
         for root, dirs, files in os.walk(base_path):
-            dirs[:] = [d for d in dirs if d not in settings.scanner.IGNORED_DIRECTORIES]
+            dirs[:] = [
+                d for d in dirs
+                if d not in settings.scanner.IGNORED_DIRECTORIES
+                and not d.endswith(".dist-info")
+                and not d.endswith(".egg-info")
+            ]
             for f in files:
                 if f.startswith(".env") or f in ("config.env", "app.env"):
                     full_p = os.path.join(root, f)
-                    rel_p = os.path.relpath(full_p, base_path)
+                    rel_p = os.path.relpath(full_p, base_path).replace("\\", "/").lower()
+                    if any(part in settings.scanner.IGNORED_DIRECTORIES or part.endswith(".dist-info") or part.endswith(".egg-info") for part in rel_p.split("/")):
+                        continue
                     source_files.add(rel_p)
                     env_webs, env_dbs = self._parse_env_file(full_p)
                     web_targets.update(env_webs)
