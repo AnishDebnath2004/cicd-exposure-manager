@@ -1,0 +1,59 @@
+name: ShieldCI Security & CI Testing Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Unit & Security Quality Gate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@0b93645e9fb737c3a6088d549a05b3c01c17242c # v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Syntax & Compilation Check
+        run: |
+          echo "Verifying Python syntax integrity across all modules..."
+          python -m compileall app/ tests/ main.py api/
+
+      - name: Execute Pytest Suite (63 Tests)
+        run: |
+          echo "Running pytest test suite..."
+          pytest tests/ -v
+
+      - name: ShieldCI Autonomous Exposure Quality Gate
+        run: |
+          echo "Executing ShieldCI self-audit security gate..."
+          python -c "
+          from app.core.orchestrator import ExposureOrchestrator
+          from app.models.schemas import ScanRequest, TargetCategory
+
+          orch = ExposureOrchestrator()
+          res = orch.run_scan(ScanRequest(target='.', target_category=TargetCategory.REPOSITORY))
+          print(f'Scan Complete - Score: {res.summary.pipeline_exposure_score}, Grade: {res.summary.risk_grade}, Findings: {len(res.findings)}')
+          assert res.summary.policy_passed, f'Policy failed: {res.summary.policy_reasons}'
+          assert res.summary.critical_count == 0, f'Found {res.summary.critical_count} critical findings'
+          assert res.summary.high_count == 0, f'Found {res.summary.high_count} high findings'
+          print('Quality gate passed successfully!')
+          "
