@@ -131,6 +131,9 @@ class SecretScanner:
                 # Shannon Entropy secret match for generic high-randomness tokens
                 tokens = self.entropy_token_pattern.findall(line)
                 for token in tokens:
+                    # Ignore known public integrity hashes (CSP / SRI hashes like sha256-...)
+                    if token.startswith(("sha256-", "sha384-", "sha512-", "md5-")):
+                        continue
                     entropy = self.shannon_entropy(token)
                     if entropy > self.entropy_threshold and not any(f.file_path == rel_path and f.line_number == line_idx for f in findings):
                         findings.append(Finding(

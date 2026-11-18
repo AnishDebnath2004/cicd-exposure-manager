@@ -8,6 +8,7 @@ import ssl
 import socket
 import urllib.parse
 import re
+from ipaddress import ip_address
 from datetime import datetime
 import uuid
 from typing import List, Tuple, Dict, Any, Optional
@@ -19,7 +20,6 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from app.models.schemas import Finding, FindingCategory, SeverityLevel
-from app.core.security import validate_safe_url
 
 
 class WebsiteScanner:
@@ -240,18 +240,32 @@ class WebsiteScanner:
                 remediation_advice="Implement a strict CSP restricting script-src, object-src, and frame-ancestors.",
                 auto_fixable=False
             ))
-        elif "'unsafe-inline'" in csp or "'unsafe-eval'" in csp:
-            findings.append(Finding(
-                id=str(uuid.uuid4()),
-                category=FindingCategory.WEB_EXPOSURE,
-                severity=SeverityLevel.MEDIUM,
-                title="Overly Permissive Content-Security-Policy (unsafe-inline/eval)",
-                description="CSP allows 'unsafe-inline' or 'unsafe-eval' script execution, significantly diminishing protection against XSS payloads.",
-                file_path=url,
-                snippet=csp[:120],
-                remediation_advice="Refactor inline scripts to external bundles or adopt cryptographic nonces / hashes in CSP.",
-                auto_fixable=False
-            ))
+        else:
+            # Parse CSP directives to specifically evaluate script-src
+            directives = {}
+            for part in csp.split(";"):
+                part_clean = part.strip()
+                if part_clean:
+                    tokens = part_clean.split()
+                    if tokens:
+                        directives[tokens[0].lower()] = " ".join(tokens[1:])
+
+            script_src = directives.get("script-src", directives.get("default-src", ""))
+            has_nonce_or_hash = any(k in script_src for k in ("'nonce-", "'sha256-", "'sha384-", "'sha512-", "'strict-dynamic'"))
+            is_script_unsafe = ("'unsafe-eval'" in script_src) or ("'unsafe-inline'" in script_src and not has_nonce_or_hash)
+
+            if is_script_unsafe:
+                findings.append(Finding(
+                    id=str(uuid.uuid4()),
+                    category=FindingCategory.WEB_EXPOSURE,
+                    severity=SeverityLevel.MEDIUM,
+                    title="Overly Permissive Content-Security-Policy (unsafe-inline/eval)",
+                    description="CSP script-src allows unconstrained 'unsafe-inline' or 'unsafe-eval' script execution without nonces or hashes, significantly diminishing protection against XSS payloads.",
+                    file_path=url,
+                    snippet=script_src[:120] if script_src else csp[:120],
+                    remediation_advice="Refactor inline scripts to external bundles or adopt cryptographic nonces / hashes in CSP.",
+                    auto_fixable=False
+                ))
 
         # 3. X-Frame-Options (Clickjacking defense)
         xfo = headers.get("X-Frame-Options")

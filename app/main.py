@@ -201,11 +201,17 @@ async def lifespan(app: FastAPI):
         scheduler.stop()
 
 
+is_production = os.getenv("APP_ENV", "").lower() == "production" or os.getenv("VERCEL", "") == "1" or not settings.DEBUG
+docs_enabled = os.getenv("SHIELDCI_ENABLE_DOCS", "false").lower() in ("true", "1") or not is_production
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Universal Tri-Vector Posture Management: Audit Any Repository, Website, or Database At Any Time",
     version=settings.VERSION,
     debug=settings.DEBUG,
+    docs_url="/docs" if docs_enabled else None,
+    redoc_url="/redoc" if docs_enabled else None,
+    openapi_url="/openapi.json" if docs_enabled else None,
     lifespan=lifespan
 )
 
@@ -262,10 +268,15 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
-    # Content Security Policy (allows UI assets: CDN Tailwind, Chart.js, FontAwesome, Google Fonts, QRCode)
+    # Content Security Policy with cryptographic SHA-256 script hashes for UI dashboard scripts
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "script-src 'self' "
+        "'sha256-/9E5/z32MBmzL5Wvn9x5UIoK86vMfsPnnf1EfHkh1Hk=' "
+        "'sha256-ScRrkSAVPNjESBtbHAxMHkVzDn6BfY5nCJr4ajUf4lA=' "
+        "'sha256-Dg7IfaQvWMBiH8L4kyElax4p3dn3J35edbe7/L2fojo=' "
+        "'sha256-WJSVqzEAUujT/KYCnhr+qpXo+xMyqy7tTtoxkWtaxMs=' "
+        "'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; "
         "img-src 'self' data: https:; "
