@@ -290,19 +290,36 @@ class GitHubService:
         }
 
         try:
-            # 1. Fetch Repository Details
+            # 1. Group findings by file_path and filter non-code targets
+            from collections import defaultdict
+            file_findings = defaultdict(list)
+            for f in findings:
+                fp = getattr(f, "file_path", None)
+                if fp:
+                    clean_fp = fp.replace("\\", "/").lstrip("/")
+                    if clean_fp.startswith(("http://", "https://", "postgres://", "postgresql://", "mysql://", "mongodb://", "redis://")):
+                        continue
+                    file_findings[clean_fp].append(f)
+
+            if not file_findings:
+                return GitHubPROpenResponse(
+                    success=False,
+                    message="No remediable code repository files found in the scan findings."
+                )
+
+            # 2. Fetch Repository Details
             repo_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}"
-            r_repo = requests.get(repo_url, headers=headers, timeout=10)
+            r_repo = requests.get(repo_url, headers=headers, timeout=8)
             r_repo.raise_for_status()
             default_branch = r_repo.json().get("default_branch", "main")
 
-            # 2. Get latest commit SHA of default branch
+            # 3. Get latest commit SHA of default branch
             ref_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/git/ref/heads/{default_branch}"
-            r_ref = requests.get(ref_url, headers=headers, timeout=10)
+            r_ref = requests.get(ref_url, headers=headers, timeout=8)
             r_ref.raise_for_status()
             base_sha = r_ref.json()["object"]["sha"]
 
-            # 3. Create a unique consolidated branch
+            # 4. Create a unique consolidated branch
             timestamp = int(time.time())
             branch = branch_name or f"shieldci/fix-all-exposures-{str(timestamp)[-5:]}"
             create_ref_url = f"{cls.GITHUB_API_BASE}/repos/{owner}/{repo}/git/refs"
@@ -310,25 +327,10 @@ class GitHubService:
                 create_ref_url,
                 headers=headers,
                 json={"ref": f"refs/heads/{branch}", "sha": base_sha},
-                timeout=10
+                timeout=8
             )
             if r_create_ref.status_code not in (201, 422):
                 r_create_ref.raise_for_status()
-
-            # 4. Group findings by file_path
-            from collections import defaultdict
-            file_findings = defaultdict(list)
-            for f in findings:
-                fp = getattr(f, "file_path", None)
-                if fp:
-                    clean_fp = fp.replace("\\", "/").lstrip("/")
-                    file_findings[clean_fp].append(f)
-
-            if not file_findings:
-                return GitHubPROpenResponse(
-                    success=False,
-                    message="No remediable files found in the scan findings."
-                )
 
             remediated_files_count = 0
             checklist_items = []
