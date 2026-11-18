@@ -128,6 +128,7 @@ class AutoDiscoveryResult(BaseModel):
     discovered_db_targets: List[str] = []
     discovered_services: List[DiscoveredService] = []
     source_files: List[str] = []
+    discovered_repo_url: Optional[str] = None
 
 class ScanSummary(BaseModel):
     total_findings: int

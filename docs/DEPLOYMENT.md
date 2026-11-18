@@ -254,6 +254,9 @@ services:
 
 ShieldCI supports serverless execution on Vercel via `@vercel/python`, configured in `vercel.json` and routed through `api/index.py`:
 
+- **Production URL**: `https://cicd-exposure-manager.vercel.app`
+- **Source Repository**: `https://github.com/AnishDebnath2004/cicd-exposure-manager`
+
 ```json
 {
   "version": 2,

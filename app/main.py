@@ -1801,6 +1801,8 @@ async def health_check():
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "environment": settings.APP_ENV,
+        "repository": "https://github.com/AnishDebnath2004/cicd-exposure-manager",
+        "deployed_url": "https://cicd-exposure-manager.vercel.app",
         "database": {
             "engine": storage.engine_type,
             "connected": db_connected

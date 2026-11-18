@@ -208,6 +208,32 @@ class ExposureOrchestrator:
             all_findings.extend(self.iac_scanner.scan(target_dir))
             all_findings.extend(self.sast_scanner.scan(target_dir))
 
+            # Auto-Discovery Triangulation: extract web & DB footprints from repo code
+            auto_disc = self.auto_discovery_engine.discover(target_dir)
+
+            # Triangulate and scan discovered live web perimeter
+            if getattr(request, "auto_triangulate", True) and auto_disc.discovered_web_targets:
+                for web_url in auto_disc.discovered_web_targets:
+                    if web_url.startswith(("http://", "https://")) and not any(ign in web_url for ign in ("example.com", "localhost", "127.0.0.1", "schema.org")):
+                        try:
+                            web_findings, web_meta = self.web_scanner.scan(web_url)
+                            all_findings.extend(web_findings)
+                            for db_uri in web_meta.get("discovered_db_uris", []):
+                                if db_uri not in auto_disc.discovered_db_targets:
+                                    auto_disc.discovered_db_targets.append(db_uri)
+                        except Exception:
+                            pass
+
+            # Deduplicate findings
+            seen_keys = set()
+            deduped_findings = []
+            for f in all_findings:
+                key = (f.title, f.file_path, f.line_number)
+                if key not in seen_keys:
+                    seen_keys.add(key)
+                    deduped_findings.append(f)
+            all_findings = deduped_findings
+
             duration = time.time() - start_time
             summary = ExposureScorer.calculate_summary(
                 findings=all_findings,
@@ -216,9 +242,6 @@ class ExposureOrchestrator:
                 fail_severity=request.fail_on_severity,
                 max_pes=request.max_allowed_pes
             )
-
-            # Auto-Discovery Triangulation: extract web & DB footprints from repo code
-            auto_disc = self.auto_discovery_engine.discover(target_dir)
 
             # Correlate findings into Toxic Combinations & construct visual Attack Graph
             toxic_combos, attack_graph = self.correlator.correlate(
@@ -310,15 +333,60 @@ class ExposureOrchestrator:
         if db_audit_metadata:
             web_meta["discovered_databases"] = db_audit_metadata
 
-        duration = time.time() - start_time
-
+        # -------------------------------------------------------------
+        # Approach B: Tri-Vector Triangulation: if a linked Git repository is discovered, audit the codebase
+        # -------------------------------------------------------------
+        repo_file_count = 0
+        all_sbom_components = []
         parsed = urllib.parse.urlparse(web_meta.get("url", target_url))
         asset_name = parsed.netloc or target_url
+
+        if auto_disc.discovered_repo_url:
+            repo_url = auto_disc.discovered_repo_url
+            try:
+                with RepoFetcher.prepare_scan_target(repo_url) as (target_dir, detected_repo_name, source_type):
+                    for root, dirs, files in os.walk(target_dir):
+                        dirs[:] = [
+                            d for d in dirs
+                            if d not in settings.scanner.IGNORED_DIRECTORIES
+                            and not d.endswith(".dist-info")
+                            and not d.endswith(".egg-info")
+                        ]
+                        for f in files:
+                            ext = os.path.splitext(f)[1].lower()
+                            if ext not in settings.scanner.IGNORED_EXTENSIONS:
+                                full_f = os.path.join(root, f)
+                                rel_f = os.path.relpath(full_f, target_dir).replace("\\", "/").lower()
+                                if not any(part in settings.scanner.IGNORED_DIRECTORIES or part.endswith(".dist-info") or part.endswith(".egg-info") for part in rel_f.split("/")):
+                                    repo_file_count += 1
+
+                    findings.extend(self.workflow_scanner.scan(target_dir))
+                    findings.extend(self.secret_scanner.scan(target_dir))
+                    sca_f, sbom_c = self.sca_scanner.scan(target_dir)
+                    findings.extend(sca_f)
+                    all_sbom_components.extend(sbom_c)
+                    findings.extend(self.iac_scanner.scan(target_dir))
+                    findings.extend(self.sast_scanner.scan(target_dir))
+                    asset_name = f"{detected_repo_name} ({asset_name})"
+            except Exception:
+                pass
+
+        # Deduplicate findings
+        seen_keys = set()
+        deduped_findings = []
+        for f in findings:
+            key = (f.title, f.file_path, f.line_number)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                deduped_findings.append(f)
+        findings = deduped_findings
+
+        duration = time.time() - start_time
 
         summary = ExposureScorer.calculate_summary(
             findings=findings,
             duration=duration,
-            file_count=1 + len(auto_disc.discovered_db_targets),
+            file_count=max(1, repo_file_count) + len(auto_disc.discovered_db_targets),
             fail_severity=fail_severity,
             max_pes=max_pes
         )
@@ -337,13 +405,13 @@ class ExposureOrchestrator:
             scan_id=scan_id,
             target_path=web_meta.get("url", target_url),
             repo_name=asset_name,
-            repo_url=web_meta.get("url", target_url),
+            repo_url=auto_disc.discovered_repo_url or web_meta.get("url", target_url),
             source_type=SourceType.WEB,
             target_type=TargetCategory.WEBSITE,
             timestamp=datetime.utcnow(),
             summary=summary,
             findings=findings,
-            sbom_components=[],
+            sbom_components=all_sbom_components,
             metadata=web_meta,
             toxic_combinations=toxic_combos,
             attack_graph=attack_graph,
