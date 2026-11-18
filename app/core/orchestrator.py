@@ -214,7 +214,7 @@ class ExposureOrchestrator:
             # Triangulate and scan discovered live web perimeter
             if getattr(request, "auto_triangulate", True) and auto_disc.discovered_web_targets:
                 for web_url in auto_disc.discovered_web_targets:
-                    if web_url.startswith(("http://", "https://")) and not any(ign in web_url for ign in ("example.com", "localhost", "127.0.0.1", "schema.org")):
+                    if web_url.startswith(("http://", "https://")) and any(plat in web_url.lower() for plat in (".vercel.app", ".onrender.com", ".railway.app", ".fly.dev", ".herokuapp.com", ".pages.dev")):
                         try:
                             web_findings, web_meta = self.web_scanner.scan(web_url)
                             all_findings.extend(web_findings)

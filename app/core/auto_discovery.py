@@ -286,13 +286,12 @@ class AutoDiscoveryEngine:
             if not discovered_repo:
                 discovered_repo = "https://github.com/AnishDebnath2004/cicd-exposure-manager"
 
-        # Filter out obvious false positives, mock domains, and 3rd-party SaaS provider URLs
+        # Filter out obvious false positives and 3rd-party SaaS consoles
         clean_webs = [
             w for w in sorted(web_targets)
             if not any(ign in w.lower() for ign in (
-                "schema.org", "w3.org", "example.com", "internal-api.io",
-                "dashboard.render.com", "render.com", "github.com",
-                "supabase.co", "neon.tech", "localhost/dummy"
+                "schema.org", "w3.org", "example.com/ns",
+                "dashboard.render.com", "github.com", "localhost/dummy"
             ))
         ]
         clean_dbs = sorted(db_targets)
