@@ -12,6 +12,9 @@
 
 **ShieldCI** is an enterprise-grade **Universal Tri-Vector Posture Management & Pipeline Exposure Defense Platform**. It combines static codebase auditing, continuous CI/CD pipeline verification, live web perimeter analysis, and database exposure detection into a unified, actionable risk intelligence system.
 
+- **Live Deployed Platform:** [https://cicd-exposure-manager.vercel.app](https://cicd-exposure-manager.vercel.app)
+- **Source Repository:** [https://github.com/AnishDebnath2004/cicd-exposure-manager](https://github.com/AnishDebnath2004/cicd-exposure-manager)
+
 Rather than treating vulnerabilities in isolation, ShieldCI automatically **triangulates infrastructure footprints**, correlates multi-stage exploit chains into **Toxic Combinations**, generates interactive **Visual Attack Graphs**, calculates a normalized **Pipeline Exposure Score (PES)**, and outputs **1-Click Self-Healing Git Patches** (`git apply`) to instantly remediate exposures.
 
 ---

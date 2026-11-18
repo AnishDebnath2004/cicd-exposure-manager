@@ -211,26 +211,22 @@ class ExposureOrchestrator:
             # Auto-Discovery Triangulation: extract web & DB footprints from repo code
             auto_disc = self.auto_discovery_engine.discover(target_dir)
 
-            # Triangulate and scan discovered live web perimeter
-            if getattr(request, "auto_triangulate", True) and auto_disc.discovered_web_targets:
-                for web_url in auto_disc.discovered_web_targets:
-                    if web_url.startswith(("http://", "https://")) and any(plat in web_url.lower() for plat in (".vercel.app", ".onrender.com", ".railway.app", ".fly.dev", ".herokuapp.com", ".pages.dev")):
-                        try:
-                            web_findings, web_meta = self.web_scanner.scan(web_url)
-                            all_findings.extend(web_findings)
-                            for db_uri in web_meta.get("discovered_db_uris", []):
-                                if db_uri not in auto_disc.discovered_db_targets:
-                                    auto_disc.discovered_db_targets.append(db_uri)
-                        except Exception:
-                            pass
+            # Auto-audit discovered live production web perimeters (e.g. deployed website on Vercel/Render/Fly)
+            for web_target in auto_disc.discovered_web_targets:
+                if web_target.startswith("https://") and any(plat in web_target.lower() for plat in (".vercel.app", ".onrender.com", ".railway.app", ".fly.dev", ".herokuapp.com", ".pages.dev")):
+                    try:
+                        web_findings, _ = self.web_scanner.scan(web_target)
+                        all_findings.extend(web_findings)
+                    except Exception:
+                        pass
 
-            # Deduplicate findings
+            # Deduplicate findings across code and live web perimeter scans
             seen_keys = set()
             deduped_findings = []
             for f in all_findings:
-                key = (f.title, f.file_path, f.line_number)
-                if key not in seen_keys:
-                    seen_keys.add(key)
+                k = (f.category, f.title, f.file_path, f.line_number)
+                if k not in seen_keys:
+                    seen_keys.add(k)
                     deduped_findings.append(f)
             all_findings = deduped_findings
 
@@ -334,18 +330,16 @@ class ExposureOrchestrator:
             web_meta["discovered_databases"] = db_audit_metadata
 
         # -------------------------------------------------------------
-        # Approach B: Tri-Vector Triangulation: if a linked Git repository is discovered, audit the codebase
+        # Bidirectional Asset Correlation: Auto-audit underlying Git repository
         # -------------------------------------------------------------
-        repo_file_count = 0
-        all_sbom_components = []
-        parsed = urllib.parse.urlparse(web_meta.get("url", target_url))
-        asset_name = parsed.netloc or target_url
-
+        sbom_components = []
+        repo_file_count = 1 + len(auto_disc.discovered_db_targets)
+        unified_patch = None
         if auto_disc.discovered_repo_url:
-            repo_url = auto_disc.discovered_repo_url
             try:
-                with RepoFetcher.prepare_scan_target(repo_url) as (target_dir, detected_repo_name, source_type):
-                    for root, dirs, files in os.walk(target_dir):
+                with RepoFetcher.prepare_scan_target(auto_disc.discovered_repo_url) as (repo_dir, detected_repo_name, src_type):
+                    counted_files = 0
+                    for root, dirs, files in os.walk(repo_dir):
                         dirs[:] = [
                             d for d in dirs
                             if d not in settings.scanner.IGNORED_DIRECTORIES
@@ -355,38 +349,44 @@ class ExposureOrchestrator:
                         for f in files:
                             ext = os.path.splitext(f)[1].lower()
                             if ext not in settings.scanner.IGNORED_EXTENSIONS:
-                                full_f = os.path.join(root, f)
-                                rel_f = os.path.relpath(full_f, target_dir).replace("\\", "/").lower()
-                                if not any(part in settings.scanner.IGNORED_DIRECTORIES or part.endswith(".dist-info") or part.endswith(".egg-info") for part in rel_f.split("/")):
-                                    repo_file_count += 1
+                                counted_files += 1
 
-                    findings.extend(self.workflow_scanner.scan(target_dir))
-                    findings.extend(self.secret_scanner.scan(target_dir))
-                    sca_f, sbom_c = self.sca_scanner.scan(target_dir)
-                    findings.extend(sca_f)
-                    all_sbom_components.extend(sbom_c)
-                    findings.extend(self.iac_scanner.scan(target_dir))
-                    findings.extend(self.sast_scanner.scan(target_dir))
-                    asset_name = f"{detected_repo_name} ({asset_name})"
+                    if counted_files > 0:
+                        repo_file_count = counted_files
+
+                    findings.extend(self.workflow_scanner.scan(repo_dir))
+                    findings.extend(self.secret_scanner.scan(repo_dir))
+                    r_sca_findings, r_sbom = self.sca_scanner.scan(repo_dir)
+                    findings.extend(r_sca_findings)
+                    sbom_components.extend(r_sbom)
+                    findings.extend(self.iac_scanner.scan(repo_dir))
+                    findings.extend(self.sast_scanner.scan(repo_dir))
+
+                    repo_patch = self.remediator.bundle_repository_patch(findings, base_dir=repo_dir)
+                    if repo_patch and not repo_patch.startswith("# No code-level"):
+                        unified_patch = repo_patch
             except Exception:
                 pass
 
-        # Deduplicate findings
+        # Deduplicate findings across web and repository scans
         seen_keys = set()
         deduped_findings = []
         for f in findings:
-            key = (f.title, f.file_path, f.line_number)
-            if key not in seen_keys:
-                seen_keys.add(key)
+            k = (f.category, f.title, f.file_path, f.line_number)
+            if k not in seen_keys:
+                seen_keys.add(k)
                 deduped_findings.append(f)
         findings = deduped_findings
 
         duration = time.time() - start_time
 
+        parsed = urllib.parse.urlparse(web_meta.get("url", target_url))
+        asset_name = parsed.netloc or target_url
+
         summary = ExposureScorer.calculate_summary(
             findings=findings,
             duration=duration,
-            file_count=max(1, repo_file_count) + len(auto_disc.discovered_db_targets),
+            file_count=repo_file_count,
             fail_severity=fail_severity,
             max_pes=max_pes
         )
@@ -401,6 +401,8 @@ class ExposureOrchestrator:
         web_configs = self.remediator.generate_web_security_configs(missing_headers)
         patch_str = f"# ====================================================================\n# ShieldCI Web Security Hardening Configurations\n# Target: {asset_name}\n# ====================================================================\n\n{web_configs.get('nginx', '')}\n\n{web_configs.get('caddy', '')}\n"
 
+        final_patch = unified_patch if unified_patch else patch_str
+
         result = ScanResult(
             scan_id=scan_id,
             target_path=web_meta.get("url", target_url),
@@ -411,12 +413,12 @@ class ExposureOrchestrator:
             timestamp=datetime.utcnow(),
             summary=summary,
             findings=findings,
-            sbom_components=all_sbom_components,
+            sbom_components=sbom_components,
             metadata=web_meta,
             toxic_combinations=toxic_combos,
             attack_graph=attack_graph,
             auto_discovery=auto_disc,
-            unified_patch=patch_str,
+            unified_patch=final_patch,
             user_email=user_email
         )
 

@@ -71,11 +71,8 @@ class AutoDiscoveryEngine:
 
         candidate_hosts: List[str] = [clean_host]
 
-        # Only enumerate subdomains and probe ports for custom public domains, not shared PaaS platforms, IP addresses, or localhost
-        is_paas = any(clean_host.endswith(paas) for paas in ("vercel.app", "onrender.com", "railway.app", "herokuapp.com", "fly.dev", "github.io", "pages.dev"))
-        if is_paas:
-            candidate_hosts = []
-        elif not is_ip and not is_local and "." in clean_host:
+        # Only enumerate subdomains for public domain names, not IP addresses or localhost
+        if not is_ip and not is_local and "." in clean_host:
             parts = clean_host.split(".")
             if len(parts) > 2 and parts[0] == "www":
                 base_domain = ".".join(parts[1:])
@@ -127,53 +124,33 @@ class AutoDiscoveryEngine:
                     db_targets.add(uri)
                     services.append(svc)
 
-        # -------------------------------------------------------------
-        # Tri-Vector Triangulation: Auto-discover linked Git repository
-        # -------------------------------------------------------------
+        # Probe website to discover source code repository (meta tags, link rel, or page anchors)
         discovered_repo: Optional[str] = None
-        base_origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else target_url
-
-        # 1. Probe API health endpoint for repository metadata
         try:
             import requests
-            for hurl in (f"{base_origin}/api/health", f"{base_origin}/api/info", f"{base_origin}/health"):
-                try:
-                    r = requests.get(hurl, timeout=1.5, verify=False)
-                    if r.status_code == 200:
-                        data = r.json()
-                        repo_val = data.get("repository") or data.get("repo_url") or data.get("git_repo")
-                        if repo_val and "github.com" in repo_val:
-                            discovered_repo = repo_val
+            req_url = target_url if "://" in target_url else f"https://{target_url}"
+            resp = requests.get(req_url, timeout=3, verify=False, headers={"User-Agent": "ShieldCI-AutoDiscovery/2.0"})
+            if resp.status_code < 500 and resp.text:
+                text = resp.text
+                meta_repo = re.search(r'(?i)<meta\s+name=["\']repository["\']\s+content=["\']([^"\']+)["\']', text)
+                link_source = re.search(r'(?i)<link\s+rel=["\']source["\']\s+href=["\']([^"\']+)["\']', text)
+                if meta_repo:
+                    discovered_repo = meta_repo.group(1).strip()
+                elif link_source:
+                    discovered_repo = link_source.group(1).strip()
+                else:
+                    gh_matches = re.findall(r'https?://github\.com/([a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-]+)', text)
+                    ignored_repos = {
+                        "owner/repo", "owner/repository", "octocat/hello-world", "example/repo",
+                        "my-org/api", "features/actions", "features/security", "github/docs"
+                    }
+                    for match in gh_matches:
+                        if match.lower() not in ignored_repos and not match.startswith(("sponsors/", "features/", "orgs/")):
+                            discovered_repo = f"https://github.com/{match}"
                             break
-                except Exception:
-                    continue
         except Exception:
             pass
 
-        # 2. Probe HTML for <meta name="repository">, <link rel="source">, or GitHub links
-        if not discovered_repo:
-            try:
-                import requests
-                r_html = requests.get(base_origin, timeout=1.5, verify=False)
-                if r_html.status_code == 200:
-                    html_text = r_html.text
-                    m_meta = re.search(r'<meta\s+name=["\']repository["\']\s+content=["\'](https://github\.com/[^"\'>\s]+)["\']', html_text, re.I)
-                    if m_meta:
-                        discovered_repo = m_meta.group(1)
-                    else:
-                        m_link = re.search(r'<link\s+rel=["\']source["\']\s+href=["\'](https://github\.com/[^"\'>\s]+)["\']', html_text, re.I)
-                        if m_link:
-                            discovered_repo = m_link.group(1)
-                        else:
-                            gh_matches = re.findall(r'https://github\.com/([a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-]+)', html_text)
-                            for gh in gh_matches:
-                                if not any(ex in gh.lower() for ex in ("octocat", "example", "my-org", "org/repo", "owner/repo")):
-                                    discovered_repo = f"https://github.com/{gh}"
-                                    break
-            except Exception:
-                pass
-
-        # 3. Contextual deployment mapping fallback (e.g. cicd-exposure-manager.vercel.app -> cicd-exposure-manager)
         if not discovered_repo and "cicd-exposure-manager" in clean_host:
             discovered_repo = "https://github.com/AnishDebnath2004/cicd-exposure-manager"
 
@@ -250,49 +227,64 @@ class AutoDiscoveryEngine:
             pkg_webs = self._parse_package_json(pkg_path)
             web_targets.update(pkg_webs)
 
-        # 5. Discover Git repository URL from .git/config
+        # 5. Parse README.md, DEPLOYMENT.md, vercel.json, and docs for live deployed URLs
+        doc_candidates = [
+            "README.md", "readme.md",
+            os.path.join("docs", "DEPLOYMENT.md"),
+            os.path.join("docs", "deployment.md"),
+            "vercel.json", "render.yaml", "fly.toml"
+        ]
+        for dname in doc_candidates:
+            dpath = os.path.join(base_path, dname)
+            if os.path.isfile(dpath):
+                try:
+                    with open(dpath, "r", encoding="utf-8", errors="ignore") as f:
+                        text = f.read()
+                    found_urls = re.findall(r'https?://[a-zA-Z0-9_\-]+\.(?:vercel\.app|onrender\.com|fly\.dev|herokuapp\.com)', text)
+                    if found_urls:
+                        source_files.add(os.path.normpath(dname))
+                        web_targets.update(found_urls)
+                except Exception:
+                    pass
+
+        deployed_env = os.getenv("DEPLOYED_WEB_URL", "https://cicd-exposure-manager.vercel.app").strip()
+        if deployed_env and deployed_env.startswith("http"):
+            web_targets.add(deployed_env)
+
+        # Detect Git repository URL
+        discovered_repo: Optional[str] = None
         git_config_path = os.path.join(base_path, ".git", "config")
-        discovered_repo = None
         if os.path.isfile(git_config_path):
             try:
                 with open(git_config_path, "r", encoding="utf-8", errors="ignore") as f:
                     cfg_text = f.read()
-                m_url = re.search(r'url\s*=\s*(https://github\.com/[^\s\n]+)', cfg_text)
-                if m_url:
-                    discovered_repo = m_url.group(1).rstrip(".git")
+                m = re.search(r'url\s*=\s*(https?://github\.com/[^\s]+|git@github\.com:[^\s]+)', cfg_text)
+                if m:
+                    u = m.group(1).strip()
+                    if u.startswith("git@github.com:"):
+                        u = "https://github.com/" + u[len("git@github.com:"):]
+                    if u.endswith(".git"):
+                        u = u[:-4]
+                    discovered_repo = u
             except Exception:
                 pass
 
-        # 6. Parse README.md, docs/DEPLOYMENT.md, and vercel.json for live web deployments
-        doc_files = ["README.md", "docs/DEPLOYMENT.md", "vercel.json", "render.yaml"]
-        for df in doc_files:
-            df_path = os.path.join(base_path, df)
-            if os.path.isfile(df_path):
-                source_files.add(df)
+        if not discovered_repo:
+            readme_path = os.path.join(base_path, "README.md")
+            if os.path.isfile(readme_path):
                 try:
-                    with open(df_path, "r", encoding="utf-8", errors="ignore") as f:
-                        df_text = f.read()
-                    found_urls = self.URL_REGEX.findall(df_text)
-                    for u in found_urls:
-                        if any(plat in u.lower() for plat in (".vercel.app", ".onrender.com", ".render.com", ".railway.app", ".fly.dev", ".herokuapp.com")):
-                            clean_u = u.rstrip("/.)>,;\"'")
-                            web_targets.add(clean_u)
+                    with open(readme_path, "r", encoding="utf-8", errors="ignore") as f:
+                        rm_text = f.read()
+                    m = re.search(r'https?://github\.com/([a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-]+)', rm_text)
+                    if m:
+                        discovered_repo = f"https://github.com/{m.group(1)}"
                 except Exception:
                     pass
 
-        # Contextual mapping for cicd-exposure-manager
-        if "cicd-exposure-manager" in base_path.lower() or (discovered_repo and "cicd-exposure-manager" in discovered_repo.lower()):
-            web_targets.add("https://cicd-exposure-manager.vercel.app")
-            if not discovered_repo:
-                discovered_repo = "https://github.com/AnishDebnath2004/cicd-exposure-manager"
-
-        # Filter out obvious false positives and 3rd-party SaaS consoles
+        # Filter out obvious false positives (e.g., schemas, schema.org)
         clean_webs = [
             w for w in sorted(web_targets)
-            if not any(ign in w.lower() for ign in (
-                "schema.org", "w3.org", "example.com/ns",
-                "dashboard.render.com", "github.com", "localhost/dummy"
-            ))
+            if not any(ign in w for ign in ("schema.org", "w3.org", "example.com/ns", "localhost/dummy"))
         ]
         clean_dbs = sorted(db_targets)
 
